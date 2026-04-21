@@ -418,30 +418,34 @@ export default function SparePartsClient({
                               ? activeTypeData.brands
                               : activeTypeData.brands.slice(0, 8)
                             ).map((brand: any) => (
-                                <button
-                                  key={brand.slug}
-                                  onClick={() => {
-                                    handleBrandSelect(brand.slug);
-                                    setShowMobileFilters(false);
-                                  }}
-                                  className={cn(
-                                    "px-3 py-2 text-xs font-bold rounded-lg transition-all",
-                                    activeBrand === brand.slug
-                                      ? "bg-primary text-white"
-                                      : "bg-white border border-zinc-200 text-zinc-700 hover:border-primary",
-                                  )}
-                                >
-                                  {brand.name}
-                                </button>
-                              ))}
+                              <button
+                                key={brand.slug}
+                                onClick={() => {
+                                  handleBrandSelect(brand.slug);
+                                  setShowMobileFilters(false);
+                                }}
+                                className={cn(
+                                  "px-3 py-2 text-xs font-bold rounded-lg transition-all",
+                                  activeBrand === brand.slug
+                                    ? "bg-primary text-white"
+                                    : "bg-white border border-zinc-200 text-zinc-700 hover:border-primary",
+                                )}
+                              >
+                                {brand.name}
+                              </button>
+                            ))}
                           </div>
                           {activeTypeData.brands.length > 8 && (
                             <button
                               type="button"
-                              onClick={() => setShowAllBrands((value) => !value)}
+                              onClick={() =>
+                                setShowAllBrands((value) => !value)
+                              }
                               className="text-[10px] text-primary font-bold mt-2 w-full py-2 border border-primary/30 rounded-lg hover:bg-primary/5"
                             >
-                              {showAllBrands ? "Show Fewer Brands" : "View All Brands"}
+                              {showAllBrands
+                                ? "Show Fewer Brands"
+                                : "View All Brands"}
                             </button>
                           )}
                         </div>

@@ -124,36 +124,40 @@ export default function Navbar() {
                 onSubmit={handleGlobalSearchSubmit}
                 className="hidden lg:flex items-center bg-surface-container rounded-full px-4 py-2.5 border border-outline gap-2 transition-all duration-200 focus-within:border-primary/30 focus-within:shadow-sm"
               >
-              <span className="material-symbols-outlined text-on-surface-variant text-xl">
-                search
-              </span>
-              <input
-                type="text"
-                placeholder="Search parts…"
+                <span className="material-symbols-outlined text-on-surface-variant text-xl">
+                  search
+                </span>
+                <input
+                  type="text"
+                  placeholder="Search parts…"
                   value={globalSearchQuery}
                   onChange={(event) => setGlobalSearchQuery(event.target.value)}
-                className="bg-transparent border-none outline-none text-sm w-44 text-on-surface placeholder:text-on-surface-variant"
-              />
+                  className="bg-transparent border-none outline-none text-sm w-44 text-on-surface placeholder:text-on-surface-variant"
+                />
               </form>
             )}
-            
+
             {user ? (
               <div className="flex items-center gap-3">
-                <button 
-                  onClick={() => router.push('/my-bookings')}
+                <button
+                  onClick={() => router.push("/my-bookings")}
                   className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-surface-container transition-colors"
                 >
                   <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
-                    {user.fullName?.charAt(0) || 'U'}
+                    {user.fullName?.charAt(0) || "U"}
                   </div>
-                  <span className="text-sm font-bold text-zinc-900 hidden lg:block">{user.fullName}</span>
+                  <span className="text-sm font-bold text-zinc-900 hidden lg:block">
+                    {user.fullName}
+                  </span>
                 </button>
-                <button 
+                <button
                   onClick={() => logout()}
                   className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-error/10 text-error/70 hover:text-error transition-all"
                   title="Logout"
                 >
-                  <span className="material-symbols-outlined text-xl">logout</span>
+                  <span className="material-symbols-outlined text-xl">
+                    logout
+                  </span>
                 </button>
               </div>
             ) : (
@@ -237,12 +241,14 @@ export default function Navbar() {
             )}
 
             {/* Profile */}
-            <button 
-              onClick={() => router.push(user ? '/my-bookings' : '/login')}
-              className={`w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 group ${user ? 'bg-primary text-white' : 'bg-primary-container text-primary'}`}
+            <button
+              onClick={() => router.push(user ? "/my-bookings" : "/login")}
+              className={`w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 group ${user ? "bg-primary text-white" : "bg-primary-container text-primary"}`}
             >
               {user ? (
-                <span className="text-[10px] font-black">{user.fullName?.charAt(0)}</span>
+                <span className="text-[10px] font-black">
+                  {user.fullName?.charAt(0)}
+                </span>
               ) : (
                 <span className="material-symbols-outlined icon-filled transition-colors text-[22px]">
                   account_circle
