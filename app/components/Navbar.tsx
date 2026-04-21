@@ -264,7 +264,7 @@ export default function Navbar() {
       ════════════════════════════════════════ */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50">
         <div className="bg-white/98 backdrop-blur-xl border-t border-outline-variant/50 px-1 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
-          <div className="flex items-center justify-around h-14 relative">
+          <div className="relative h-16 grid grid-cols-5 items-center">
             {/* Left two items */}
             {BOTTOM_NAV.slice(0, 2).map(({ label, icon, href }) => (
               <BottomTab
@@ -277,8 +277,11 @@ export default function Navbar() {
               />
             ))}
 
+            {/* Center spacer keeps side tabs perfectly balanced */}
+            <div className="h-full" />
+
             {/* ── Center: BOOK button (Elevated) ── */}
-            <div className="relative flex flex-col items-center -mt-8">
+            <div className="absolute left-1/2 -translate-x-1/2 -top-6 flex flex-col items-center">
               <button
                 onClick={() => openBooking()}
                 className={`w-14 h-14 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/30
@@ -334,7 +337,7 @@ function BottomTab({
     <Link
       href={href}
       onClick={onClick}
-      className={`flex flex-col items-center justify-center gap-0.5 px-2 min-w-16 h-full transition-all duration-200 ${
+      className={`flex w-full flex-col items-center justify-center gap-0.5 px-1 h-full transition-all duration-200 ${
         active ? "text-primary" : "text-zinc-500"
       }`}
     >
