@@ -15,6 +15,13 @@ export interface SparePart {
   description: string;
 }
 
+export interface ApplianceTypeCategory {
+  slug: string;
+  name: string;
+  icon: string;
+  partCount: number;
+}
+
 export const SPARE_PARTS: SparePart[] = [
   {
     id: "compressor-inverter-10",
@@ -120,4 +127,99 @@ export function getSparePartBySlug(slug: string) {
 
 export function getSparePartById(id: string) {
   return SPARE_PARTS.find((part) => part.id === id);
+}
+
+/**
+ * Fetch appliance type categories from backend API
+ * @param apiUrl - Base API URL
+ * @returns Array of appliance types with part counts
+ */
+export async function fetchApplianceTypes(
+  apiUrl: string,
+): Promise<ApplianceTypeCategory[]> {
+  try {
+    const res = await fetch(`${apiUrl}/spare-parts/categories`);
+    if (!res.ok) throw new Error("Failed to fetch appliance types");
+    const data = await res.json();
+    // API returns array with applianceTypeSlug, applianceTypeName, partCount
+    return data.map((item: any) => ({
+      slug: item.applianceTypeSlug,
+      name: item.applianceTypeName,
+      icon: item.icon || "wrench",
+      partCount: item.partCount || 0,
+    }));
+  } catch (error) {
+    console.error("Error fetching appliance types:", error);
+    return [];
+  }
+}
+
+/**
+ * Fetch featured/popular spare parts from backend
+ * @param apiUrl - Base API URL
+ * @param limit - Number of parts to fetch (default: 12)
+ * @returns Array of featured spare parts
+ */
+export async function fetchFeaturedParts(apiUrl: string, limit: number = 12) {
+  try {
+    const params = new URLSearchParams();
+    params.append("limit", String(limit));
+
+    const res = await fetch(
+      `${apiUrl}/spare-parts?isFeatured=true&${params.toString()}`,
+    );
+    if (!res.ok) throw new Error("Failed to fetch featured parts");
+
+    const data = await res.json();
+    return data.data || [];
+  } catch (error) {
+    console.error("Error fetching featured parts:", error);
+    return [];
+  }
+}
+
+/**
+ * Fetch spare parts by appliance type (category-first approach)
+ * @param apiUrl - Base API URL
+ * @param applianceTypeSlug - Appliance type slug (e.g., "refrigerator")
+ * @param filters - Optional filters (brand, model, category, search)
+ * @param pagination - Pagination options (page, limit)
+ */
+export async function fetchSparePartsByApplianceType(
+  apiUrl: string,
+  applianceTypeSlug: string,
+  filters?: {
+    brandSlug?: string;
+    modelNumber?: string;
+    partCategory?: string;
+    searchQuery?: string;
+    isUniversal?: boolean;
+  },
+  pagination: { page: number; limit: number } = { page: 1, limit: 24 },
+) {
+  try {
+    const params = new URLSearchParams();
+    params.append("applianceType", applianceTypeSlug);
+
+    if (filters?.brandSlug) params.append("brand", filters.brandSlug);
+    if (filters?.modelNumber) params.append("model", filters.modelNumber);
+    if (filters?.partCategory)
+      params.append("partCategory", filters.partCategory);
+    if (filters?.searchQuery) params.append("q", filters.searchQuery);
+    if (filters?.isUniversal) params.append("isUniversal", "true");
+
+    params.append("page", String(pagination.page));
+    params.append("limit", String(pagination.limit));
+
+    const res = await fetch(`${apiUrl}/spare-parts?${params.toString()}`);
+    if (!res.ok) throw new Error("Failed to fetch spare parts");
+
+    return await res.json();
+  } catch (error) {
+    console.error("Error fetching spare parts:", error);
+    return {
+      data: [],
+      metadata: { total: 0, page: 1, limit: 24, totalPages: 0 },
+    };
+  }
 }

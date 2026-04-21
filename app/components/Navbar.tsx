@@ -26,6 +26,7 @@ const BOTTOM_NAV = [
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
+  const [globalSearchQuery, setGlobalSearchQuery] = useState("");
   const pathname = usePathname();
   const router = useRouter();
   const { openBooking, isOpen: isBookingOpen } = useBooking();
@@ -33,6 +34,7 @@ export default function Navbar() {
 
   // Helper to determine if we are on a subpage for app-like header
   const isSubpage = pathname !== "/";
+  const hasInPageSearch = pathname.startsWith("/spare-parts");
 
   // Get page title for header
   const getPageTitle = () => {
@@ -68,6 +70,15 @@ export default function Navbar() {
     onScroll();
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  const handleGlobalSearchSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+
+    const query = globalSearchQuery.trim();
+    if (!query) return;
+
+    router.push(`/spare-parts?q=${encodeURIComponent(query)}`);
+  };
 
   return (
     <>
@@ -108,16 +119,23 @@ export default function Navbar() {
 
           {/* Actions */}
           <div className="flex items-center gap-3">
-            <div className="hidden lg:flex items-center bg-surface-container rounded-full px-4 py-2.5 border border-outline gap-2 transition-all duration-200 focus-within:border-primary/30 focus-within:shadow-sm">
+            {!hasInPageSearch && (
+              <form
+                onSubmit={handleGlobalSearchSubmit}
+                className="hidden lg:flex items-center bg-surface-container rounded-full px-4 py-2.5 border border-outline gap-2 transition-all duration-200 focus-within:border-primary/30 focus-within:shadow-sm"
+              >
               <span className="material-symbols-outlined text-on-surface-variant text-xl">
                 search
               </span>
               <input
                 type="text"
                 placeholder="Search parts…"
+                  value={globalSearchQuery}
+                  onChange={(event) => setGlobalSearchQuery(event.target.value)}
                 className="bg-transparent border-none outline-none text-sm w-44 text-on-surface placeholder:text-on-surface-variant"
               />
-            </div>
+              </form>
+            )}
             
             {user ? (
               <div className="flex items-center gap-3">
@@ -196,8 +214,12 @@ export default function Navbar() {
           {/* Right actions */}
           <div className="flex items-center gap-1">
             {/* Search - Icon only for mobile if subpage */}
-            {isSubpage && (
-              <button className="w-10 h-10 flex items-center justify-center rounded-full active:bg-surface-container transition-colors">
+            {isSubpage && !hasInPageSearch && (
+              <button
+                onClick={() => router.push("/spare-parts")}
+                className="w-10 h-10 flex items-center justify-center rounded-full active:bg-surface-container transition-colors"
+                aria-label="Open spare parts search"
+              >
                 <span className="material-symbols-outlined text-zinc-600 text-[22px]">
                   search
                 </span>

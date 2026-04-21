@@ -1,10 +1,11 @@
 "use client";
 
-import React from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { cn, formatPrice } from '@/app/lib/utils';
-import { ShoppingCart, Plus, CheckCircle2, AlertCircle } from 'lucide-react';
+import React from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { cn, formatPrice } from "@/app/lib/utils";
+import { ShoppingCart, Plus, CheckCircle2, AlertCircle } from "lucide-react";
 
 interface PartCardProps {
   part: any;
@@ -12,86 +13,101 @@ interface PartCardProps {
 }
 
 export const PartCard: React.FC<PartCardProps> = ({ part, onAddToCart }) => {
+  const router = useRouter();
   const discount = part.mrp ? Math.round((1 - part.price / part.mrp) * 100) : 0;
 
+  const handleRequestPart = () => {
+    if (onAddToCart) {
+      onAddToCart(part.sku);
+      return;
+    }
+
+    router.push(`/spare-parts/enquiry?part=${part._id}`);
+  };
+
   return (
-    <article className="flex flex-row gap-4 p-4 border border-zinc-100 rounded-3xl bg-white hover:border-primary/30 hover:shadow-xl hover:shadow-zinc-200/40 transition-all duration-300">
-      <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-2xl overflow-hidden bg-zinc-50 flex-shrink-0">
+    <article className="flex flex-col border border-zinc-100 rounded-2xl bg-white hover:border-primary/50 hover:shadow-md hover:shadow-zinc-200/50 transition-all duration-300 overflow-hidden group">
+      {/* Image Container - Compact */}
+      <div className="relative w-full h-40 bg-gradient-to-br from-zinc-50 to-zinc-100 shrink-0 overflow-hidden">
         <Image
-          src={part.imageUrls?.[0] || "https://images.unsplash.com/photo-1581092160562-40aa08e78837"}
+          src={
+            part.imageUrls?.[0] ||
+            "https://images.unsplash.com/photo-1581092160562-40aa08e78837"
+          }
           alt={part.name}
           fill
-          className="object-cover"
+          className="object-cover group-hover:scale-105 transition-transform duration-300"
         />
         {part.isUniversal && (
-          <div className="absolute top-2 left-2 bg-teal-600/90 backdrop-blur-sm text-[8px] font-black text-white px-2 py-0.5 rounded-full uppercase tracking-tighter">
+          <div className="absolute top-2 left-2 bg-teal-600/95 text-[7px] font-black text-white px-2 py-0.5 rounded-full uppercase tracking-tighter">
             Universal
+          </div>
+        )}
+        {discount > 0 && (
+          <div className="absolute top-2 right-2 bg-orange-600/95 text-[9px] font-black text-white px-2 py-0.5 rounded-lg">
+            -{discount}%
           </div>
         )}
       </div>
 
-      <div className="flex flex-col flex-1 min-w-0">
-        <div className="flex justify-between items-start gap-2">
-          <Link href={`/spare-parts/${part.sku}`} className="group">
-            <h3 className="text-sm md:text-base font-black text-zinc-900 line-clamp-2 leading-tight group-hover:text-primary transition-colors">
-              {part.name}
-            </h3>
-          </Link>
-          <span className={cn(
-            "text-[8px] md:text-[10px] uppercase font-black px-2 py-0.5 rounded-md",
-            part.partType?.type === 'OEM' ? "bg-blue-50 text-blue-600 border border-blue-100" :
-            part.partType?.type === 'Universal' ? "bg-teal-50 text-teal-600 border border-teal-100" :
-            "bg-zinc-50 text-zinc-500 border border-zinc-100"
-          )}>
-            {part.partType?.type || 'Part'}
-          </span>
-        </div>
+      {/* Content Container - Compact */}
+      <div className="flex flex-col flex-1 min-w-0 p-3">
+        {/* Title */}
+        <Link href={`/spare-parts/${part.sku}`} className="group/link">
+          <h3 className="text-xs font-black text-zinc-900 line-clamp-2 leading-tight group-hover/link:text-primary transition-colors">
+            {part.name}
+          </h3>
+        </Link>
 
-        <p className="text-[10px] md:text-xs text-zinc-400 mt-1 uppercase tracking-wider font-black">
-          OEM #{part.partNumber || "N/A"}
+        {/* Brand + SKU */}
+        <p className="text-[9px] text-zinc-500 mt-1 font-medium line-clamp-1">
+          {part.brandSlug || "Generic"}
         </p>
 
+        {/* Quick Info Tags - Compact */}
         <div className="mt-2 flex flex-wrap gap-1">
-           {part.installationDifficulty?.type && (
-             <span className={cn(
-               "text-[9px] px-2 py-0.5 rounded-full font-bold",
-               part.installationDifficulty.type === 'Professional Only' ? "bg-orange-50 text-orange-600" : "bg-green-50 text-green-600"
-             )}>
-               {part.installationDifficulty.type}
-             </span>
-           )}
-           {part.warrantyMonths && (
-             <span className="text-[9px] px-2 py-0.5 rounded-full font-bold bg-zinc-100 text-zinc-600">
-               {part.warrantyMonths}m Warranty
-             </span>
-           )}
+          {part.installationDifficulty?.type && (
+            <span
+              className={cn(
+                "text-[7px] px-1.5 py-0.5 rounded-md font-bold whitespace-nowrap",
+                part.installationDifficulty.type === "Professional Only"
+                  ? "bg-orange-50 text-orange-600"
+                  : part.installationDifficulty.type === "Easy"
+                    ? "bg-green-50 text-green-600"
+                    : "bg-blue-50 text-blue-600",
+              )}
+            >
+              {part.installationDifficulty.type === "Professional Only"
+                ? "Pro"
+                : "Easy"}
+            </span>
+          )}
+          {part.warrantyMonths && (
+            <span className="text-[7px] px-1.5 py-0.5 rounded-md font-bold bg-zinc-100 text-zinc-600 whitespace-nowrap">
+              {part.warrantyMonths}mo
+            </span>
+          )}
         </div>
 
-        <div className="mt-auto pt-3 flex items-end justify-between">
+        {/* Price & CTA - Compact */}
+        <div className="mt-auto pt-2 flex items-center justify-between gap-2">
           <div className="flex flex-col">
-            <div className="flex items-baseline gap-2">
-              <span className="text-base md:text-xl font-black text-zinc-900">
-                {formatPrice(part.price)}
-              </span>
-              {discount > 0 && (
-                <span className="text-[10px] md:text-xs text-zinc-400 line-through">
-                  {formatPrice(part.mrp)}
-                </span>
-              )}
-            </div>
+            <span className="text-base font-black text-zinc-900">
+              {formatPrice(part.price)}
+            </span>
             {discount > 0 && (
-              <span className="text-[10px] font-black text-teal-600">
-                SAVE {discount}% OFF
+              <span className="text-[8px] text-zinc-400 line-through">
+                {formatPrice(part.mrp)}
               </span>
             )}
           </div>
 
           <button
-            onClick={() => onAddToCart?.(part.sku)}
-            className="flex items-center gap-1.5 px-4 py-2 bg-primary text-white text-[11px] md:text-xs font-black uppercase tracking-wider rounded-xl shadow-lg shadow-primary/20 hover:scale-[0.98] transition-all active:scale-95"
+            onClick={handleRequestPart}
+            className="flex items-center justify-center w-8 h-8 bg-primary text-white text-[10px] font-black rounded-lg shadow-md shadow-primary/20 hover:bg-primary/90 transition-all active:scale-95 shrink-0"
+            title="Request part"
           >
-            <Plus className="w-3.5 h-3.5" />
-            Add
+            <Plus className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -115,9 +131,9 @@ export const FilterChips: React.FC<{
           onClick={() => onSelect(null)}
           className={cn(
             "h-8 px-4 rounded-full text-[11px] font-black uppercase transition-all whitespace-nowrap",
-            activeValue === null 
-              ? "bg-primary text-white" 
-              : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200"
+            activeValue === null
+              ? "bg-primary text-white"
+              : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200",
           )}
         >
           All
@@ -132,9 +148,9 @@ export const FilterChips: React.FC<{
               onClick={() => onSelect(value)}
               className={cn(
                 "h-8 px-4 rounded-full text-[11px] font-black uppercase transition-all whitespace-nowrap",
-                isActive 
-                  ? "bg-primary text-white shadow-lg shadow-primary/20" 
-                  : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200"
+                isActive
+                  ? "bg-primary text-white shadow-lg shadow-primary/20"
+                  : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200",
               )}
             >
               {displayLabel}
