@@ -9,6 +9,8 @@ import { BrandGrid } from "./BrandGrid";
 import { ApplianceCategoryGrid } from "./ApplianceCategoryGrid";
 import { PartCard, FilterChips } from "./PartComponents";
 import PopularPartsSection from "./PopularPartsSection";
+import IndiaMartHero from "@/app/components/IndiaMartHero";
+import IndiaMartCategorization from "@/app/components/IndiaMartCategorization";
 import {
   Search,
   SlidersHorizontal,
@@ -72,6 +74,26 @@ export default function SparePartsClient({
   const [partCategories, setPartCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [meta, setMeta] = useState<any>({ total: 0 });
+
+  // Sync state with searchParams when URL changes
+  useEffect(() => {
+    const type = searchParams.get("type");
+    const brand = searchParams.get("brand");
+    const universal = searchParams.get("universal") === "true";
+    const model = searchParams.get("model");
+    const category = searchParams.get("category");
+    const q = searchParams.get("q") || "";
+
+    if (type !== activeType) setActiveType(type);
+    if (brand !== activeBrand) setActiveBrand(brand);
+    if (universal !== isUniversal) setIsUniversal(universal);
+    if (model !== activeModel) setActiveModel(model);
+    if (category !== activeCategory) setActiveCategory(category);
+    if (q !== searchQuery) {
+      setSearchQuery(q);
+      setSearchInput(q);
+    }
+  }, [searchParams]); // Only depend on searchParams to avoid infinite loops
 
   // Find active type data from tree
   const activeTypeData = initialCategories.find(
@@ -292,27 +314,14 @@ export default function SparePartsClient({
         <div className="flex-1 flex flex-col min-w-0">
           {/* LANDING STATE: Show Popular Parts + Appliance Categories */}
           {!activeType ? (
-            <div className="flex-1 overflow-y-auto px-4 md:px-12 pt-4 md:pt-16 pb-20 space-y-8 md:space-y-20">
-              {/* Popular Parts Section */}
-              <PopularPartsSection
-                apiUrl={apiUrl}
-                onBrowseAll={() => {
-                  document
-                    .getElementById("browse-categories")
-                    ?.scrollIntoView({ behavior: "smooth", block: "start" });
-                }}
-              />
-
-              {/* Divider */}
-              <div className="flex items-center gap-4 py-2">
-                <div className="flex-1 h-px bg-gradient-to-r from-transparent via-zinc-300 to-transparent" />
-              </div>
-
-              {/* Appliance Categories */}
-              <div id="browse-categories">
-                <ApplianceCategoryGrid
-                  categories={applianceTypes}
-                  onSelect={handleTypeSelect}
+            <div className="flex-1 overflow-y-auto pb-20">
+              <IndiaMartHero />
+              <IndiaMartCategorization />
+              
+              <div className="px-4 md:px-12 py-8">
+                <PopularPartsSection
+                  apiUrl={apiUrl}
+                  onBrowseAll={() => {}}
                 />
               </div>
             </div>

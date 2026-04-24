@@ -3,7 +3,6 @@ import Image from "next/image";
 import Link from "next/link";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
-import { getApplianceIcon } from "@/app/components/spare-parts/IconMap";
 import { formatPrice, cn } from "@/app/lib/utils";
 import {
   ChevronLeft,
@@ -12,14 +11,19 @@ import {
   Hammer,
   Info,
   CheckCircle2,
+  Phone,
+  MessageCircle,
+  Mail,
+  Refrigerator,
+  WashingMachine,
+  Box
 } from "lucide-react";
 
-export default async function PartDetailPage({
-  params,
-}: {
+export default async function PartDetailPage(props: {
   params: Promise<{ sku: string }>;
 }) {
-  const { sku } = await params;
+  const resolvedParams = await props.params;
+  const sku = resolvedParams.sku;
   const apiUrl =
     process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/v1";
 
@@ -72,7 +76,7 @@ export default async function PartDetailPage({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-16">
           {/* Left: Image Carousel */}
           <div className="flex flex-col gap-4">
-            <div className="relative aspect-square w-full rounded-3xl overflow-hidden bg-zinc-50 border border-zinc-100">
+            <div className="relative aspect-square w-full rounded-3xl overflow-hidden bg-zinc-50 border border-zinc-100 p-8">
               <Image
                 src={
                   part.imageUrls?.[0] ||
@@ -80,10 +84,10 @@ export default async function PartDetailPage({
                 }
                 alt={part.name}
                 fill
-                className="object-cover"
+                className="object-contain"
               />
               {part.isUniversal && (
-                <div className="absolute top-4 left-4 bg-teal-600 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-lg">
+                <div className="absolute top-4 left-4 bg-zinc-900 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
                   ✦ Universal Compatibility
                 </div>
               )}
@@ -122,17 +126,18 @@ export default async function PartDetailPage({
                 {part.partType?.type || "Part"}
               </span>
               <span className="flex items-center gap-1 text-[10px] uppercase font-black px-3 py-1 rounded-full bg-zinc-100 text-zinc-600">
-                {getApplianceIcon(
-                  part.applianceTypeSlug === "refrigerator"
-                    ? "Refrigerator"
-                    : "WashingMachine",
-                  "w-3 h-3",
+                {part.applianceTypeSlug === "refrigerator" ? (
+                  <Refrigerator className="w-3 h-3" />
+                ) : part.applianceTypeSlug === "washing-machine" ? (
+                  <WashingMachine className="w-3 h-3" />
+                ) : (
+                  <Box className="w-3 h-3" />
                 )}
                 {part.applianceTypeSlug}
               </span>
             </div>
 
-            <h1 className="text-3xl md:text-4xl font-black text-zinc-900 leading-tight mb-2">
+            <h1 className="text-3xl md:text-5xl font-black text-zinc-900 leading-tight mb-2">
               {part.name}
             </h1>
             <p className="text-sm font-black text-zinc-400 uppercase tracking-widest mb-6">
@@ -148,7 +153,7 @@ export default async function PartDetailPage({
                   <span className="text-xl text-zinc-400 line-through">
                     {formatPrice(part.mrp)}
                   </span>
-                  <span className="text-xl font-black text-teal-600">
+                  <span className="text-xl font-black text-primary">
                     {discount}% OFF
                   </span>
                 </>
@@ -232,23 +237,49 @@ export default async function PartDetailPage({
               </section>
             </div>
 
-            {/* Desktop Add to Cart */}
-            <div className="hidden md:flex mt-12 pt-8 border-t border-zinc-100">
-              <button className="flex-1 h-14 bg-primary text-white font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20 hover:scale-[0.99] transition-all flex items-center justify-center gap-3">
-                <ShoppingCart className="w-5 h-5" />
-                Add to Cart — {formatPrice(part.price)}
+            {/* Desktop CTAs */}
+            <div className="hidden md:flex gap-4 mt-12 pt-8 border-t border-zinc-100">
+              <Link
+                href={`/spare-parts/enquiry?part=${part._id}`}
+                className="flex-[2] h-14 bg-primary text-white font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20 hover:scale-[0.99] transition-all flex items-center justify-center gap-3"
+              >
+                <Mail className="w-5 h-5" />
+                Get Best Price
+              </Link>
+              <button className="flex-1 h-14 border-2 border-primary text-primary font-black uppercase tracking-widest rounded-2xl hover:bg-primary/5 transition-all flex items-center justify-center gap-3">
+                <Phone className="w-5 h-5" />
+                Call Now
               </button>
             </div>
           </div>
         </div>
       </main>
 
-      {/* Mobile Sticky CTA */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-xl border-t border-zinc-100 pb-safe z-50">
-        <button className="w-full h-14 bg-primary text-white font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20 flex items-center justify-center gap-3">
-          <ShoppingCart className="w-5 h-5" />
-          Add — {formatPrice(part.price)}
-        </button>
+      {/* Mobile Sticky CTA Trio - IndiaMART Style */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 p-3 bg-white border-t border-zinc-100 flex gap-2 z-50 pb-safe shadow-[0_-8px_30px_rgba(0,0,0,0.1)]">
+        <a 
+          href="tel:+919999999999"
+          className="flex-1 h-12 border-2 border-primary text-primary font-black text-[10px] uppercase tracking-widest rounded-lg flex flex-col items-center justify-center leading-none gap-1 active:bg-primary/5 transition-all"
+        >
+          <Phone className="w-4 h-4" />
+          Call
+        </a>
+        <a 
+          href={`https://wa.me/919999999999?text=I'm%20interested%20in%20${encodeURIComponent(part.name)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex-1 h-12 bg-[#25D366] text-white font-black text-[10px] uppercase tracking-widest rounded-lg flex flex-col items-center justify-center leading-none gap-1 active:brightness-90 transition-all"
+        >
+          <MessageCircle className="w-4 h-4" />
+          WhatsApp
+        </a>
+        <Link 
+          href={`/spare-parts/enquiry?part=${part._id}`}
+          className="flex-[2] h-12 bg-primary text-white font-black text-[11px] uppercase tracking-widest rounded-lg flex flex-col items-center justify-center leading-none gap-1 shadow-lg shadow-primary/20 active:brightness-110 transition-all"
+        >
+          <Mail className="w-4 h-4" />
+          Enquire Now
+        </Link>
       </div>
 
       <Footer />

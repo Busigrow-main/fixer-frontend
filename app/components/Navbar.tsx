@@ -257,62 +257,114 @@ export default function Navbar() {
             </button>
           </div>
         </div>
+
+        {/* Secondary Search Bar - Only on Homepage Mobile (If needed) */}
+        {pathname === "DISABLED_FOR_NOW" && (
+          <div className="px-5 pb-3 animate-fade-in">
+            <button 
+              onClick={() => {}}
+              className="w-full h-11 bg-zinc-100 rounded-xl px-4 flex items-center gap-3 text-zinc-400 border border-zinc-200 shadow-sm"
+            >
+              <span className="material-symbols-outlined text-xl">search</span>
+              <span className="text-sm font-medium">What are you looking for?</span>
+              <div className="ml-auto flex items-center gap-2">
+                <div className="w-px h-4 bg-zinc-300" />
+                <span className="material-symbols-outlined text-xl">photo_camera</span>
+              </div>
+            </button>
+          </div>
+        )}
       </header>
 
       {/* ════════════════════════════════════════
-          MOBILE — Bottom navigation bar (Urban Company style)
+          MOBILE — Bottom navigation bar (Urban Company / IndiaMART style)
       ════════════════════════════════════════ */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50">
-        <div className="bg-white/98 backdrop-blur-xl border-t border-outline-variant/50 px-1 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
-          <div className="relative h-16 grid grid-cols-5 items-center">
-            {/* Left two items */}
-            {BOTTOM_NAV.slice(0, 2).map(({ label, icon, href }) => (
+        <div className="bg-white border-t border-outline-variant/30 px-1 pb-safe shadow-[0_-8px_30px_rgba(0,0,0,0.05)]">
+          {pathname.startsWith("/spare-parts") ? (
+            /* ── IndiaMART Style Bottom Nav (3 items) ── */
+            <div className="h-16 grid grid-cols-3 items-center">
               <BottomTab
-                key={label}
-                label={label}
-                icon={icon}
-                href={href}
-                active={activeTab === label}
+                label="Login"
+                icon="account_circle"
+                href="/login"
+                active={pathname === "/login"}
                 onClick={() => {}}
               />
-            ))}
-
-            {/* Center spacer keeps side tabs perfectly balanced */}
-            <div className="h-full" />
-
-            {/* ── Center: BOOK button (Elevated) ── */}
-            <div className="absolute left-1/2 -translate-x-1/2 -top-6 flex flex-col items-center">
-              <button
-                onClick={() => openBooking()}
-                className={`w-14 h-14 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/30
-                  border-[3px] border-white transition-all duration-200 active:scale-95
-                  ${activeTab === "Book" ? "shadow-primary/40 bg-zinc-900" : "hover:scale-105"}`}
+              <Link
+                href="/spare-parts/enquiry"
+                className="relative flex flex-col items-center justify-center gap-0.5 h-full group active:scale-95 transition-all"
               >
-                <span className="material-symbols-outlined icon-filled text-white text-2xl">
-                  calendar_add_on
+                <div className="relative">
+                  <span className="material-symbols-outlined text-[24px] text-zinc-600 group-hover:text-primary transition-colors">
+                    post_add
+                  </span>
+                  <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary rounded-full border-2 border-white shadow-sm" />
+                </div>
+                <span className="text-[9px] font-black uppercase tracking-wider text-zinc-600 group-hover:text-primary transition-colors">
+                  Post Requirement
                 </span>
-              </button>
-              <span
-                className={`text-[9px] font-bold uppercase tracking-wider mt-1 ${
-                  activeTab === "Book" ? "text-primary" : "text-zinc-500"
-                }`}
-              >
-                Book
-              </span>
-            </div>
-
-            {/* Right two items */}
-            {BOTTOM_NAV.slice(2).map(({ label, icon, href }) => (
+              </Link>
               <BottomTab
-                key={label}
-                label={label}
-                icon={icon}
-                href={href}
-                active={activeTab === label}
+                label="Verified Exporters"
+                icon="public"
+                href="/spare-parts/verified"
+                active={pathname === "/spare-parts/verified"}
                 onClick={() => {}}
               />
-            ))}
-          </div>
+            </div>
+          ) : (
+            /* ── Standard Bottom Nav (5 items) ── */
+            <div className="relative h-16 grid grid-cols-5 items-center">
+              {/* Left two items */}
+              {BOTTOM_NAV.slice(0, 2).map(({ label, icon, href }) => (
+                <BottomTab
+                  key={label}
+                  label={label}
+                  icon={icon}
+                  href={href}
+                  active={activeTab === label}
+                  onClick={() => {}}
+                />
+              ))}
+
+              {/* Center spacer keeps side tabs perfectly balanced */}
+              <div className="h-full" />
+
+              {/* ── Center: BOOK button (Elevated) ── */}
+              <div className="absolute left-1/2 -translate-x-1/2 -top-6 flex flex-col items-center">
+                <button
+                  onClick={() => openBooking()}
+                  className={`w-14 h-14 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/30
+                    border-[3px] border-white transition-all duration-200 active:scale-95
+                    ${activeTab === "Book" ? "shadow-primary/40 bg-zinc-900" : "hover:scale-105"}`}
+                >
+                  <span className="material-symbols-outlined icon-filled text-white text-2xl">
+                    calendar_add_on
+                  </span>
+                </button>
+                <span
+                  className={`text-[9px] font-bold uppercase tracking-wider mt-1 ${
+                    activeTab === "Book" ? "text-primary" : "text-zinc-500"
+                  }`}
+                >
+                  Book
+                </span>
+              </div>
+
+              {/* Right two items */}
+              {BOTTOM_NAV.slice(2).map(({ label, icon, href }) => (
+                <BottomTab
+                  key={label}
+                  label={label}
+                  icon={icon}
+                  href={href}
+                  active={activeTab === label}
+                  onClick={() => {}}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </nav>
     </>
