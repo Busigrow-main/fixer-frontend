@@ -1,22 +1,11 @@
 "use client";
 
-import { Search, MapPin, Camera } from "lucide-react";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { MapPin } from "lucide-react";
+import SearchBar from "@/app/components/SearchBar";
 
 export default function IndiaMartHero() {
-  const [query, setQuery] = useState("");
-  const router = useRouter();
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (query.trim()) {
-      router.push(`/spare-parts?q=${encodeURIComponent(query)}`);
-    }
-  };
-
   return (
-    <section className="bg-zinc-900 pt-6 pb-12 px-5 md:px-10">
+    <section className="bg-zinc-900 pt-6 pb-14 px-5 md:px-10">
       <div className="max-w-screen-xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
         {/* Left Side: Headline */}
         <div className="text-white space-y-4 max-w-xl">
@@ -29,34 +18,45 @@ export default function IndiaMartHero() {
           </p>
         </div>
 
-        {/* Right Side: Search Box */}
-        <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl p-2 flex flex-col gap-2">
-          <div className="flex items-center gap-2 px-4 py-2 border-b border-zinc-100">
+        {/* Right Side: Search Widget */}
+        <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl p-3 flex flex-col gap-2">
+          {/* Location */}
+          <div className="flex items-center gap-2 px-3 py-1.5 border-b border-zinc-100 mb-1">
             <MapPin className="w-4 h-4 text-zinc-400" />
             <span className="text-xs font-bold text-zinc-900">Patna, Bihar</span>
           </div>
-          
-          <form onSubmit={handleSearch} className="flex items-center bg-zinc-100 rounded-xl px-4 h-14 gap-3">
-            <Search className="w-5 h-5 text-zinc-400" />
-            <input 
-              type="text"
-              placeholder="What are you looking for?"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="flex-1 bg-transparent border-none outline-none text-sm font-medium placeholder:text-zinc-400"
-            />
-            <button type="button" className="text-zinc-400">
-              <Camera className="w-5 h-5" />
-            </button>
-          </form>
 
-          <button 
-            type="submit"
-            onClick={handleSearch}
-            className="w-full h-12 bg-primary text-white font-black rounded-xl uppercase tracking-widest text-sm hover:brightness-110 transition-all"
+          {/* Search Bar */}
+          <SearchBar
+            variant="hero"
+            placeholder="Search — LG Compressor, Motor, Fan etc."
+          />
+
+          {/* Submit */}
+          <button
+            className="w-full h-12 bg-primary text-white font-black rounded-xl uppercase tracking-widest text-sm hover:brightness-110 transition-all mt-1"
+            onClick={() => {
+              const input = document.querySelector<HTMLInputElement>('input[type=text]');
+              if (input?.value) {
+                window.location.href = `/spare-parts?q=${encodeURIComponent(input.value)}`;
+              }
+            }}
           >
             Search
           </button>
+
+          {/* Popular chips */}
+          <div className="flex gap-2 flex-wrap pt-1">
+            {["AC Filter", "Compressor", "Motor", "Thermostat"].map((tag) => (
+              <a
+                key={tag}
+                href={`/spare-parts?q=${encodeURIComponent(tag)}`}
+                className="text-[11px] font-bold text-zinc-500 hover:text-primary bg-zinc-100 hover:bg-primary/5 px-2.5 py-1 rounded-full transition-colors"
+              >
+                {tag}
+              </a>
+            ))}
+          </div>
         </div>
       </div>
     </section>
