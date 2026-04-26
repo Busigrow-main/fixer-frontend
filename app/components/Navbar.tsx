@@ -6,7 +6,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { useBooking } from "@/app/context/BookingContext";
 import { useAuth } from "@/app/context/AuthContext";
 import { SERVICES } from "@/app/lib/services";
-import { getSparePartBySlug } from "@/app/lib/spareParts";
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
@@ -48,8 +47,7 @@ export default function Navbar() {
     if (pathname.startsWith("/spare-parts/")) {
       const slug = pathname.split("/").pop();
       if (slug === "enquiry") return "Part Enquiry";
-      const part = slug ? getSparePartBySlug(slug) : undefined;
-      return part ? part.name : "Part Detail";
+      return "Part Detail";
     }
     if (pathname === "/my-bookings") return "My Bookings";
     return "";

@@ -80,7 +80,7 @@ export const PartCard: React.FC<PartCardProps> = ({ part, onAddToCart }) => {
         <div className="mt-4 pt-3 border-t border-zinc-50 flex items-center gap-2 text-zinc-400">
           <MapPin className="w-3.5 h-3.5 text-zinc-300" />
           <span className="text-[10px] font-medium uppercase tracking-wider">
-            Available Pan-India
+            Ready in Patna, Bihar
           </span>
         </div>
 

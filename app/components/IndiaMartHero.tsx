@@ -21,11 +21,11 @@ export default function IndiaMartHero() {
         {/* Left Side: Headline */}
         <div className="text-white space-y-4 max-w-xl">
           <h1 className="text-3xl md:text-5xl font-black leading-tight">
-            India&apos;s Largest <br />
-            <span className="text-primary">Spare Parts</span> Marketplace
+            Patna&apos;s Trusted <br />
+            <span className="text-primary">Spare Parts</span> Source
           </h1>
           <p className="text-white/80 text-sm md:text-lg font-medium">
-            Find genuine OEM and Universal parts for all your home appliances.
+            Find genuine OEM and Universal parts for all your home appliances in Patna.
           </p>
         </div>
 
@@ -33,7 +33,7 @@ export default function IndiaMartHero() {
         <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl p-2 flex flex-col gap-2">
           <div className="flex items-center gap-2 px-4 py-2 border-b border-zinc-100">
             <MapPin className="w-4 h-4 text-zinc-400" />
-            <span className="text-xs font-bold text-zinc-900">All India</span>
+            <span className="text-xs font-bold text-zinc-900">Patna, Bihar</span>
           </div>
           
           <form onSubmit={handleSearch} className="flex items-center bg-zinc-100 rounded-xl px-4 h-14 gap-3">
