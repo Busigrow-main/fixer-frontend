@@ -11,14 +11,12 @@ import { PartCategoryGrid } from "./PartCategoryGrid";
 import { PartCard, FilterChips } from "./PartComponents";
 import PopularPartsSection from "./PopularPartsSection";
 import IndiaMartHero from "@/app/components/IndiaMartHero";
+import SearchBar from "@/app/components/SearchBar";
 import {
-  Search,
   Package,
   Info,
   ChevronRight,
-  X,
   Filter,
-  ShoppingCart,
   TrendingUp
 } from "lucide-react";
 import Link from "next/link";
@@ -28,7 +26,6 @@ import {
   fetchTypeTree,
   fetchPartsByCategory,
   searchParts,
-  fetchSuggestions
 } from "@/app/lib/spareParts";
 import { BulkBusinessInquiry, ServicePromiseGrid, UniversalPartsTeaser } from "./PromotionalSections";
 
@@ -124,25 +121,7 @@ export default function SparePartsClient({
     loadParts();
   }, [activeType, activeCat, activeBrand, isUniversal, searchParams, apiUrl]);
 
-  // --- Suggestions State ---
-  const [suggestions, setSuggestions] = useState<{ parts: any[], categories: any[], brands: any[] } | null>(null);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-
-  // Fetch suggestions as user types
-  useEffect(() => {
-    const timer = setTimeout(async () => {
-      if (searchInput.length >= 2) {
-        const data = await fetchSuggestions(apiUrl, searchInput);
-        setSuggestions(data);
-        setShowSuggestions(true);
-      } else {
-        setSuggestions(null);
-        setShowSuggestions(false);
-      }
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [searchInput, apiUrl]);
+  // --- Suggestions handled by <SearchBar> component ---
 
   // --- Navigation Handlers ---
   const updateParams = (updates: Record<string, string | null | boolean>) => {
@@ -174,19 +153,18 @@ export default function SparePartsClient({
     updateParams({ brand: slug, universal: null });
   };
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchInput.trim()) {
-      updateParams({ q: searchInput });
-      setShowSuggestions(false);
+  const handleSearch = (q: string) => {
+    if (q.trim()) {
+      updateParams({ q: q.trim() });
+    } else {
+      updateParams({ q: null });
     }
   };
 
   const selectSuggestion = (suggestion: any) => {
     setSearchInput(suggestion.title);
-    setShowSuggestions(false);
     if (suggestion.type === 'part') {
-      router.push(`/spare-parts/${suggestion.slug}`);
+      router.push(`/spare-parts/${suggestion.sku || suggestion.slug}`);
     } else if (suggestion.type === 'category') {
       updateParams({ type: suggestion.appliance, cat: suggestion.slug, q: null });
     } else if (suggestion.type === 'brand') {
@@ -300,57 +278,16 @@ export default function SparePartsClient({
                   )}
                 </div>
 
-                {/* Search Bar */}
-                <div className="relative w-full max-w-2xl">
-                  <form onSubmit={handleSearch} className="relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-                    <input
-                      type="text"
-                      placeholder="Search for parts..."
-                      className="w-full h-12 pl-11 pr-12 bg-zinc-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 transition-all font-bold text-sm"
-                      value={searchInput}
-                      onChange={(e) => setSearchInput(e.target.value)}
-                      onFocus={() => searchInput.length >= 2 && setShowSuggestions(true)}
-                    />
-                    {searchInput && (
-                      <button onClick={() => { setSearchInput(""); updateParams({ q: null }); }} className="absolute right-4 top-1/2 -translate-y-1/2">
-                        <X className="w-4 h-4 text-zinc-400" />
-                      </button>
-                    )}
-                  </form>
-
-                  {/* Suggestions Dropdown for Listing State */}
-                  {showSuggestions && suggestions && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-zinc-100 overflow-hidden z-50">
-                      {suggestions.categories.length > 0 && (
-                        <div className="p-2 border-b border-zinc-50">
-                          {suggestions.categories.map((cat, idx) => (
-                            <button
-                              key={idx}
-                              onClick={() => selectSuggestion(cat)}
-                              className="w-full text-left px-3 py-2 hover:bg-zinc-50 rounded-xl transition-colors flex items-center gap-3"
-                            >
-                              <p className="text-sm font-bold text-zinc-900">{cat.title}</p>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                      {suggestions.parts.length > 0 && (
-                        <div className="p-2">
-                          {suggestions.parts.map((part, idx) => (
-                            <button
-                              key={idx}
-                              onClick={() => selectSuggestion(part)}
-                              className="w-full text-left px-3 py-2 hover:bg-zinc-50 rounded-xl transition-colors flex items-center gap-3"
-                            >
-                              <p className="text-sm font-bold text-zinc-900">{part.title}</p>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+                {/* Search Bar — powered by Elasticsearch */}
+                <SearchBar
+                  variant="compact"
+                  placeholder="Search parts by name, part number…"
+                  defaultValue={searchInput}
+                  className="max-w-2xl"
+                  apiUrl={apiUrl}
+                  onSearch={handleSearch}
+                  onSelect={selectSuggestion}
+                />
               </div>
 
               {/* View Content */}
