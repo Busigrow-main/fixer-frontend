@@ -95,3 +95,18 @@ export async function searchParts(apiUrl: string, queryParams: any) {
     return { data: [], metadata: { total: 0 } };
   }
 }
+
+/**
+ * Fetch search suggestions (autocomplete)
+ */
+export async function fetchSuggestions(apiUrl: string, query: string) {
+  if (!query || query.length < 2) return null;
+  try {
+    const res = await fetch(`${apiUrl}/spare-parts/suggestions?q=${encodeURIComponent(query)}`, { cache: 'no-store' });
+    if (!res.ok) throw new Error("Suggestions fetch failed");
+    return await res.json();
+  } catch (error) {
+    console.error("Error fetching suggestions:", error);
+    return null;
+  }
+}

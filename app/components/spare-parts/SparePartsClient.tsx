@@ -27,7 +27,8 @@ import {
   fetchCategoryTree,
   fetchTypeTree,
   fetchPartsByCategory,
-  searchParts
+  searchParts,
+  fetchSuggestions
 } from "@/app/lib/spareParts";
 import { BulkBusinessInquiry, ServicePromiseGrid, UniversalPartsTeaser } from "./PromotionalSections";
 
@@ -123,6 +124,26 @@ export default function SparePartsClient({
     loadParts();
   }, [activeType, activeCat, activeBrand, isUniversal, searchParams, apiUrl]);
 
+  // --- Suggestions State ---
+  const [suggestions, setSuggestions] = useState<{ parts: any[], categories: any[], brands: any[] } | null>(null);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Fetch suggestions as user types
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (searchInput.length >= 2) {
+        const data = await fetchSuggestions(apiUrl, searchInput);
+        setSuggestions(data);
+        setShowSuggestions(true);
+      } else {
+        setSuggestions(null);
+        setShowSuggestions(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchInput, apiUrl]);
+
   // --- Navigation Handlers ---
   const updateParams = (updates: Record<string, string | null | boolean>) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -134,6 +155,7 @@ export default function SparePartsClient({
       }
     });
     router.push(`/spare-parts?${params.toString()}`, { scroll: false });
+    setShowSuggestions(false);
   };
 
   const handleTypeSelect = (slug: string) => {
@@ -156,6 +178,19 @@ export default function SparePartsClient({
     e.preventDefault();
     if (searchInput.trim()) {
       updateParams({ q: searchInput });
+      setShowSuggestions(false);
+    }
+  };
+
+  const selectSuggestion = (suggestion: any) => {
+    setSearchInput(suggestion.title);
+    setShowSuggestions(false);
+    if (suggestion.type === 'part') {
+      router.push(`/spare-parts/${suggestion.slug}`);
+    } else if (suggestion.type === 'category') {
+      updateParams({ type: suggestion.appliance, cat: suggestion.slug, q: null });
+    } else if (suggestion.type === 'brand') {
+      updateParams({ brand: suggestion.slug, q: suggestion.title });
     }
   };
 
@@ -182,9 +217,10 @@ export default function SparePartsClient({
           {/* LANDING STATE */}
           {!activeType && !searchInput && (
             <div className="flex-1 pb-20">
+              {/* IndiaMartHero already has its own integrated search bar */}
               <IndiaMartHero />
 
-              {/* Popular Parts Header */}
+              {/* Popular Parts */}
               <div className="px-4 md:px-12 pt-12">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
@@ -197,7 +233,7 @@ export default function SparePartsClient({
                 <PopularPartsSection apiUrl={apiUrl} onPartSelect={() => { }} />
               </div>
 
-              {/* Browse Catalog Header */}
+              {/* Browse Catalog */}
               <div className="px-4 md:px-12 py-16 bg-zinc-50 mt-12">
                 <ApplianceCategoryGrid
                   categories={categoryTree.map(item => ({
@@ -227,7 +263,7 @@ export default function SparePartsClient({
                 <BulkBusinessInquiry />
               </div>
 
-              {/* Why Choose Us / Trust Section */}
+              {/* Expert CTA */}
               <div className="px-4 md:px-12 py-20 text-center space-y-4 bg-zinc-50 rounded-[3rem] mx-4 md:mx-12 mb-20 border border-zinc-100 shadow-sm">
                 <h3 className="text-3xl font-black text-zinc-900">Still can't find what you're looking for?</h3>
                 <p className="text-zinc-500 max-w-xl mx-auto font-medium text-lg">Our experts in Patna are specialized in identifying hard-to-find components. Share your appliance model details and we'll source it for you.</p>
@@ -265,21 +301,56 @@ export default function SparePartsClient({
                 </div>
 
                 {/* Search Bar */}
-                <form onSubmit={handleSearch} className="relative w-full max-w-2xl">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-                  <input
-                    type="text"
-                    placeholder="Search for parts..."
-                    className="w-full h-12 pl-11 pr-12 bg-zinc-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 transition-all font-bold text-sm"
-                    value={searchInput}
-                    onChange={(e) => setSearchInput(e.target.value)}
-                  />
-                  {searchInput && (
-                    <button onClick={() => { setSearchInput(""); updateParams({ q: null }); }} className="absolute right-4 top-1/2 -translate-y-1/2">
-                      <X className="w-4 h-4 text-zinc-400" />
-                    </button>
+                <div className="relative w-full max-w-2xl">
+                  <form onSubmit={handleSearch} className="relative">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                    <input
+                      type="text"
+                      placeholder="Search for parts..."
+                      className="w-full h-12 pl-11 pr-12 bg-zinc-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 transition-all font-bold text-sm"
+                      value={searchInput}
+                      onChange={(e) => setSearchInput(e.target.value)}
+                      onFocus={() => searchInput.length >= 2 && setShowSuggestions(true)}
+                    />
+                    {searchInput && (
+                      <button onClick={() => { setSearchInput(""); updateParams({ q: null }); }} className="absolute right-4 top-1/2 -translate-y-1/2">
+                        <X className="w-4 h-4 text-zinc-400" />
+                      </button>
+                    )}
+                  </form>
+
+                  {/* Suggestions Dropdown for Listing State */}
+                  {showSuggestions && suggestions && (
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-zinc-100 overflow-hidden z-50">
+                      {suggestions.categories.length > 0 && (
+                        <div className="p-2 border-b border-zinc-50">
+                          {suggestions.categories.map((cat, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => selectSuggestion(cat)}
+                              className="w-full text-left px-3 py-2 hover:bg-zinc-50 rounded-xl transition-colors flex items-center gap-3"
+                            >
+                              <p className="text-sm font-bold text-zinc-900">{cat.title}</p>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      {suggestions.parts.length > 0 && (
+                        <div className="p-2">
+                          {suggestions.parts.map((part, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => selectSuggestion(part)}
+                              className="w-full text-left px-3 py-2 hover:bg-zinc-50 rounded-xl transition-colors flex items-center gap-3"
+                            >
+                              <p className="text-sm font-bold text-zinc-900">{part.title}</p>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   )}
-                </form>
+                </div>
               </div>
 
               {/* View Content */}

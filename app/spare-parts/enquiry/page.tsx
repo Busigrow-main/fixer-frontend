@@ -9,22 +9,41 @@ export default async function SparePartsEnquiryPage({
 }) {
   const params = await searchParams;
   const selectedPartId = params.part ?? "";
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/v1";
 
-  // Fetch all spare parts from the backend API
-  let spareParts = [];
+  // Fetch all spare parts (high limit so the dropdown is complete)
+  let spareParts: any[] = [];
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/v1"}/spare-parts`,
-      {
-        cache: "no-store",
-      },
-    );
+    const res = await fetch(`${apiBase}/spare-parts?limit=500&isActive=true`, {
+      cache: "no-store",
+    });
     if (res.ok) {
       const json = await res.json();
       spareParts = Array.isArray(json) ? json : json.data || [];
     }
   } catch (error) {
     console.error("Failed to fetch spare parts:", error);
+  }
+
+  // If there's a pre-selected part, ensure it's in the list (it could be missing
+  // if the catalog has >500 items and it didn't land in this page).
+  if (selectedPartId) {
+    const alreadyPresent = spareParts.some((p: any) => p._id === selectedPartId);
+    if (!alreadyPresent) {
+      try {
+        // The SKU-based endpoint returns a single doc — try fetching by _id via search
+        const res = await fetch(`${apiBase}/spare-parts?limit=1&id=${selectedPartId}`, {
+          cache: "no-store",
+        });
+        if (res.ok) {
+          const json = await res.json();
+          const found = Array.isArray(json) ? json[0] : json.data?.[0];
+          if (found) spareParts = [found, ...spareParts];
+        }
+      } catch (_) {
+        // Silently ignore — the part just won't be pre-selected
+      }
+    }
   }
 
   // Find if there's a pre-selected part
