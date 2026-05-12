@@ -1,6 +1,6 @@
 # fixxer
 
-A premium development platform built with Next.js, React, and Tailwind CSS.
+A premium development platform built with Next.js, React, and Tailwind CSS...
 
 ## Getting Started
 
