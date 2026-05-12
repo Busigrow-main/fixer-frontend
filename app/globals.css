@@ -57,6 +57,11 @@
   --font-body:     var(--font-inter), system-ui, -apple-system, sans-serif;
   --font-label:    var(--font-inter), system-ui, -apple-system, sans-serif;
 
+  /* IndiaMART Colors */
+  --color-indiamart-teal:           #007088;
+  --color-indiamart-orange:         #FF8F00;
+  --color-whatsapp:                 #25D366;
+
   /* Animations */
   --animate-fade-up:     fade-up 0.65s cubic-bezier(0.22,1,0.36,1) both;
   --animate-fade-in:     fade-in 0.5s ease both;

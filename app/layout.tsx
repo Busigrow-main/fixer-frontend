@@ -20,10 +20,10 @@ const newsreader = Newsreader({
 });
 
 export const metadata: Metadata = {
-  title: "Fixxer | Professional Appliance Repair & Parts",
+  title: "Fixxer | Master Appliance Repair in Patna, Bihar",
   description:
-    "Certified technicians at your door in 30 minutes. Guaranteed OEM parts for all major luxury brands. Local, licensed, and background-checked.",
-  keywords: ["appliance repair", "OEM parts", "local technician", "refrigerator repair", "HVAC"],
+    "Cool Air Refrigeration (Fixxer) provides certified technicians at your door in 30 minutes in Patna. Guaranteed OEM parts for all major luxury brands. Local, licensed, and background-checked.",
+  keywords: ["appliance repair Patna", "spare parts Patna", "Cool Air Refrigeration", "refrigerator repair Bihar", "AC service Patna"],
 };
 
 export default function RootLayout({

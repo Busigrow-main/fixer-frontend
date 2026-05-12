@@ -158,7 +158,7 @@ export default function SparePartsEnquiryForm({
               <option value="">Select a spare part...</option>
               {availableParts.map((part) => (
                 <option key={part._id} value={part._id}>
-                  {part.name} - {part.price}
+                  {part.name}{part.brandSlug ? ` (${part.brandSlug})` : ""} — ₹{((part.price || 0) / 100).toFixed(0)}
                 </option>
               ))}
             </select>
@@ -315,9 +315,22 @@ export default function SparePartsEnquiryForm({
                 return (
                   <li
                     key={`${item.partId}-${index}`}
-                    className="text-sm text-on-surface-variant"
+                    className="text-sm text-on-surface-variant flex items-center gap-1"
                   >
-                    {matched?.name ?? "Unknown part"} x {item.quantity}
+                    {matched ? (
+                      <>
+                        <span className="font-bold text-zinc-900">{matched.name}</span>
+                        {matched.brandSlug && (
+                          <span className="text-zinc-500 capitalize"> ({matched.brandSlug})</span>
+                        )}
+                        <span className="text-zinc-500"> × {item.quantity}</span>
+                        <span className="ml-auto font-black text-primary">
+                          ₹{(((matched.price || 0) / 100) * item.quantity).toFixed(0)}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-zinc-400 italic">Part ID: {item.partId.slice(-6)} × {item.quantity}</span>
+                    )}
                   </li>
                 );
               })}
