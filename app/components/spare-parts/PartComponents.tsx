@@ -12,6 +12,22 @@ interface PartCardProps {
   onAddToCart?: (sku: string) => void;
 }
 
+// Context-aware fallback images per appliance type
+const FALLBACK_IMAGES: Record<string, string> = {
+  refrigerator:     'https://images.unsplash.com/photo-1584568694244-14fbdf83bd30?q=80&w=600&auto=format&fit=crop',
+  'washing-machine': 'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?q=80&w=600&auto=format&fit=crop',
+  microwave:        'https://images.unsplash.com/photo-1574269909862-7e1d70bb8078?q=80&w=600&auto=format&fit=crop',
+  ac:               'https://images.unsplash.com/photo-1585771724684-38269d6639fd?q=80&w=600&auto=format&fit=crop',
+  'air-conditioner': 'https://images.unsplash.com/photo-1585771724684-38269d6639fd?q=80&w=600&auto=format&fit=crop',
+  television:       'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?q=80&w=600&auto=format&fit=crop',
+  geyser:           'https://images.unsplash.com/photo-1584622781564-1d987f7333c1?q=80&w=600&auto=format&fit=crop',
+  default:          'https://images.unsplash.com/photo-1621905251918-44b7a1d1ccf6?q=80&w=600&auto=format&fit=crop',
+};
+
+function getPartFallbackImage(applianceSlug?: string): string {
+  return FALLBACK_IMAGES[applianceSlug?.toLowerCase() || ''] || FALLBACK_IMAGES['default'];
+}
+
 export const PartCard: React.FC<PartCardProps> = ({ part, onAddToCart }) => {
   const router = useRouter();
   const discount = part.mrp ? Math.round((1 - part.price / part.mrp) * 100) : 0;
@@ -32,7 +48,7 @@ export const PartCard: React.FC<PartCardProps> = ({ part, onAddToCart }) => {
         <Image
           src={
             part.imageUrls?.[0] ||
-            "https://images.unsplash.com/photo-1581092160562-40aa08e78837"
+            getPartFallbackImage(part.applianceTypeSlug)
           }
           alt={part.name}
           fill
