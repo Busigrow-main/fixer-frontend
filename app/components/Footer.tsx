@@ -95,8 +95,8 @@ export default function Footer() {
                   </span>
                 </div>
                 <div>
-                  <p className="font-bold text-zinc-800 text-sm">1-800-FIXXER-PRO</p>
-                  <p className="text-zinc-500 text-[10px] md:text-xs mt-0.5">24/7 Dispatch</p>
+                  <p className="font-bold text-zinc-800 text-sm">+91 70047 71388</p>
+                  <p className="text-zinc-500 text-[10px] md:text-xs mt-0.5">8 AM - 11 PM Daily</p>
                 </div>
               </div>
 
@@ -107,8 +107,8 @@ export default function Footer() {
                   </span>
                 </div>
                 <div>
-                  <p className="font-bold text-zinc-800 text-sm">Downtown Hub</p>
-                  <p className="text-zinc-500 text-[10px] md:text-xs mt-0.5">422 Artisan Way</p>
+                  <p className="font-bold text-zinc-800 text-sm">Cool Air Refrigeration</p>
+                  <p className="text-zinc-500 text-[10px] md:text-xs mt-0.5">MLA Colony, Raja Bazar, Patna 800014</p>
                 </div>
               </div>
 

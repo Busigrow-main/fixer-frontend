@@ -6,7 +6,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { useBooking } from "@/app/context/BookingContext";
 import { useAuth } from "@/app/context/AuthContext";
 import { SERVICES } from "@/app/lib/services";
-import { getSparePartBySlug } from "@/app/lib/spareParts";
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
@@ -26,6 +25,7 @@ const BOTTOM_NAV = [
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
+  const [globalSearchQuery, setGlobalSearchQuery] = useState("");
   const pathname = usePathname();
   const router = useRouter();
   const { openBooking, isOpen: isBookingOpen } = useBooking();
@@ -33,6 +33,7 @@ export default function Navbar() {
 
   // Helper to determine if we are on a subpage for app-like header
   const isSubpage = pathname !== "/";
+  const hasInPageSearch = pathname.startsWith("/spare-parts");
 
   // Get page title for header
   const getPageTitle = () => {
@@ -46,8 +47,7 @@ export default function Navbar() {
     if (pathname.startsWith("/spare-parts/")) {
       const slug = pathname.split("/").pop();
       if (slug === "enquiry") return "Part Enquiry";
-      const part = slug ? getSparePartBySlug(slug) : undefined;
-      return part ? part.name : "Part Detail";
+      return "Part Detail";
     }
     if (pathname === "/my-bookings") return "My Bookings";
     return "";
@@ -68,6 +68,15 @@ export default function Navbar() {
     onScroll();
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  const handleGlobalSearchSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+
+    const query = globalSearchQuery.trim();
+    if (!query) return;
+
+    router.push(`/spare-parts?q=${encodeURIComponent(query)}`);
+  };
 
   return (
     <>
@@ -108,34 +117,45 @@ export default function Navbar() {
 
           {/* Actions */}
           <div className="flex items-center gap-3">
-            <div className="hidden lg:flex items-center bg-surface-container rounded-full px-4 py-2.5 border border-outline gap-2 transition-all duration-200 focus-within:border-primary/30 focus-within:shadow-sm">
-              <span className="material-symbols-outlined text-on-surface-variant text-xl">
-                search
-              </span>
-              <input
-                type="text"
-                placeholder="Search parts…"
-                className="bg-transparent border-none outline-none text-sm w-44 text-on-surface placeholder:text-on-surface-variant"
-              />
-            </div>
-            
+            {!hasInPageSearch && (
+              <form
+                onSubmit={handleGlobalSearchSubmit}
+                className="hidden lg:flex items-center bg-surface-container rounded-full px-4 py-2.5 border border-outline gap-2 transition-all duration-200 focus-within:border-primary/30 focus-within:shadow-sm"
+              >
+                <span className="material-symbols-outlined text-on-surface-variant text-xl">
+                  search
+                </span>
+                <input
+                  type="text"
+                  placeholder="Search parts…"
+                  value={globalSearchQuery}
+                  onChange={(event) => setGlobalSearchQuery(event.target.value)}
+                  className="bg-transparent border-none outline-none text-sm w-44 text-on-surface placeholder:text-on-surface-variant"
+                />
+              </form>
+            )}
+
             {user ? (
               <div className="flex items-center gap-3">
-                <button 
-                  onClick={() => router.push('/my-bookings')}
+                <button
+                  onClick={() => router.push("/my-bookings")}
                   className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-surface-container transition-colors"
                 >
                   <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
-                    {user.fullName?.charAt(0) || 'U'}
+                    {user.fullName?.charAt(0) || "U"}
                   </div>
-                  <span className="text-sm font-bold text-zinc-900 hidden lg:block">{user.fullName}</span>
+                  <span className="text-sm font-bold text-zinc-900 hidden lg:block">
+                    {user.fullName}
+                  </span>
                 </button>
-                <button 
+                <button
                   onClick={() => logout()}
                   className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-error/10 text-error/70 hover:text-error transition-all"
                   title="Logout"
                 >
-                  <span className="material-symbols-outlined text-xl">logout</span>
+                  <span className="material-symbols-outlined text-xl">
+                    logout
+                  </span>
                 </button>
               </div>
             ) : (
@@ -196,8 +216,12 @@ export default function Navbar() {
           {/* Right actions */}
           <div className="flex items-center gap-1">
             {/* Search - Icon only for mobile if subpage */}
-            {isSubpage && (
-              <button className="w-10 h-10 flex items-center justify-center rounded-full active:bg-surface-container transition-colors">
+            {isSubpage && !hasInPageSearch && (
+              <button
+                onClick={() => router.push("/spare-parts")}
+                className="w-10 h-10 flex items-center justify-center rounded-full active:bg-surface-container transition-colors"
+                aria-label="Open spare parts search"
+              >
                 <span className="material-symbols-outlined text-zinc-600 text-[22px]">
                   search
                 </span>
@@ -215,12 +239,14 @@ export default function Navbar() {
             )}
 
             {/* Profile */}
-            <button 
-              onClick={() => router.push(user ? '/my-bookings' : '/login')}
-              className={`w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 group ${user ? 'bg-primary text-white' : 'bg-primary-container text-primary'}`}
+            <button
+              onClick={() => router.push(user ? "/my-bookings" : "/login")}
+              className={`w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 group ${user ? "bg-primary text-white" : "bg-primary-container text-primary"}`}
             >
               {user ? (
-                <span className="text-[10px] font-black">{user.fullName?.charAt(0)}</span>
+                <span className="text-[10px] font-black">
+                  {user.fullName?.charAt(0)}
+                </span>
               ) : (
                 <span className="material-symbols-outlined icon-filled transition-colors text-[22px]">
                   account_circle
@@ -229,59 +255,114 @@ export default function Navbar() {
             </button>
           </div>
         </div>
+
+        {/* Secondary Search Bar - Only on Homepage Mobile (If needed) */}
+        {pathname === "DISABLED_FOR_NOW" && (
+          <div className="px-5 pb-3 animate-fade-in">
+            <button 
+              onClick={() => {}}
+              className="w-full h-11 bg-zinc-100 rounded-xl px-4 flex items-center gap-3 text-zinc-400 border border-zinc-200 shadow-sm"
+            >
+              <span className="material-symbols-outlined text-xl">search</span>
+              <span className="text-sm font-medium">What are you looking for?</span>
+              <div className="ml-auto flex items-center gap-2">
+                <div className="w-px h-4 bg-zinc-300" />
+                <span className="material-symbols-outlined text-xl">photo_camera</span>
+              </div>
+            </button>
+          </div>
+        )}
       </header>
 
       {/* ════════════════════════════════════════
-          MOBILE — Bottom navigation bar (Urban Company style)
+          MOBILE — Bottom navigation bar (Urban Company / IndiaMART style)
       ════════════════════════════════════════ */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50">
-        <div className="bg-white/98 backdrop-blur-xl border-t border-outline-variant/50 px-1 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
-          <div className="flex items-center justify-around h-14 relative">
-            {/* Left two items */}
-            {BOTTOM_NAV.slice(0, 2).map(({ label, icon, href }) => (
+        <div className="bg-white border-t border-outline-variant/30 px-1 pb-safe shadow-[0_-8px_30px_rgba(0,0,0,0.05)]">
+          {pathname.startsWith("/spare-parts") ? (
+            /* ── IndiaMART Style Bottom Nav (3 items) ── */
+            <div className="h-16 grid grid-cols-3 items-center">
               <BottomTab
-                key={label}
-                label={label}
-                icon={icon}
-                href={href}
-                active={activeTab === label}
+                label="Login"
+                icon="account_circle"
+                href="/login"
+                active={pathname === "/login"}
                 onClick={() => {}}
               />
-            ))}
-
-            {/* ── Center: BOOK button (Elevated) ── */}
-            <div className="relative flex flex-col items-center -mt-8">
-              <button
-                onClick={() => openBooking()}
-                className={`w-14 h-14 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/30
-                  border-[3px] border-white transition-all duration-200 active:scale-95
-                  ${activeTab === "Book" ? "shadow-primary/40 bg-zinc-900" : "hover:scale-105"}`}
+              <Link
+                href="/spare-parts/enquiry"
+                className="relative flex flex-col items-center justify-center gap-0.5 h-full group active:scale-95 transition-all"
               >
-                <span className="material-symbols-outlined icon-filled text-white text-2xl">
-                  calendar_add_on
+                <div className="relative">
+                  <span className="material-symbols-outlined text-[24px] text-zinc-600 group-hover:text-primary transition-colors">
+                    post_add
+                  </span>
+                  <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary rounded-full border-2 border-white shadow-sm" />
+                </div>
+                <span className="text-[9px] font-black uppercase tracking-wider text-zinc-600 group-hover:text-primary transition-colors">
+                  Post Requirement
                 </span>
-              </button>
-              <span
-                className={`text-[9px] font-bold uppercase tracking-wider mt-1 ${
-                  activeTab === "Book" ? "text-primary" : "text-zinc-500"
-                }`}
-              >
-                Book
-              </span>
-            </div>
-
-            {/* Right two items */}
-            {BOTTOM_NAV.slice(2).map(({ label, icon, href }) => (
+              </Link>
               <BottomTab
-                key={label}
-                label={label}
-                icon={icon}
-                href={href}
-                active={activeTab === label}
+                label="Verified Exporters"
+                icon="public"
+                href="/spare-parts/verified"
+                active={pathname === "/spare-parts/verified"}
                 onClick={() => {}}
               />
-            ))}
-          </div>
+            </div>
+          ) : (
+            /* ── Standard Bottom Nav (5 items) ── */
+            <div className="relative h-16 grid grid-cols-5 items-center">
+              {/* Left two items */}
+              {BOTTOM_NAV.slice(0, 2).map(({ label, icon, href }) => (
+                <BottomTab
+                  key={label}
+                  label={label}
+                  icon={icon}
+                  href={href}
+                  active={activeTab === label}
+                  onClick={() => {}}
+                />
+              ))}
+
+              {/* Center spacer keeps side tabs perfectly balanced */}
+              <div className="h-full" />
+
+              {/* ── Center: BOOK button (Elevated) ── */}
+              <div className="absolute left-1/2 -translate-x-1/2 -top-6 flex flex-col items-center">
+                <button
+                  onClick={() => openBooking()}
+                  className={`w-14 h-14 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/30
+                    border-[3px] border-white transition-all duration-200 active:scale-95
+                    ${activeTab === "Book" ? "shadow-primary/40 bg-zinc-900" : "hover:scale-105"}`}
+                >
+                  <span className="material-symbols-outlined icon-filled text-white text-2xl">
+                    calendar_add_on
+                  </span>
+                </button>
+                <span
+                  className={`text-[9px] font-bold uppercase tracking-wider mt-1 ${
+                    activeTab === "Book" ? "text-primary" : "text-zinc-500"
+                  }`}
+                >
+                  Book
+                </span>
+              </div>
+
+              {/* Right two items */}
+              {BOTTOM_NAV.slice(2).map(({ label, icon, href }) => (
+                <BottomTab
+                  key={label}
+                  label={label}
+                  icon={icon}
+                  href={href}
+                  active={activeTab === label}
+                  onClick={() => {}}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </nav>
     </>
@@ -306,7 +387,7 @@ function BottomTab({
     <Link
       href={href}
       onClick={onClick}
-      className={`flex flex-col items-center justify-center gap-0.5 px-2 min-w-16 h-full transition-all duration-200 ${
+      className={`flex w-full flex-col items-center justify-center gap-0.5 px-1 h-full transition-all duration-200 ${
         active ? "text-primary" : "text-zinc-500"
       }`}
     >

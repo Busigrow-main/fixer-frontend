@@ -44,12 +44,10 @@ export default function SocialProofSection() {
               </div>
 
               <p className="text-base md:text-xl italic font-headline text-on-surface mb-4 md:mb-5 leading-relaxed md:leading-relaxed">
-                "The technician arrived within 20 minutes of my call. He fixed
-                our Sub-Zero fridge on the spot with genuine parts. Absolute
-                lifesaver."
+                "Best appliance service provider in Patna. The technician was a master at his craft and fixed our refrigerator within an hour. Highly recommended!"
               </p>
               <p className="font-label text-[10px] md:text-sm font-bold uppercase tracking-widest text-on-surface-variant">
-                — Sarah J., Midtown Heights
+                — Rajesh K., Raja Bazar
               </p>
             </div>
 
