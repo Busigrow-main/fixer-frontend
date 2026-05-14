@@ -12,13 +12,7 @@ import { PartCard, FilterChips } from "./PartComponents";
 import PopularPartsSection from "./PopularPartsSection";
 import IndiaMartHero from "@/app/components/IndiaMartHero";
 import SearchBar from "@/app/components/SearchBar";
-import {
-  Package,
-  Info,
-  ChevronRight,
-  Filter,
-  TrendingUp
-} from "lucide-react";
+import { Package, Info, ChevronRight, Filter, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/app/lib/utils";
 import {
@@ -27,7 +21,11 @@ import {
   fetchPartsByCategory,
   searchParts,
 } from "@/app/lib/spareParts";
-import { BulkBusinessInquiry, ServicePromiseGrid, UniversalPartsTeaser } from "./PromotionalSections";
+import {
+  BulkBusinessInquiry,
+  ServicePromiseGrid,
+  UniversalPartsTeaser,
+} from "./PromotionalSections";
 
 export default function SparePartsClient({
   initialCategories,
@@ -40,13 +38,23 @@ export default function SparePartsClient({
   const searchParams = useSearchParams();
 
   // --- 4-State Navigation State ---
-  const [activeType, setActiveType] = useState<string | null>(searchParams.get("type"));
-  const [activeCat, setActiveCat] = useState<string | null>(searchParams.get("cat"));
-  const [activeBrand, setActiveBrand] = useState<string | null>(searchParams.get("brand"));
+  const [activeType, setActiveType] = useState<string | null>(
+    searchParams.get("type"),
+  );
+  const [activeCat, setActiveCat] = useState<string | null>(
+    searchParams.get("cat"),
+  );
+  const [activeBrand, setActiveBrand] = useState<string | null>(
+    searchParams.get("brand"),
+  );
 
   // --- Other UI State ---
-  const [searchInput, setSearchInput] = useState<string>(searchParams.get("q") || "");
-  const [isUniversal, setIsUniversal] = useState<boolean>(searchParams.get("universal") === "true");
+  const [searchInput, setSearchInput] = useState<string>(
+    searchParams.get("q") || "",
+  );
+  const [isUniversal, setIsUniversal] = useState<boolean>(
+    searchParams.get("universal") === "true",
+  );
   const [loading, setLoading] = useState(false);
 
   // --- Data State ---
@@ -98,7 +106,10 @@ export default function SparePartsClient({
       const q = searchParams.get("q");
       if (q) {
         setLoading(true);
-        const result = await searchParts(apiUrl, Object.fromEntries(searchParams.entries()));
+        const result = await searchParts(
+          apiUrl,
+          Object.fromEntries(searchParams.entries()),
+        );
         setParts(result.data || []);
         setMeta(result.metadata || { total: 0 });
         setLoading(false);
@@ -107,10 +118,15 @@ export default function SparePartsClient({
 
       if (activeType && activeCat) {
         setLoading(true);
-        const result = await fetchPartsByCategory(apiUrl, activeType, activeCat, {
-          brand: activeBrand || undefined,
-          universal: isUniversal || undefined,
-        });
+        const result = await fetchPartsByCategory(
+          apiUrl,
+          activeType,
+          activeCat,
+          {
+            brand: activeBrand || undefined,
+            universal: isUniversal || undefined,
+          },
+        );
         setParts(result.data || []);
         setMeta(result.metadata || { total: 0 });
         setLoading(false);
@@ -137,11 +153,23 @@ export default function SparePartsClient({
   };
 
   const handleTypeSelect = (slug: string) => {
-    updateParams({ type: slug, cat: null, brand: null, q: null, universal: null });
+    updateParams({
+      type: slug,
+      cat: null,
+      brand: null,
+      q: null,
+      universal: null,
+    });
   };
 
   const handleSubSelect = (typeSlug: string, catSlug: string) => {
-    updateParams({ type: typeSlug, cat: catSlug, brand: null, q: null, universal: null });
+    updateParams({
+      type: typeSlug,
+      cat: catSlug,
+      brand: null,
+      q: null,
+      universal: null,
+    });
   };
 
   const handleCatSelect = (slug: string) => {
@@ -162,17 +190,23 @@ export default function SparePartsClient({
 
   const selectSuggestion = (suggestion: any) => {
     setSearchInput(suggestion.title);
-    if (suggestion.type === 'part') {
+    if (suggestion.type === "part") {
       router.push(`/spare-parts/${suggestion.sku || suggestion.slug}`);
-    } else if (suggestion.type === 'category') {
-      updateParams({ type: suggestion.appliance, cat: suggestion.slug, q: null });
-    } else if (suggestion.type === 'brand') {
+    } else if (suggestion.type === "category") {
+      updateParams({
+        type: suggestion.appliance,
+        cat: suggestion.slug,
+        q: null,
+      });
+    } else if (suggestion.type === "brand") {
       updateParams({ brand: suggestion.slug, q: suggestion.title });
     }
   };
 
   // --- Render Helpers ---
-  const activeTypeInfo = categoryTree.find(t => t.applianceTypeSlug === activeType);
+  const activeTypeInfo = categoryTree.find(
+    (t) => t.applianceTypeSlug === activeType,
+  );
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
@@ -190,7 +224,6 @@ export default function SparePartsClient({
 
         {/* Content Area */}
         <div className="flex-1 flex flex-col min-w-0">
-
           {/* LANDING STATE */}
           {!activeType && !searchInput && (
             <div className="flex-1 pb-20">
@@ -207,18 +240,18 @@ export default function SparePartsClient({
                     Commonly Bought Spares
                   </h2>
                 </div>
-                <PopularPartsSection apiUrl={apiUrl} onPartSelect={() => { }} />
+                <PopularPartsSection apiUrl={apiUrl} onPartSelect={() => {}} />
               </div>
 
               {/* Browse Catalog */}
               <div className="px-4 md:px-12 py-16 bg-zinc-50 mt-12">
                 <ApplianceCategoryGrid
-                  categories={categoryTree.map(item => ({
+                  categories={categoryTree.map((item) => ({
                     slug: item.applianceTypeSlug,
                     name: item.applianceTypeName,
                     icon: item.applianceTypeIcon,
                     partCount: item.totalPartsCount,
-                    subCategories: item.partCategories || []
+                    subCategories: item.partCategories || [],
                   }))}
                   onSelect={handleTypeSelect}
                   onSubSelect={handleSubSelect}
@@ -242,10 +275,19 @@ export default function SparePartsClient({
 
               {/* Expert CTA */}
               <div className="px-4 md:px-12 py-20 text-center space-y-4 bg-zinc-50 rounded-[3rem] mx-4 md:mx-12 mb-20 border border-zinc-100 shadow-sm">
-                <h3 className="text-3xl font-black text-zinc-900">Still can't find what you're looking for?</h3>
-                <p className="text-zinc-500 max-w-xl mx-auto font-medium text-lg">Our experts in Patna are specialized in identifying hard-to-find components. Share your appliance model details and we'll source it for you.</p>
+                <h3 className="text-3xl font-black text-zinc-900">
+                  Still can't find what you're looking for?
+                </h3>
+                <p className="text-zinc-500 max-w-xl mx-auto font-medium text-lg">
+                  Our experts in Patna are specialized in identifying
+                  hard-to-find components. Share your appliance model details
+                  and we'll source it for you.
+                </p>
                 <div className="flex items-center justify-center gap-4 pt-6">
-                  <Link href="/contact" className="h-14 px-10 bg-primary text-white rounded-2xl flex items-center justify-center font-black text-sm uppercase tracking-widest hover:scale-105 shadow-xl shadow-primary/20 transition-all">
+                  <Link
+                    href="/contact"
+                    className="h-14 px-10 bg-primary text-white rounded-2xl flex items-center justify-center font-black text-sm uppercase tracking-widest hover:scale-105 shadow-xl shadow-primary/20 transition-all"
+                  >
                     Consult an Expert
                   </Link>
                 </div>
@@ -260,11 +302,26 @@ export default function SparePartsClient({
               <div className="sticky top-14 md:top-20 z-30 bg-white border-b border-zinc-100 p-4 md:px-12 flex flex-col gap-4">
                 {/* Breadcrumbs */}
                 <div className="flex items-center gap-2 text-[10px] font-black uppercase text-zinc-400 tracking-widest">
-                  <button onClick={() => updateParams({ type: null, cat: null, brand: null, q: null })}>Home</button>
+                  <button
+                    onClick={() =>
+                      updateParams({
+                        type: null,
+                        cat: null,
+                        brand: null,
+                        q: null,
+                      })
+                    }
+                  >
+                    Home
+                  </button>
                   {activeType && (
                     <>
                       <ChevronRight className="w-3 h-3" />
-                      <button onClick={() => updateParams({ cat: null, brand: null, q: null })}>
+                      <button
+                        onClick={() =>
+                          updateParams({ cat: null, brand: null, q: null })
+                        }
+                      >
                         {activeTypeInfo?.applianceTypeName}
                       </button>
                     </>
@@ -292,13 +349,16 @@ export default function SparePartsClient({
               {/* View Content */}
               <div className="flex-1 p-4 md:p-12 overflow-y-auto">
                 {/* State 2: Part Categories for a Type */}
-                {activeType && !activeCat && !searchInput && currentTypeData && (
-                  <PartCategoryGrid
-                    categories={currentTypeData.partCategories}
-                    applianceName={currentTypeData.applianceTypeName}
-                    onSelect={handleCatSelect}
-                  />
-                )}
+                {activeType &&
+                  !activeCat &&
+                  !searchInput &&
+                  currentTypeData && (
+                    <PartCategoryGrid
+                      categories={currentTypeData.partCategories}
+                      applianceName={currentTypeData.applianceTypeName}
+                      onSelect={handleCatSelect}
+                    />
+                  )}
 
                 {/* State 3 & 4: Parts Listing (Search or Category) */}
                 {(activeCat || searchInput) && (
@@ -307,10 +367,14 @@ export default function SparePartsClient({
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                       <div>
                         <h1 className="text-3xl font-black text-zinc-900">
-                          {searchInput ? `Results for "${searchInput}"` : `${activeCat} Spares`}
+                          {searchInput
+                            ? `Results for "${searchInput}"`
+                            : `${activeCat} Spares`}
                         </h1>
                         <p className="text-sm font-bold text-zinc-500 mt-1 uppercase tracking-widest">
-                          {meta.total} Parts found in {activeTypeInfo?.applianceTypeName || "All Categories"}
+                          {meta.total} Parts found in{" "}
+                          {activeTypeInfo?.applianceTypeName ||
+                            "All Categories"}
                         </p>
                       </div>
 
@@ -319,18 +383,26 @@ export default function SparePartsClient({
                         <div className="flex items-center gap-2">
                           <FilterChips
                             label="Brand"
-                            items={currentTypeData.partCategories.find((c: any) => c.slug === activeCat)?.brands.map((b: any) => ({
-                              label: b.brandName,
-                              value: b.brandSlug
-                            })) || []}
+                            items={
+                              currentTypeData.partCategories
+                                .find((c: any) => c.slug === activeCat)
+                                ?.brands.map((b: any) => ({
+                                  label: b.brandName,
+                                  value: b.brandSlug,
+                                })) || []
+                            }
                             activeValue={activeBrand}
                             onSelect={handleBrandSelect}
                           />
                           <button
-                            onClick={() => updateParams({ universal: !isUniversal })}
+                            onClick={() =>
+                              updateParams({ universal: !isUniversal })
+                            }
                             className={cn(
                               "px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all",
-                              isUniversal ? "bg-primary text-white" : "bg-zinc-100 text-zinc-400 hover:bg-zinc-200"
+                              isUniversal
+                                ? "bg-primary text-white"
+                                : "bg-zinc-100 text-zinc-400 hover:bg-zinc-200",
                             )}
                           >
                             Universal
@@ -342,18 +414,39 @@ export default function SparePartsClient({
                     {/* Grid */}
                     {loading ? (
                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-64 bg-zinc-100 rounded-3xl animate-pulse" />)}
+                        {[1, 2, 3, 4, 5, 6].map((i) => (
+                          <div
+                            key={i}
+                            className="h-64 bg-zinc-100 rounded-3xl animate-pulse"
+                          />
+                        ))}
                       </div>
                     ) : parts.length > 0 ? (
                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {parts.map(part => <PartCard key={part.sku} part={part} />)}
+                        {parts.map((part) => (
+                          <PartCard key={part.sku} part={part} />
+                        ))}
                       </div>
                     ) : (
                       <div className="py-20 text-center flex flex-col items-center">
                         <Package className="w-16 h-16 text-zinc-200 mb-4" />
-                        <h3 className="text-lg font-black text-zinc-900">No parts found</h3>
-                        <p className="text-zinc-500 text-sm">Try broadening your search or choosing a different brand.</p>
-                        <button onClick={() => updateParams({ brand: null, universal: null, q: null })} className="mt-6 text-primary font-black uppercase text-xs tracking-widest hover:underline">
+                        <h3 className="text-lg font-black text-zinc-900">
+                          No parts found
+                        </h3>
+                        <p className="text-zinc-500 text-sm">
+                          Try broadening your search or choosing a different
+                          brand.
+                        </p>
+                        <button
+                          onClick={() =>
+                            updateParams({
+                              brand: null,
+                              universal: null,
+                              q: null,
+                            })
+                          }
+                          className="mt-6 text-primary font-black uppercase text-xs tracking-widest hover:underline"
+                        >
                           Clear all filters
                         </button>
                       </div>
