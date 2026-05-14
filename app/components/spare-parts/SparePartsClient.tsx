@@ -134,7 +134,6 @@ export default function SparePartsClient({
       }
     });
     router.push(`/spare-parts?${params.toString()}`, { scroll: false });
-    setShowSuggestions(false);
   };
 
   const handleTypeSelect = (slug: string) => {
