@@ -243,6 +243,67 @@ export default function SparePartsClient({
                 <PopularPartsSection apiUrl={apiUrl} onPartSelect={() => {}} />
               </div>
 
+              {/* Browse Complete Appliances Section */}
+              <div className="px-4 md:px-12 py-16 bg-gradient-to-r from-[#C8102E] to-[#A00826] rounded-3xl mx-4 md:mx-12 mb-12 overflow-hidden">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                  {/* Left: Icon & Text */}
+                  <div className="text-white">
+                    <div className="flex items-center gap-3 mb-4">
+                      <span className="material-symbols-outlined text-4xl">
+                        shopping_bag
+                      </span>
+                      <h3 className="text-2xl md:text-3xl font-black">
+                        Buy Complete Appliances
+                      </h3>
+                    </div>
+                    <p className="text-white/90 mb-6 text-base md:text-lg">
+                      Shop full AC units, refrigerators, and washing machines
+                      directly. Get professional installation and extended
+                      warranty with every purchase.
+                    </p>
+                    <Link
+                      href="/spare-parts/appliances"
+                      className="inline-flex items-center gap-2 bg-white text-[#C8102E] font-bold px-6 py-3 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      Browse Appliances
+                      <span className="material-symbols-outlined">
+                        arrow_forward
+                      </span>
+                    </Link>
+                  </div>
+
+                  {/* Right: Feature Icons */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-4 text-white text-center">
+                      <span className="material-symbols-outlined text-3xl block mb-2">
+                        verified_user
+                      </span>
+                      <p className="text-sm font-semibold">
+                        Expert Installation
+                      </p>
+                    </div>
+                    <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-4 text-white text-center">
+                      <span className="material-symbols-outlined text-3xl block mb-2">
+                        shield
+                      </span>
+                      <p className="text-sm font-semibold">60-Day Warranty</p>
+                    </div>
+                    <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-4 text-white text-center">
+                      <span className="material-symbols-outlined text-3xl block mb-2">
+                        local_shipping
+                      </span>
+                      <p className="text-sm font-semibold">Fast Delivery</p>
+                    </div>
+                    <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-4 text-white text-center">
+                      <span className="material-symbols-outlined text-3xl block mb-2">
+                        support_agent
+                      </span>
+                      <p className="text-sm font-semibold">24/7 Support</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Browse Catalog */}
               <div className="px-4 md:px-12 py-16 bg-zinc-50 mt-12">
                 <ApplianceCategoryGrid
