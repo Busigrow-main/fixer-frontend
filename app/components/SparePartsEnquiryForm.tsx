@@ -14,11 +14,15 @@ interface EnquiryPartItem {
 interface SparePartsEnquiryFormProps {
   initialPartId?: string;
   availableParts: any[];
+  initialProduct?: string;
+  enquiryType?: "part" | "appliance";
 }
 
 export default function SparePartsEnquiryForm({
   initialPartId,
   availableParts = [],
+  initialProduct,
+  enquiryType = "part",
 }: SparePartsEnquiryFormProps) {
   const router = useRouter();
   const { createPartInquiry } = useBooking();
@@ -27,7 +31,7 @@ export default function SparePartsEnquiryForm({
   const [items, setItems] = useState<EnquiryPartItem[]>([
     { partId: initialPartId ?? "", quantity: 1 },
   ]);
-  
+
   // Auto-populate form if user is logged in
   const [customerName, setCustomerName] = useState(user?.fullName || "");
   const [phone, setPhone] = useState(user?.phone || "");
@@ -73,7 +77,9 @@ export default function SparePartsEnquiryForm({
     setError("");
 
     if (!user || !token) {
-      router.push(`/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`);
+      router.push(
+        `/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`,
+      );
       return;
     }
 
@@ -127,81 +133,104 @@ export default function SparePartsEnquiryForm({
           {error}
         </div>
       )}
-      <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
-        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
-          Selected spare parts
-        </p>
-        <p className="mt-1 text-sm text-on-surface-variant">
-          {selectedCount > 0
-            ? `${selectedCount} part(s) selected`
-            : "Select at least one part"}
-        </p>
-      </div>
 
-      {items.map((item, index) => (
-        <div
-          key={`part-row-${index}`}
-          className="grid grid-cols-1 md:grid-cols-[1fr_130px_40px] gap-3 items-end"
-        >
-          <div className="space-y-2">
-            <label className="block font-label text-[10px] uppercase tracking-widest font-black text-on-surface-variant">
-              Spare Part {index + 1}
-            </label>
-            <select
-              required={index === 0}
-              value={item.partId}
-              onChange={(event) =>
-                updateItem(index, { ...item, partId: event.target.value })
-              }
-              className="w-full h-12 bg-surface-container-low border-2 border-outline rounded-xl px-4 appearance-none outline-none focus:border-primary transition-all duration-200 text-on-surface font-medium"
-            >
-              <option value="">Select a spare part...</option>
-              {availableParts.map((part) => (
-                <option key={part._id} value={part._id}>
-                  {part.name}{part.brandSlug ? ` (${part.brandSlug})` : ""} — ₹{((part.price || 0) / 100).toFixed(0)}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="space-y-2">
-            <label className="block font-label text-[10px] uppercase tracking-widest font-black text-on-surface-variant">
-              Qty
-            </label>
-            <input
-              type="number"
-              min={1}
-              value={item.quantity}
-              onChange={(event) => {
-                const qty = Number.parseInt(event.target.value, 10);
-                updateItem(index, {
-                  ...item,
-                  quantity: Number.isNaN(qty) ? 1 : qty,
-                });
-              }}
-              className="w-full h-12 bg-surface-container-low border-2 border-outline rounded-xl px-4 outline-none focus:border-primary"
-            />
-          </div>
-
-          <button
-            type="button"
-            onClick={() => removePartRow(index)}
-            disabled={items.length === 1}
-            className="h-10 w-10 rounded-full border border-outline text-on-surface-variant hover:bg-surface-container disabled:opacity-40"
-          >
-            <span className="material-symbols-outlined text-lg">delete</span>
-          </button>
+      {enquiryType === "appliance" && initialProduct ? (
+        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+            Selected Product
+          </p>
+          <p className="mt-2 text-base font-semibold text-on-surface">
+            {initialProduct}
+          </p>
+          <p className="mt-1 text-sm text-on-surface-variant">
+            Our team will help you with pricing, availability, and installation
+            scheduling.
+          </p>
         </div>
-      ))}
+      ) : (
+        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+            Selected spare parts
+          </p>
+          <p className="mt-1 text-sm text-on-surface-variant">
+            {selectedCount > 0
+              ? `${selectedCount} part(s) selected`
+              : "Select at least one part"}
+          </p>
+        </div>
+      )}
 
-      <button
-        type="button"
-        onClick={addPartRow}
-        className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-primary"
-      >
-        <span className="material-symbols-outlined text-base">add_circle</span>
-        Add Another Part
-      </button>
+      {enquiryType !== "appliance" &&
+        items.map((item, index) => (
+          <div
+            key={`part-row-${index}`}
+            className="grid grid-cols-1 md:grid-cols-[1fr_130px_40px] gap-3 items-end"
+          >
+            <div className="space-y-2">
+              <label className="block font-label text-[10px] uppercase tracking-widest font-black text-on-surface-variant">
+                Spare Part {index + 1}
+              </label>
+              <select
+                required={index === 0}
+                value={item.partId}
+                onChange={(event) =>
+                  updateItem(index, { ...item, partId: event.target.value })
+                }
+                className="w-full h-12 bg-surface-container-low border-2 border-outline rounded-xl px-4 appearance-none outline-none focus:border-primary transition-all duration-200 text-on-surface font-medium"
+              >
+                <option value="">Select a spare part...</option>
+                {availableParts.map((part) => (
+                  <option key={part._id} value={part._id}>
+                    {part.name}
+                    {part.brandSlug ? ` (${part.brandSlug})` : ""} — ₹
+                    {((part.price || 0) / 100).toFixed(0)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block font-label text-[10px] uppercase tracking-widest font-black text-on-surface-variant">
+                Qty
+              </label>
+              <input
+                type="number"
+                min={1}
+                value={item.quantity}
+                onChange={(event) => {
+                  const qty = Number.parseInt(event.target.value, 10);
+                  updateItem(index, {
+                    ...item,
+                    quantity: Number.isNaN(qty) ? 1 : qty,
+                  });
+                }}
+                className="w-full h-12 bg-surface-container-low border-2 border-outline rounded-xl px-4 outline-none focus:border-primary"
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={() => removePartRow(index)}
+              disabled={items.length === 1}
+              className="h-10 w-10 rounded-full border border-outline text-on-surface-variant hover:bg-surface-container disabled:opacity-40"
+            >
+              <span className="material-symbols-outlined text-lg">delete</span>
+            </button>
+          </div>
+        ))}
+
+      {enquiryType !== "appliance" && (
+        <button
+          type="button"
+          onClick={addPartRow}
+          className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-primary"
+        >
+          <span className="material-symbols-outlined text-base">
+            add_circle
+          </span>
+          Add Another Part
+        </button>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -311,7 +340,9 @@ export default function SparePartsEnquiryForm({
             {items
               .filter((item) => item.partId)
               .map((item, index) => {
-                const matched = availableParts.find((p) => p._id === item.partId);
+                const matched = availableParts.find(
+                  (p) => p._id === item.partId,
+                );
                 return (
                   <li
                     key={`${item.partId}-${index}`}
@@ -319,17 +350,31 @@ export default function SparePartsEnquiryForm({
                   >
                     {matched ? (
                       <>
-                        <span className="font-bold text-zinc-900">{matched.name}</span>
+                        <span className="font-bold text-zinc-900">
+                          {matched.name}
+                        </span>
                         {matched.brandSlug && (
-                          <span className="text-zinc-500 capitalize"> ({matched.brandSlug})</span>
+                          <span className="text-zinc-500 capitalize">
+                            {" "}
+                            ({matched.brandSlug})
+                          </span>
                         )}
-                        <span className="text-zinc-500"> × {item.quantity}</span>
+                        <span className="text-zinc-500">
+                          {" "}
+                          × {item.quantity}
+                        </span>
                         <span className="ml-auto font-black text-primary">
-                          ₹{(((matched.price || 0) / 100) * item.quantity).toFixed(0)}
+                          ₹
+                          {(
+                            ((matched.price || 0) / 100) *
+                            item.quantity
+                          ).toFixed(0)}
                         </span>
                       </>
                     ) : (
-                      <span className="text-zinc-400 italic">Part ID: {item.partId.slice(-6)} × {item.quantity}</span>
+                      <span className="text-zinc-400 italic">
+                        Part ID: {item.partId.slice(-6)} × {item.quantity}
+                      </span>
                     )}
                   </li>
                 );
