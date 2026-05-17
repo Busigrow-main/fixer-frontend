@@ -13,7 +13,7 @@ export function ACDetailStickyBar({ product }: ACDetailStickyBarProps) {
   );
 
   return (
-    <div className="md:hidden fixed bottom-16 left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] px-3 py-2.5 pb-safe">
+    <div className="md:hidden fixed left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] px-3 py-2.5 mobile-bottom-cta">
       <div className="grid grid-cols-3 gap-2.5">
         <a
           href="tel:+917004771388"

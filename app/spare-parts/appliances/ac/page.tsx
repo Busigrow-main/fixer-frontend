@@ -71,23 +71,27 @@ export default function ACListingPage() {
   const totalPages = Math.ceil(total / 12);
 
   return (
-    <main className="min-h-screen bg-gray-50 py-8 pb-24 md:pb-12">
-      <div className="container mx-auto px-4 max-w-7xl">
+    <main className="min-h-screen bg-background pb-mobile-nav md:pb-12 md:py-8">
+      <div className="container mx-auto max-w-7xl px-4 pt-2 md:pt-0">
         {/* Breadcrumb */}
-        <nav className="mb-6 flex items-center gap-2 text-sm text-gray-600 flex-wrap">
-          <Link href="/" className="hover:text-[#C8102E] transition-colors">Home</Link>
-          <span className="text-gray-400">/</span>
-          <Link href="/spare-parts" className="hover:text-[#C8102E] transition-colors">Spare Parts</Link>
-          <span className="text-gray-400">/</span>
-          <Link href="/spare-parts/appliances" className="hover:text-[#C8102E] transition-colors">Appliances</Link>
-          <span className="text-gray-400">/</span>
-          <span className="text-gray-900 font-medium">Air Conditioners</span>
+        <nav className="mb-4 flex items-center gap-1.5 overflow-x-auto whitespace-nowrap font-label text-[10px] font-bold uppercase tracking-widest text-on-surface-variant no-scrollbar">
+          <Link href="/" className="transition-colors hover:text-primary">
+            Home
+          </Link>
+          <span className="text-outline">/</span>
+          <Link href="/spare-parts/appliances" className="transition-colors hover:text-primary">
+            Appliances
+          </Link>
+          <span className="text-outline">/</span>
+          <span className="text-on-surface">Air Conditioners</span>
         </nav>
 
         {/* Page Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-1">Air Conditioners</h1>
-          <p className="text-gray-600 text-sm md:text-base">
+        <div className="mb-5">
+          <h1 className="font-headline text-2xl font-bold tracking-tight text-on-surface md:text-4xl">
+            Air Conditioners
+          </h1>
+          <p className="mt-1 font-body text-sm text-on-surface-variant md:text-base">
             {loading
               ? "Loading products…"
               : total > 0
@@ -110,17 +114,17 @@ export default function ACListingPage() {
 
             {/* Loading skeleton */}
             {loading && (
-              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+              <div className="grid grid-cols-2 gap-2.5 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
                 {Array(6).fill(0).map((_, i) => (
-                  <div key={i} className="bg-gray-200 rounded-xl h-80 animate-pulse" />
+                  <div key={i} className="h-80 animate-pulse rounded-2xl bg-surface-container-high" />
                 ))}
               </div>
             )}
 
             {/* Error */}
             {!loading && error && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-red-700 flex items-start gap-3">
-                <span className="material-symbols-outlined text-red-500 flex-shrink-0 mt-0.5">error</span>
+              <div className="flex items-start gap-3 rounded-2xl border border-error/20 bg-error-container p-6 text-on-error-container">
+                <span className="material-symbols-outlined mt-0.5 shrink-0 text-error">error</span>
                 <div>
                   <p className="font-semibold">Could not load products</p>
                   <p className="text-sm mt-1">{error}</p>
@@ -152,11 +156,11 @@ export default function ACListingPage() {
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                  <div className="flex flex-wrap justify-center gap-2 mt-8 pt-8 border-t border-gray-200">
+                  <div className="mt-8 flex flex-wrap justify-center gap-2 border-t border-outline pt-8">
                     {page > 1 && (
                       <Link
                         href={`?${new URLSearchParams({ ...Object.fromEntries(searchParams), page: (page - 1).toString() }).toString()}`}
-                        className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors font-medium text-sm flex items-center gap-2"
+                        className="flex items-center gap-2 rounded-xl border border-outline px-4 py-2 font-label text-sm font-semibold text-on-surface transition-colors hover:bg-surface-container"
                       >
                         <span className="material-symbols-outlined text-sm">arrow_back</span>
                         Previous
@@ -167,10 +171,10 @@ export default function ACListingPage() {
                         <Link
                           key={pageNum}
                           href={`?${new URLSearchParams({ ...Object.fromEntries(searchParams), page: pageNum.toString() }).toString()}`}
-                          className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          className={`rounded-xl px-3 py-2 font-label text-sm font-semibold transition-colors ${
                             pageNum === page
-                              ? "bg-[#C8102E] text-white"
-                              : "border border-gray-300 hover:bg-gray-100"
+                              ? "bg-primary text-on-primary"
+                              : "border border-outline text-on-surface hover:bg-surface-container"
                           }`}
                         >
                           {pageNum}
@@ -180,7 +184,7 @@ export default function ACListingPage() {
                     {page < totalPages && (
                       <Link
                         href={`?${new URLSearchParams({ ...Object.fromEntries(searchParams), page: (page + 1).toString() }).toString()}`}
-                        className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors font-medium text-sm flex items-center gap-2"
+                        className="flex items-center gap-2 rounded-xl border border-outline px-4 py-2 font-label text-sm font-semibold text-on-surface transition-colors hover:bg-surface-container"
                       >
                         Next
                         <span className="material-symbols-outlined text-sm">arrow_forward</span>
@@ -193,10 +197,16 @@ export default function ACListingPage() {
 
             {/* Empty state */}
             {!loading && !error && products.length === 0 && (
-              <div className="text-center py-16">
-                <span className="material-symbols-outlined text-6xl text-gray-300 block mb-4">ac_unit</span>
-                <p className="text-gray-500 text-lg font-medium">No products match your filters.</p>
-                <p className="text-gray-400 text-sm mt-2">Try adjusting or clearing filters.</p>
+              <div className="py-16 text-center">
+                <span className="material-symbols-outlined mb-4 block text-6xl text-on-surface-variant/40">
+                  ac_unit
+                </span>
+                <p className="font-headline text-lg font-semibold text-on-surface">
+                  No products match your filters.
+                </p>
+                <p className="mt-2 font-body text-sm text-on-surface-variant">
+                  Try adjusting or clearing filters.
+                </p>
               </div>
             )}
           </div>

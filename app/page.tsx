@@ -11,7 +11,7 @@ export default function Home() {
     <>
       <Navbar />
       {/* pb-24 on mobile creates space above the fixed bottom nav bar */}
-      <main className="pb-24 md:pb-0">
+      <main className="pb-mobile-nav md:pb-0">
         <Hero />
         <DifferenceSection />
         <InsuranceBanner />

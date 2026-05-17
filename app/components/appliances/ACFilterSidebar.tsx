@@ -65,12 +65,13 @@ export function ACFilterSidebar({ onApply }: { onApply?: () => void } = {}) {
   };
 
   return (
-    <aside className="bg-white rounded-lg border border-gray-200 p-6 h-fit sticky top-24 shadow-sm">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-bold text-gray-900">Filters</h2>
+    <aside className="sticky top-24 h-fit rounded-2xl border border-outline bg-surface-bright p-6 shadow-sm">
+      <div className="mb-6 flex items-center justify-between">
+        <h2 className="font-headline text-lg font-bold text-on-surface">Filters</h2>
         <button
+          type="button"
           onClick={handleClearFilters}
-          className="text-xs text-[#C8102E] hover:text-[#A00826] font-semibold transition-colors"
+          className="font-label text-xs font-bold uppercase tracking-wide text-primary transition-colors hover:brightness-110"
         >
           Clear
         </button>

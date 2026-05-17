@@ -51,7 +51,7 @@ export function ACDetailMobile({ product }: ACDetailMobileProps) {
   const showLegacySpecs = hasLegacySpecs(product) && !showTechnical;
 
   return (
-    <article className="md:hidden bg-[#F1F2F4] min-h-screen pb-36">
+    <article className="md:hidden bg-[#F1F2F4] min-h-screen pb-mobile-cta">
       {/* Back + share row */}
       <div className="bg-white px-3 py-2 flex items-center gap-2 border-b border-gray-100">
         <Link

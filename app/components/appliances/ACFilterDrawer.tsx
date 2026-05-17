@@ -9,12 +9,13 @@ export function ACFilterDrawer() {
   return (
     <>
       {/* Mobile Filter Toggle Button — visible only on mobile */}
-      <div className="lg:hidden mb-4">
+      <div className="mb-3 lg:hidden">
         <button
+          type="button"
           onClick={() => setOpen(true)}
-          className="flex items-center gap-2 px-4 py-2.5 border border-gray-300 rounded-lg bg-white text-sm font-semibold text-gray-700 hover:border-[#C8102E] hover:text-[#C8102E] transition-colors shadow-sm"
+          className="flex h-8 items-center gap-1.5 rounded-full border border-outline bg-surface-container px-4 font-label text-[11px] font-bold uppercase tracking-wide text-on-surface transition-colors hover:border-primary/30 hover:text-primary"
         >
-          <span className="material-symbols-outlined text-lg">tune</span>
+          <span className="material-symbols-outlined text-base leading-none">tune</span>
           Filters
         </button>
       </div>
@@ -37,7 +38,7 @@ export function ACFilterDrawer() {
         <div className="bg-white rounded-t-2xl shadow-2xl max-h-[85vh] overflow-y-auto">
           {/* Drawer Handle */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 sticky top-0 bg-white z-10">
-            <h2 className="text-lg font-bold text-gray-900">Filters</h2>
+            <h2 className="font-headline text-lg font-bold text-on-surface">Filters</h2>
             <button
               onClick={() => setOpen(false)}
               className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
@@ -57,7 +58,7 @@ export function ACFilterDrawer() {
           <div className="sticky bottom-0 bg-white border-t border-gray-200 p-4 pb-safe">
             <button
               onClick={() => setOpen(false)}
-              className="w-full bg-[#C8102E] hover:bg-[#A00826] text-white font-bold py-3 rounded-lg transition-colors"
+              className="w-full rounded-xl bg-primary py-3 font-label text-sm font-bold uppercase tracking-wide text-on-primary transition-colors hover:brightness-110"
             >
               Apply Filters
             </button>
