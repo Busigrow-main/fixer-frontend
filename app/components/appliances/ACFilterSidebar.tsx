@@ -12,7 +12,7 @@ const TYPE_OPTIONS = [
   { value: "portable", label: "Portable" },
 ];
 
-export function ACFilterSidebar() {
+export function ACFilterSidebar({ onApply }: { onApply?: () => void } = {}) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -48,6 +48,7 @@ export function ACFilterSidebar() {
     const newFilters = { ...filters, [key]: value };
     setFilters(newFilters);
     updateURL(newFilters);
+    onApply?.();
   };
 
   const handleClearFilters = () => {
@@ -131,7 +132,12 @@ export function ACFilterSidebar() {
                 }
                 className="w-4 h-4 text-[#C8102E] cursor-pointer"
               />
-              <span className="text-sm text-gray-700">{star}⭐ & above</span>
+              <span className="text-sm text-gray-700 flex items-center gap-1">
+                {Array.from({ length: star }).map((_, i) => (
+                  <span key={i} className="material-symbols-outlined text-xs icon-filled text-amber-500">star</span>
+                ))}
+                <span className="ml-1">& above</span>
+              </span>
             </label>
           ))}
         </div>

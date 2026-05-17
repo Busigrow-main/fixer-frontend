@@ -145,6 +145,64 @@ body {
   padding-bottom: max(8px, env(safe-area-inset-bottom));
 }
 
+/* ─── AC product description (e-commerce HTML from API) ──────── */
+.ac-product-description p {
+  font-size: 0.875rem;
+  line-height: 1.65;
+  color: #374151;
+  margin-bottom: 0.75rem;
+}
+.ac-product-description p:last-child {
+  margin-bottom: 0;
+}
+.ac-product-description strong {
+  color: #111827;
+  font-weight: 700;
+}
+.ac-product-description ul {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0 0;
+}
+.ac-product-description li {
+  position: relative;
+  padding-left: 1.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #4b5563;
+}
+.ac-product-description li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.45em;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #c8102e;
+}
+.ac-product-description h2,
+.ac-product-description h3 {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #111827;
+  margin: 1.25rem 0 0.5rem;
+}
+
+/* ─── AC description sections (Flipkart-style blocks) ─────────── */
+.ac-desc-image-full img,
+.ac-desc-image-text img {
+  object-fit: cover;
+}
+.ac-desc-image-full {
+  background: #f3f4f6;
+}
+.ac-desc-banner + .ac-desc-image-text,
+.ac-desc-hero + section {
+  margin-top: 0;
+}
+
 /* ─── Mobile bottom nav active indicator ─────────────────────── */
 @media (max-width: 767px) {
   body {

@@ -2,14 +2,13 @@
 
 interface TrustBadgeStripProps {
   installationIncluded: boolean;
-  warrantyYears: number;
+  warrantyYears?: number; // kept for backwards compat; badge removed
   oemBrand?: boolean;
   size?: "sm" | "md" | "lg";
 }
 
 export function TrustBadgeStrip({
   installationIncluded,
-  warrantyYears,
   oemBrand = true,
   size = "md",
 }: TrustBadgeStripProps) {
@@ -56,20 +55,6 @@ export function TrustBadgeStrip({
         </div>
       )}
 
-      <div
-        className={`flex items-center gap-1 ${badgePaddingClasses[size]} bg-amber-50 border border-amber-200 rounded-lg`}
-      >
-        <span
-          className={`material-symbols-outlined ${iconSizeClasses[size]} text-amber-600`}
-        >
-          shield_task
-        </span>
-        <span
-          className={`${textSizeClasses[size]} font-semibold text-amber-900`}
-        >
-          {warrantyYears}-Year Warranty
-        </span>
-      </div>
 
       {oemBrand && (
         <div

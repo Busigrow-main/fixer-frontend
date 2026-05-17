@@ -104,17 +104,18 @@ export function ACProductCard({ product }: ACProductCardProps) {
 
           {/* Specs Chips */}
           <div className="flex flex-wrap gap-1 mb-3">
-            <span className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded font-medium">
+            <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded font-medium">
               {product.capacityTon}T
             </span>
-            <span className="text-xs bg-yellow-50 text-yellow-700 px-2 py-1 rounded font-medium">
-              ⭐{product.starRating}
+            <span className="inline-flex items-center gap-0.5 text-xs bg-amber-50 text-amber-700 px-2 py-1 rounded font-medium">
+              <span className="material-symbols-outlined text-xs icon-filled">star</span>
+              {product.starRating}
             </span>
-            <span className="text-xs bg-purple-50 text-purple-700 px-2 py-1 rounded font-medium capitalize">
+            <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded font-medium capitalize">
               {product.acType}
             </span>
             {product.isInverter && (
-              <span className="text-xs bg-green-50 text-green-700 px-2 py-1 rounded font-medium">
+              <span className="text-xs bg-primary-container text-on-primary-container px-2 py-1 rounded font-medium">
                 Inverter
               </span>
             )}

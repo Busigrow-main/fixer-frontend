@@ -39,10 +39,10 @@ const APPLIANCE_CATEGORIES = [
 
 export default function AppliancesPage() {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-gray-50 to-white py-12">
+    <main className="min-h-screen bg-gradient-to-b from-gray-50 to-white py-8 pb-24 md:pb-12">
       <div className="container mx-auto px-4 max-w-6xl">
         {/* Breadcrumb */}
-        <nav className="mb-8 flex items-center gap-2 text-sm text-gray-600">
+        <nav className="mb-8 flex items-center gap-2 text-sm text-gray-600 flex-wrap">
           <Link href="/" className="hover:text-[#C8102E] transition-colors">
             Home
           </Link>
@@ -59,7 +59,7 @@ export default function AppliancesPage() {
 
         {/* Page Header */}
         <div className="mb-12 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+          <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4">
             Shop Complete Appliances
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
@@ -78,11 +78,11 @@ export default function AppliancesPage() {
           ))}
         </div>
 
-        {/* Info Section */}
-        <div className="mt-16 bg-blue-50 rounded-lg border border-blue-200 p-8">
+        {/* Info Section — brand colours, no blue */}
+        <div className="mt-16 bg-gray-50 rounded-2xl border border-gray-200 p-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
             <div>
-              <span className="material-symbols-outlined text-4xl text-blue-600 block mb-3">
+              <span className="material-symbols-outlined text-4xl text-[#C8102E] block mb-3">
                 verified_user
               </span>
               <h3 className="font-semibold text-gray-900 mb-2">
@@ -94,7 +94,7 @@ export default function AppliancesPage() {
               </p>
             </div>
             <div>
-              <span className="material-symbols-outlined text-4xl text-blue-600 block mb-3">
+              <span className="material-symbols-outlined text-4xl text-[#D48F0E] block mb-3">
                 shield
               </span>
               <h3 className="font-semibold text-gray-900 mb-2">
@@ -105,7 +105,7 @@ export default function AppliancesPage() {
               </p>
             </div>
             <div>
-              <span className="material-symbols-outlined text-4xl text-blue-600 block mb-3">
+              <span className="material-symbols-outlined text-4xl text-[#C8102E] block mb-3">
                 support_agent
               </span>
               <h3 className="font-semibold text-gray-900 mb-2">24/7 Support</h3>

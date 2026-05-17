@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import Image from "next/image";
 
 interface ACImageGalleryProps {
@@ -9,91 +9,152 @@ interface ACImageGalleryProps {
 }
 
 export function ACImageGallery({ images, productName }: ACImageGalleryProps) {
-  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [active, setActive] = useState(0);
+  const [fading, setFading] = useState(false);
+
+  const go = useCallback(
+    (next: number) => {
+      if (next === active || fading) return;
+      setFading(true);
+      setTimeout(() => {
+        setActive(next);
+        setFading(false);
+      }, 180);
+    },
+    [active, fading],
+  );
+
+  const prev = () => go(active === 0 ? images.length - 1 : active - 1);
+  const next = () => go(active === images.length - 1 ? 0 : active + 1);
 
   if (!images || images.length === 0) {
     return (
-      <div className="bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center h-96">
+      <div className="bg-gray-100 rounded-2xl overflow-hidden flex items-center justify-center h-80">
         <div className="text-center">
-          <span className="material-symbols-outlined text-6xl text-gray-400 block mb-2">
+          <span className="material-symbols-outlined text-5xl text-gray-300 block mb-2">
             image_not_supported
           </span>
-          <p className="text-gray-600">No images available</p>
+          <p className="text-sm text-gray-400">No images available</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {/* Main Image */}
-      <div className="relative bg-gray-100 rounded-lg overflow-hidden h-96 flex items-center justify-center group">
-        <Image
-          src={images[selectedIndex]}
-          alt={productName}
-          fill
-          className="object-contain p-4 group-hover:scale-105 transition-transform duration-300"
-          priority
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 40vw"
-        />
+    <div className="select-none">
+      {/* ── Main viewer ─────────────────────────────────────── */}
+      <div className="relative bg-[#F5F5F7] rounded-2xl overflow-hidden aspect-square group">
+        {/* Slides – all rendered, only active is visible */}
+        {images.map((src, i) => (
+          <div
+            key={i}
+            className="absolute inset-0 flex items-center justify-center p-6"
+            style={{
+              opacity: i === active ? (fading ? 0 : 1) : 0,
+              transition: "opacity 0.18s ease",
+              pointerEvents: i === active ? "auto" : "none",
+            }}
+          >
+            <Image
+              src={src}
+              alt={`${productName} – view ${i + 1}`}
+              fill
+              className="object-contain p-6"
+              priority={i === 0}
+              sizes="(max-width: 768px) 100vw, 50vw"
+            />
+          </div>
+        ))}
 
-        {/* Navigation Arrows */}
+        {/* Arrows — only when multiple images */}
         {images.length > 1 && (
           <>
             <button
-              onClick={() =>
-                setSelectedIndex(
-                  selectedIndex === 0 ? images.length - 1 : selectedIndex - 1,
-                )
-              }
-              className="absolute left-4 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-75 text-white p-2 rounded-full transition-all z-10"
+              onClick={prev}
               aria-label="Previous image"
+              className="
+                absolute left-3 top-1/2 -translate-y-1/2 z-10
+                w-9 h-9 rounded-full bg-white/90 backdrop-blur-sm shadow
+                flex items-center justify-center
+                md:opacity-0 md:group-hover:opacity-100
+                hover:bg-white active:scale-95
+                transition-all duration-200
+              "
             >
-              <span className="material-symbols-outlined">arrow_back</span>
+              <span className="material-symbols-outlined text-gray-700 text-[18px]">
+                chevron_left
+              </span>
             </button>
 
             <button
-              onClick={() =>
-                setSelectedIndex(
-                  selectedIndex === images.length - 1 ? 0 : selectedIndex + 1,
-                )
-              }
-              className="absolute right-4 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-75 text-white p-2 rounded-full transition-all z-10"
+              onClick={next}
               aria-label="Next image"
+              className="
+                absolute right-3 top-1/2 -translate-y-1/2 z-10
+                w-9 h-9 rounded-full bg-white/90 backdrop-blur-sm shadow
+                flex items-center justify-center
+                md:opacity-0 md:group-hover:opacity-100
+                hover:bg-white active:scale-95
+                transition-all duration-200
+              "
             >
-              <span className="material-symbols-outlined">arrow_forward</span>
+              <span className="material-symbols-outlined text-gray-700 text-[18px]">
+                chevron_right
+              </span>
             </button>
-          </>
-        )}
 
-        {/* Image Counter */}
-        {images.length > 1 && (
-          <div className="absolute bottom-4 right-4 bg-black bg-opacity-70 text-white text-xs font-semibold px-3 py-1 rounded-full">
-            {selectedIndex + 1} / {images.length}
-          </div>
+            {/* Counter pill */}
+            <div className="absolute bottom-3 right-3 z-10 bg-black/50 text-white text-[11px] font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm">
+              {active + 1} / {images.length}
+            </div>
+          </>
         )}
       </div>
 
-      {/* Thumbnail Strip */}
+      {/* ── Dot indicators (mobile) ──────────────────────────── */}
       {images.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {images.map((image, index) => (
+        <div className="flex justify-center gap-1.5 mt-3 md:hidden">
+          {images.map((_, i) => (
             <button
-              key={index}
-              onClick={() => setSelectedIndex(index)}
-              className={`flex-shrink-0 h-20 w-20 rounded-lg overflow-hidden border-2 transition-all ${
-                index === selectedIndex
-                  ? "border-[#C8102E] shadow-md scale-110"
-                  : "border-gray-300 hover:border-gray-400"
-              }`}
-              aria-label={`View image ${index + 1}`}
+              key={i}
+              onClick={() => go(i)}
+              aria-label={`Go to image ${i + 1}`}
+              className="transition-all duration-200"
+              style={{
+                width: i === active ? 20 : 6,
+                height: 6,
+                borderRadius: 99,
+                background: i === active ? "#C8102E" : "#D1D5DB",
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* ── Thumbnail strip (desktop) ────────────────────────── */}
+      {images.length > 1 && (
+        <div className="hidden md:flex gap-2.5 mt-3">
+          {images.map((src, i) => (
+            <button
+              key={i}
+              onClick={() => go(i)}
+              aria-label={`View image ${i + 1}`}
+              className={`
+                relative flex-shrink-0 w-[72px] h-[72px] rounded-xl overflow-hidden
+                bg-[#F5F5F7] transition-all duration-200
+                ${
+                  i === active
+                    ? "ring-2 ring-[#C8102E] ring-offset-2"
+                    : "ring-1 ring-gray-200 hover:ring-gray-400 opacity-60 hover:opacity-100"
+                }
+              `}
             >
               <Image
-                src={image}
-                alt={`${productName} thumbnail ${index + 1}`}
+                src={src}
+                alt={`${productName} thumbnail ${i + 1}`}
                 fill
-                className="object-contain p-1"
-                sizes="80px"
+                className="object-contain p-2"
+                sizes="72px"
               />
             </button>
           ))}
