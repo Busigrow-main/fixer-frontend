@@ -2,15 +2,15 @@
 
 import Link from "next/link";
 import { ApplianceCategoryCard } from "@/app/components/appliances/ApplianceCategoryCard";
+import { SHOP_SPARE_PARTS_HREF } from "@/app/lib/shop-routes";
 
-// Category data
 const APPLIANCE_CATEGORIES = [
   {
     id: "ac",
     name: "Air Conditioner",
     slug: "ac",
     icon: "ac_unit",
-    description: "Godrej AC units - cooling solutions for your home",
+    description: "Godrej split & inverter ACs with professional installation across Patna & Bihar.",
     status: "active" as const,
     productCount: 7,
     href: "/spare-parts/appliances/ac",
@@ -20,7 +20,7 @@ const APPLIANCE_CATEGORIES = [
     name: "Refrigerator",
     slug: "fridge",
     icon: "kitchen",
-    description: "Refrigerators & cooling appliances - Coming soon",
+    description: "Refrigerators and cooling appliances for your home.",
     status: "coming-soon" as const,
     productCount: 0,
     href: "#",
@@ -30,90 +30,110 @@ const APPLIANCE_CATEGORIES = [
     name: "Washing Machine",
     slug: "washing-machine",
     icon: "local_laundry_service",
-    description: "Washing machines & laundry solutions - Coming soon",
+    description: "Washing machines and laundry solutions.",
     status: "coming-soon" as const,
     productCount: 0,
     href: "#",
   },
-];
+] as const;
+
+const TRUST_ITEMS = [
+  {
+    icon: "handyman",
+    title: "Professional installation",
+    body: "Certified Fixxer technicians install, test, and hand over a working unit.",
+    iconClass: "text-primary",
+  },
+  {
+    icon: "shield",
+    title: "Extended warranty",
+    body: "60-day Fixxer service warranty on top of the manufacturer coverage.",
+    iconClass: "text-secondary",
+  },
+  {
+    icon: "support_agent",
+    title: "Dedicated support",
+    body: "Guidance from enquiry to delivery, installation, and after-sales care.",
+    iconClass: "text-primary",
+  },
+] as const;
 
 export default function AppliancesPage() {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-gray-50 to-white py-8 pb-mobile-nav md:pb-12">
-      <div className="container mx-auto px-4 max-w-6xl">
-        {/* Breadcrumb */}
-        <nav className="mb-8 flex items-center gap-2 text-sm text-gray-600 flex-wrap">
-          <Link href="/" className="hover:text-[#C8102E] transition-colors">
+    <main className="min-h-screen bg-background pb-mobile-nav md:pb-12 md:py-8">
+      <div className="container mx-auto max-w-6xl px-4 pt-2 md:pt-0">
+        <nav className="mb-4 flex items-center gap-1.5 overflow-x-auto whitespace-nowrap font-label text-[10px] font-bold uppercase tracking-widest text-on-surface-variant no-scrollbar">
+          <Link href="/" className="transition-colors hover:text-primary">
             Home
           </Link>
-          <span className="text-gray-400">/</span>
-          <Link
-            href="/spare-parts"
-            className="hover:text-[#C8102E] transition-colors"
-          >
-            Spare Parts
-          </Link>
-          <span className="text-gray-400">/</span>
-          <span className="text-gray-900 font-medium">Appliances</span>
+          <span className="text-outline">/</span>
+          <span className="text-on-surface">Appliances</span>
         </nav>
 
-        {/* Page Header */}
-        <div className="mb-12 text-center">
-          <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4">
-            Shop Complete Appliances
-          </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Buy full appliances with professional Fixxer installation and
-            extended warranty.
-            <br className="hidden md:inline" />
-            Choose from trusted brands, all delivered and installed in your
-            home.
+        <header className="mx-auto mb-10 max-w-3xl text-center md:mb-12">
+          <p className="mb-3 font-label text-[10px] font-black uppercase tracking-[0.28em] text-primary md:text-xs">
+            Fixxer Shop · Appliances
           </p>
-        </div>
+          <h1 className="font-headline text-3xl font-bold tracking-tight text-on-surface md:text-5xl">
+            Shop complete <span className="italic text-primary">appliances</span>
+          </h1>
+          <p className="mt-4 font-body text-base leading-relaxed text-on-surface-variant md:text-lg">
+            Buy full units with professional Fixxer installation, trial run, and
+            post-install service — delivered and set up in your home.
+          </p>
+          <div className="mx-auto mt-5 h-0.5 w-12 rounded-full bg-primary md:w-16" />
+        </header>
 
-        {/* Category Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
           {APPLIANCE_CATEGORIES.map((category) => (
             <ApplianceCategoryCard key={category.id} category={category} />
           ))}
         </div>
 
-        {/* Info Section — brand colours, no blue */}
-        <div className="mt-16 bg-gray-50 rounded-2xl border border-gray-200 p-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-            <div>
-              <span className="material-symbols-outlined text-4xl text-[#C8102E] block mb-3">
-                verified_user
-              </span>
-              <h3 className="font-semibold text-gray-900 mb-2">
-                Professional Installation
-              </h3>
-              <p className="text-sm text-gray-600">
-                Expert technicians install your appliance and ensure it works
-                perfectly.
-              </p>
-            </div>
-            <div>
-              <span className="material-symbols-outlined text-4xl text-[#D48F0E] block mb-3">
-                shield
-              </span>
-              <h3 className="font-semibold text-gray-900 mb-2">
-                Extended Warranty
-              </h3>
-              <p className="text-sm text-gray-600">
-                60-day Fixxer service warranty on top of manufacturer warranty.
-              </p>
-            </div>
-            <div>
-              <span className="material-symbols-outlined text-4xl text-[#C8102E] block mb-3">
-                support_agent
-              </span>
-              <h3 className="font-semibold text-gray-900 mb-2">24/7 Support</h3>
-              <p className="text-sm text-gray-600">
-                Dedicated customer support team available round the clock.
-              </p>
-            </div>
+        <section
+          className="mt-12 rounded-[1.75rem] border border-outline bg-surface-container-low p-6 md:mt-16 md:rounded-[2rem] md:p-10 carbon-texture"
+          aria-labelledby="appliances-trust-heading"
+        >
+          <h2
+            id="appliances-trust-heading"
+            className="mb-8 text-center font-headline text-xl font-bold text-on-surface md:text-2xl"
+          >
+            Why buy appliances from Fixxer
+          </h2>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
+            {TRUST_ITEMS.map(({ icon, title, body, iconClass }) => (
+              <div key={title} className="text-center">
+                <span
+                  className={`material-symbols-outlined icon-filled mb-3 block text-4xl ${iconClass}`}
+                >
+                  {icon}
+                </span>
+                <h3 className="font-headline text-base font-bold text-on-surface md:text-lg">
+                  {title}
+                </h3>
+                <p className="mt-2 font-body text-sm leading-relaxed text-on-surface-variant">
+                  {body}
+                </p>
+              </div>
+            ))}
           </div>
+        </section>
+
+        <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
+          <Link
+            href="/spare-parts/appliances/ac"
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-primary px-8 font-label text-xs font-black uppercase tracking-widest text-on-primary shadow-md shadow-primary/20 transition-all hover:brightness-110 active:scale-[0.98]"
+          >
+            <span className="material-symbols-outlined text-lg">ac_unit</span>
+            Browse air conditioners
+          </Link>
+          <Link
+            href={SHOP_SPARE_PARTS_HREF}
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border-2 border-outline bg-surface-bright px-8 font-label text-xs font-black uppercase tracking-widest text-on-surface transition-all hover:border-primary/30 hover:text-primary active:scale-[0.98]"
+          >
+            <span className="material-symbols-outlined text-lg">build_circle</span>
+            Need spare parts instead?
+          </Link>
         </div>
       </div>
     </main>

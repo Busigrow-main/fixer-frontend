@@ -296,6 +296,21 @@ function MyBookingsContent() {
                               <p className="text-sm text-on-surface-variant mt-1 leading-relaxed">
                                  {order.contactData.address}<br />
                                  Phone: {order.contactData.phone}
+                                 {order.contactData.preferredDate && (
+                                   <>
+                                     <br />
+                                     Preferred visit: {order.contactData.preferredDate}
+                                     {order.contactData.preferredTime
+                                       ? ` at ${order.contactData.preferredTime}`
+                                       : ""}
+                                   </>
+                                 )}
+                                 {order.contactData.notes && (
+                                   <>
+                                     <br />
+                                     Notes: {order.contactData.notes}
+                                   </>
+                                 )}
                               </p>
                            </div>
 
@@ -305,7 +320,29 @@ function MyBookingsContent() {
                                  Items Summary
                               </p>
                               <div className="space-y-3">
-                                 {order.items.map((item: any, idx: number) => (
+                                 {order.orderType === "appliance" && order.applianceItem ? (
+                                    <div className="flex justify-between items-center text-sm">
+                                       <div className="flex items-center gap-3">
+                                          <span className="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center font-bold text-xs">
+                                             {order.applianceItem.quantity}x
+                                          </span>
+                                          <div>
+                                             <span className="text-on-surface font-medium block">
+                                                {order.applianceItem.name}
+                                             </span>
+                                             <span className="text-xs text-on-surface-variant">
+                                                Appliance enquiry · {order.applianceItem.brand}
+                                             </span>
+                                          </div>
+                                       </div>
+                                       <span className="font-bold text-primary">
+                                          {order.applianceItem.price
+                                            ? `₹${Number(order.applianceItem.price).toLocaleString("en-IN")}`
+                                            : "TBD"}
+                                       </span>
+                                    </div>
+                                 ) : (
+                                    (order.items ?? []).map((item: any, idx: number) => (
                                     <div key={idx} className="flex justify-between items-center text-sm">
                                        <div className="flex items-center gap-3">
                                           <span className="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center font-bold text-xs">
@@ -317,7 +354,8 @@ function MyBookingsContent() {
                                        </div>
                                        <span className="font-bold text-primary">{item.partId?.price || "TBD"}</span>
                                     </div>
-                                 ))}
+                                    ))
+                                 )}
                               </div>
                               
                               {order.courierTracking && (

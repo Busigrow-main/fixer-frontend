@@ -14,11 +14,11 @@ export default function AppliancesSection() {
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-10 md:mb-12">
           <p className="font-label text-[10px] md:text-xs uppercase tracking-[0.28em] font-bold text-primary mb-3">
-            Master Solutions
+            Repair Services
           </p>
           <h2 className="font-headline text-3xl md:text-6xl tracking-tight text-on-surface leading-tight">
-            Professional Service for{" "}
-            <span className="italic text-primary">Every</span> Appliance
+            Professional repair for{" "}
+            <span className="italic text-primary">every</span> appliance
           </h2>
           <div className="h-0.5 w-12 md:w-16 bg-primary mx-auto mt-4 md:mt-6 rounded-full" />
         </div>
@@ -93,7 +93,7 @@ export default function AppliancesSection() {
             className="inline-flex items-center gap-3 bg-zinc-900 text-white px-8 md:px-12 h-14 md:h-16 rounded-2xl font-black text-xs md:text-sm uppercase tracking-widest shadow-xl shadow-black/10 hover:bg-primary hover:scale-[0.98] active:scale-95 transition-all"
           >
             <span className="material-symbols-outlined text-lg md:text-xl">apps</span>
-            Explore Full Catalog
+            Explore repair services
           </Link>
         </div>
       </div>

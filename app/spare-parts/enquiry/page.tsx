@@ -1,6 +1,7 @@
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 import SparePartsEnquiryForm from "@/app/components/SparePartsEnquiryForm";
+import type { ACProduct } from "@/app/components/appliances/types";
 
 export default async function SparePartsEnquiryPage({
   searchParams,
@@ -10,12 +11,12 @@ export default async function SparePartsEnquiryPage({
   const params = await searchParams;
   const selectedPartId = params.part ?? "";
   const productSlug = params.product ?? "";
-  const enquiryType = params.type ?? "part"; // 'part' or 'appliance'
+  const enquiryType = params.type ?? "part";
   const apiBase =
     process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/v1";
 
-  // Fetch all spare parts (high limit so the dropdown is complete)
-  let spareParts: any[] = [];
+  let spareParts: { _id: string; name: string; price?: number; brandSlug?: string }[] =
+    [];
   try {
     const res = await fetch(`${apiBase}/spare-parts?limit=500&isActive=true`, {
       cache: "no-store",
@@ -28,49 +29,57 @@ export default async function SparePartsEnquiryPage({
     console.error("Failed to fetch spare parts:", error);
   }
 
-  // If there's a pre-selected part, ensure it's in the list (it could be missing
-  // if the catalog has >500 items and it didn't land in this page).
   if (selectedPartId) {
     const alreadyPresent = spareParts.some(
-      (p: any) => p._id === selectedPartId,
+      (p) => p._id === selectedPartId,
     );
     if (!alreadyPresent) {
       try {
-        // The SKU-based endpoint returns a single doc — try fetching by _id via search
         const res = await fetch(
           `${apiBase}/spare-parts?limit=1&id=${selectedPartId}`,
-          {
-            cache: "no-store",
-          },
+          { cache: "no-store" },
         );
         if (res.ok) {
           const json = await res.json();
           const found = Array.isArray(json) ? json[0] : json.data?.[0];
           if (found) spareParts = [found, ...spareParts];
         }
-      } catch (_) {
-        // Silently ignore — the part just won't be pre-selected
+      } catch {
+        // Pre-selected part may be missing from dropdown
       }
     }
   }
 
-  // Find if there's a pre-selected part
-  const selectedPart = Array.isArray(spareParts)
-    ? spareParts.find((p: any) => p._id === selectedPartId)
-    : null;
+  const selectedPart = spareParts.find((p) => p._id === selectedPartId) ?? null;
 
-  // For appliances: use product slug to build product name display
-  const isAppliance = enquiryType === "appliance" && productSlug;
-  const applianceDisplayName = isAppliance
-    ? productSlug
-        .split("-")
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(" ")
-    : undefined;
+  const isAppliance = enquiryType === "appliance" && Boolean(productSlug);
+  let selectedAppliance: ACProduct | null = null;
+  let applianceLoadError = false;
+
+  if (isAppliance) {
+    try {
+      const res = await fetch(`${apiBase}/appliances/ac/${productSlug}`, {
+        cache: "no-store",
+      });
+      if (res.ok) {
+        const json = await res.json();
+        selectedAppliance = json.product ?? null;
+      } else {
+        applianceLoadError = true;
+      }
+    } catch (error) {
+      console.error("Failed to fetch appliance:", error);
+      applianceLoadError = true;
+    }
+  }
 
   const pageTitle = isAppliance ? "Request Appliance" : "Request Spare Parts";
   const pageDescription = isAppliance
-    ? `Auto-selected: ${applianceDisplayName}. Our team will confirm availability and help you with installation scheduling.`
+    ? selectedAppliance
+      ? `Enquiring about ${selectedAppliance.name}. Fill in your details and we will confirm availability and installation scheduling.`
+      : applianceLoadError
+        ? "We could not load this product. Please go back and try again, or contact us on WhatsApp."
+        : "Loading product details…"
     : selectedPart
       ? `Auto-selected: ${selectedPart.name}. You can add more parts in the same enquiry before submitting.`
       : "Select one or more parts and submit your enquiry. Our team will confirm availability and schedule delivery/service.";
@@ -95,8 +104,9 @@ export default async function SparePartsEnquiryPage({
               <SparePartsEnquiryForm
                 initialPartId={selectedPartId || undefined}
                 availableParts={spareParts}
-                initialProduct={isAppliance ? applianceDisplayName : undefined}
                 enquiryType={enquiryType === "appliance" ? "appliance" : "part"}
+                selectedAppliance={selectedAppliance}
+                applianceLoadError={applianceLoadError}
               />
             </div>
           </div>
