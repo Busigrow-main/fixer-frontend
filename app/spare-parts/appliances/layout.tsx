@@ -8,7 +8,7 @@ export default function AppliancesLayout({
   children: ReactNode;
 }) {
   return (
-    <div className="flex flex-col min-h-screen bg-white">
+    <div className="flex min-h-screen flex-col bg-background">
       <Navbar />
       <div className="flex-1 pt-0 md:pt-20">{children}</div>
       <Footer />

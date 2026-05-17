@@ -115,7 +115,11 @@ export default function AdminOrdersPage() {
                 <tr key={o._id}>
                   <td style={{ fontFamily: "monospace", fontSize: 11 }}>{o._id?.slice(-8)}</td>
                   <td>{o.userId?.fullName || o.contactData?.name || "—"}</td>
-                  <td>{o.items?.length || 0} item(s)</td>
+                  <td>
+                    {o.orderType === "appliance"
+                      ? o.applianceItem?.name || "Appliance enquiry"
+                      : `${o.items?.length || 0} part(s)`}
+                  </td>
                   <td>{o.contactData?.phone || "—"}</td>
                   <td>
                     <span className={`admin-badge admin-badge-${o.status?.toLowerCase()}`}>

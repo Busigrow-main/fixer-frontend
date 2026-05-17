@@ -46,12 +46,12 @@ export default function HomeShopSection() {
       id="shop"
       className="relative overflow-hidden bg-surface-container-low py-12 md:py-20 carbon-texture"
     >
-      <motion.div className="pointer-events-none absolute -right-24 top-0 h-72 w-72 rounded-full bg-primary/10 blur-[100px]" />
-      <motion.div className="pointer-events-none absolute -left-16 bottom-0 h-56 w-56 rounded-full bg-secondary-container/40 blur-[80px]" />
+      <div className="pointer-events-none absolute -right-24 top-0 h-72 w-72 rounded-full bg-primary/10 blur-[100px]" />
+      <div className="pointer-events-none absolute -left-16 bottom-0 h-56 w-56 rounded-full bg-secondary-container/40 blur-[80px]" />
 
-      <motion.div className="relative z-10 container mx-auto max-w-screen-2xl px-6 md:px-10">
+      <div className="relative z-10 container mx-auto max-w-screen-2xl px-6 md:px-10">
         {/* Header */}
-        <motion.div className="mx-auto mb-10 max-w-3xl text-center md:mb-14">
+        <div className="mx-auto mb-10 max-w-3xl text-center md:mb-14">
           <p className="mb-3 font-label text-[10px] font-black uppercase tracking-[0.28em] text-primary md:text-xs">
             Fixxer Shop
           </p>
@@ -64,22 +64,22 @@ export default function HomeShopSection() {
             home appliances with installation included — the same mastery, from
             catalog to your doorstep.
           </p>
-          <motion.div className="mx-auto mt-5 h-0.5 w-12 rounded-full bg-primary md:w-16" />
-        </motion.div>
+          <div className="mx-auto mt-5 h-0.5 w-12 rounded-full bg-primary md:w-16" />
+        </div>
 
         {/* Two business pillars */}
-        <motion.div className="grid gap-5 md:grid-cols-2 md:gap-8">
+        <div className="grid gap-5 md:grid-cols-2 md:gap-8">
           {SHOP_PATHS.map((path) => (
             <Link
               key={path.id}
               href={path.href}
               className="group relative flex flex-col overflow-hidden rounded-[1.75rem] border border-outline bg-surface-bright p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-xl hover:shadow-black/[0.06] active:scale-[0.99] md:rounded-[2rem] md:p-8"
             >
-              <motion.div
+              <div
                 className={`absolute inset-0 bg-gradient-to-br ${path.accent} opacity-60 transition-opacity group-hover:opacity-100`}
               />
-              <motion.div className="relative z-10 flex flex-1 flex-col">
-                <motion.div className="mb-5 flex items-start justify-between gap-4">
+              <div className="relative z-10 flex flex-1 flex-col">
+                <div className="mb-5 flex items-start justify-between gap-4">
                   <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-outline">
                     <span className="material-symbols-outlined text-3xl text-primary icon-filled">
                       {path.icon}
@@ -88,7 +88,7 @@ export default function HomeShopSection() {
                   <span className="font-label text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
                     {path.tagline}
                   </span>
-                </motion.div>
+                </div>
 
                 <h3 className="font-headline text-2xl tracking-tight text-on-surface transition-colors group-hover:text-primary md:text-3xl">
                   {path.title}
@@ -114,21 +114,21 @@ export default function HomeShopSection() {
                     arrow_forward
                   </span>
                 </span>
-              </motion.div>
+              </div>
             </Link>
           ))}
-        </motion.div>
+        </div>
 
         {/* Featured AC strip */}
-        <motion.div className="mt-6 overflow-hidden rounded-2xl border border-outline bg-surface-bright md:mt-8 md:rounded-[1.75rem]">
-          <motion.div className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between md:p-6">
-            <motion.div className="flex min-w-0 items-center gap-4">
+        <div className="mt-6 overflow-hidden rounded-2xl border border-outline bg-surface-bright md:mt-8 md:rounded-[1.75rem]">
+          <div className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between md:p-6">
+            <div className="flex min-w-0 items-center gap-4">
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-container">
                 <span className="material-symbols-outlined text-2xl text-primary icon-filled">
                   ac_unit
                 </span>
               </span>
-              <motion.div>
+              <div>
                 <p className="font-label text-[10px] font-black uppercase tracking-widest text-primary">
                   Now available
                 </p>
@@ -138,8 +138,8 @@ export default function HomeShopSection() {
                 <p className="mt-0.5 font-body text-sm text-on-surface-variant">
                   Split & inverter models · Installation included · Patna delivery
                 </p>
-              </motion.div>
-            </motion.div>
+              </div>
+            </div>
             <Link
               href={`${SHOP_APPLIANCES_HREF}/ac`}
               className="inline-flex h-11 shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-primary px-6 font-label text-xs font-black uppercase tracking-widest text-on-primary shadow-md shadow-primary/20 transition-all hover:brightness-110 active:scale-[0.98] md:self-center"
@@ -147,13 +147,13 @@ export default function HomeShopSection() {
               View AC range
               <span className="material-symbols-outlined text-base">arrow_forward</span>
             </Link>
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
 
         {/* Trust row */}
-        <motion.div className="mt-8 flex gap-3 overflow-x-auto pb-1 no-scrollbar md:mt-10 md:grid md:grid-cols-4 md:gap-4 md:overflow-visible">
+        <div className="mt-8 flex gap-3 overflow-x-auto pb-1 no-scrollbar md:mt-10 md:grid md:grid-cols-4 md:gap-4 md:overflow-visible">
           {TRUST_POINTS.map(({ icon, label }) => (
-            <motion.div
+            <div
               key={label}
               className="flex min-w-[140px] shrink-0 items-center gap-2.5 rounded-xl border border-outline bg-surface-bright px-4 py-3 md:min-w-0"
             >
@@ -161,12 +161,12 @@ export default function HomeShopSection() {
               <span className="font-label text-[11px] font-bold uppercase tracking-wide text-on-surface">
                 {label}
               </span>
-            </motion.div>
+            </div>
           ))}
-        </motion.div>
+        </div>
 
         {/* Bottom links */}
-        <motion.div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4 md:mt-10">
+        <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4 md:mt-10">
           <Link
             href={SHOP_SPARE_PARTS_HREF}
             className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border-2 border-outline bg-surface-bright px-8 font-label text-xs font-black uppercase tracking-widest text-on-surface transition-all hover:border-primary/30 hover:text-primary active:scale-[0.98]"
@@ -181,8 +181,8 @@ export default function HomeShopSection() {
             <span className="material-symbols-outlined text-lg">post_add</span>
             Post a requirement
           </Link>
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
     </section>
   );
 }
