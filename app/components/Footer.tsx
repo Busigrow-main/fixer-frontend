@@ -5,7 +5,7 @@ const LEGAL_LINKS = ["Privacy Policy", "Terms of Service"];
 
 export default function Footer() {
   return (
-    <footer className="bg-zinc-50 border-t border-zinc-200">
+    <footer className="bg-zinc-50 border-t border-zinc-200 max-md:pb-mobile-footer">
       <div className="max-w-screen-2xl mx-auto px-6 md:px-10 pt-8 md:pt-12 pb-6 md:pb-8">
         
         {/* Main Footer Content */}

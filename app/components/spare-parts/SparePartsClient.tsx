@@ -226,7 +226,7 @@ export default function SparePartsClient({
         <div className="flex-1 flex flex-col min-w-0">
           {/* LANDING STATE */}
           {!activeType && !searchInput && (
-            <div className="flex-1 pb-20">
+            <div className="flex-1 pb-mobile-nav">
               {/* IndiaMartHero already has its own integrated search bar */}
               <IndiaMartHero />
 

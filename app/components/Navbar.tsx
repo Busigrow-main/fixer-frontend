@@ -6,26 +6,43 @@ import { usePathname, useRouter } from "next/navigation";
 import { useBooking } from "@/app/context/BookingContext";
 import { useAuth } from "@/app/context/AuthContext";
 import { SERVICES } from "@/app/lib/services";
+import {
+  isAppliancesShopRoute,
+  isShopRoute,
+  isSparePartsShopRoute,
+  SHOP_APPLIANCES_HREF,
+  SHOP_SPARE_PARTS_HREF,
+} from "@/app/lib/shop-routes";
+import { MobileBottomNav } from "@/app/components/MobileBottomNav";
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "Services", href: "/services" },
-  { label: "Spare Parts", href: "/spare-parts" },
   { label: "My Bookings", href: "/my-bookings" },
 ] as const;
 
-/* ── Bottom nav items (mobile only) ── */
-const BOTTOM_NAV = [
-  { label: "Home", icon: "home", href: "/" },
-  { label: "Services", icon: "home_repair_service", href: "/services" },
-  // center slot — Book — rendered separately
-  { label: "Spare Parts", icon: "storefront", href: "/spare-parts" },
-  { label: "My Bookings", icon: "event_note", href: "/my-bookings" },
+const SHOP_DRAWER_OPTIONS = [
+  {
+    label: "Spare Parts",
+    description: "OEM catalog & verified parts",
+    icon: "build_circle",
+    href: SHOP_SPARE_PARTS_HREF,
+    isActive: isSparePartsShopRoute,
+  },
+  {
+    label: "Appliances",
+    description: "Air conditioners & more",
+    icon: "ac_unit",
+    href: SHOP_APPLIANCES_HREF,
+    isActive: isAppliancesShopRoute,
+  },
 ] as const;
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [globalSearchQuery, setGlobalSearchQuery] = useState("");
+  const [shopDrawerOpen, setShopDrawerOpen] = useState(false);
+  const [desktopShopOpen, setDesktopShopOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const { openBooking, isOpen: isBookingOpen } = useBooking();
@@ -64,7 +81,7 @@ export default function Navbar() {
     if (isBookingOpen) return "Book";
     if (pathname === "/") return "Home";
     if (pathname.startsWith("/services")) return "Services";
-    if (pathname.startsWith("/spare-parts")) return "Spare Parts";
+    if (isShopRoute(pathname)) return "Shop";
     if (pathname === "/my-bookings") return "My Bookings";
     return "";
   })();
@@ -75,6 +92,11 @@ export default function Navbar() {
     onScroll();
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  useEffect(() => {
+    setShopDrawerOpen(false);
+    setDesktopShopOpen(false);
+  }, [pathname]);
 
   const handleGlobalSearchSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -119,6 +141,62 @@ export default function Navbar() {
                   </Link>
                 </li>
               ))}
+              <li className="relative">
+                <button
+                  type="button"
+                  onClick={() => setDesktopShopOpen((open) => !open)}
+                  className={`relative font-label text-sm uppercase tracking-wider font-medium transition-colors ${
+                    isShopRoute(pathname)
+                      ? "text-zinc-900"
+                      : "text-zinc-500 hover:text-zinc-900"
+                  }`}
+                  aria-expanded={desktopShopOpen}
+                  aria-haspopup="true"
+                >
+                  Shop
+                  <span
+                    className={`material-symbols-outlined text-base align-middle ml-1 transition-transform ${
+                      desktopShopOpen ? "rotate-180" : ""
+                    }`}
+                  >
+                    expand_more
+                  </span>
+                </button>
+                {desktopShopOpen && (
+                  <>
+                    <button
+                      type="button"
+                      className="fixed inset-0 z-40 cursor-default"
+                      aria-label="Close shop menu"
+                      onClick={() => setDesktopShopOpen(false)}
+                    />
+                    <div className="absolute left-0 top-full mt-3 z-50 w-64 rounded-2xl border border-outline bg-white shadow-xl p-2 overflow-hidden">
+                      {SHOP_DRAWER_OPTIONS.map((option) => (
+                        <Link
+                          key={option.label}
+                          href={option.href}
+                          onClick={() => setDesktopShopOpen(false)}
+                          className={`flex items-start gap-3 rounded-xl px-3 py-3 transition-colors ${
+                            option.isActive(pathname)
+                              ? "bg-primary-container text-on-primary-container"
+                              : "hover:bg-surface-container"
+                          }`}
+                        >
+                          <span className="material-symbols-outlined text-xl mt-0.5">
+                            {option.icon}
+                          </span>
+                          <span>
+                            <span className="block text-sm font-bold">{option.label}</span>
+                            <span className="block text-xs text-on-surface-variant mt-0.5">
+                              {option.description}
+                            </span>
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </li>
             </ul>
           </div>
 
@@ -281,97 +359,12 @@ export default function Navbar() {
         )}
       </header>
 
-      {/* ════════════════════════════════════════
-          MOBILE — Bottom navigation bar
-      ════════════════════════════════════════ */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50">
-        <div className="bg-white border-t border-outline-variant/30 px-1 pb-safe shadow-[0_-8px_30px_rgba(0,0,0,0.05)]">
-          <div className="relative h-16 grid grid-cols-5 items-center">
-              {BOTTOM_NAV.slice(0, 2).map(({ label, icon, href }) => (
-                <BottomTab
-                  key={label}
-                  label={label}
-                  icon={icon}
-                  href={href}
-                  active={activeTab === label}
-                  onClick={() => {}}
-                />
-              ))}
-
-              {/* Center spacer keeps side tabs perfectly balanced */}
-              <div className="h-full" />
-
-              {/* ── Center: BOOK button (Elevated) ── */}
-              <div className="absolute left-1/2 -translate-x-1/2 -top-6 flex flex-col items-center">
-                <button
-                  onClick={() => openBooking()}
-                  className={`w-14 h-14 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/30
-                    border-[3px] border-white transition-all duration-200 active:scale-95
-                    ${activeTab === "Book" ? "shadow-primary/40 bg-zinc-900" : "hover:scale-105"}`}
-                >
-                  <span className="material-symbols-outlined icon-filled text-white text-2xl">
-                    calendar_add_on
-                  </span>
-                </button>
-                <span
-                  className={`text-[9px] font-bold uppercase tracking-wider mt-1 ${
-                    activeTab === "Book" ? "text-primary" : "text-zinc-500"
-                  }`}
-                >
-                  Book
-                </span>
-              </div>
-
-              {/* Right two items */}
-              {BOTTOM_NAV.slice(2).map(({ label, icon, href }) => (
-                <BottomTab
-                  key={label}
-                  label={label}
-                  icon={icon}
-                  href={href}
-                  active={activeTab === label}
-                  onClick={() => {}}
-                />
-            ))}
-          </div>
-        </div>
-      </nav>
+      <MobileBottomNav
+        activeTab={activeTab}
+        shopOpen={shopDrawerOpen}
+        onShopOpenChange={setShopDrawerOpen}
+        onBook={() => openBooking()}
+      />
     </>
-  );
-}
-
-/* ── Bottom tab item ── */
-function BottomTab({
-  label,
-  icon,
-  href,
-  active,
-  onClick,
-}: {
-  label: string;
-  icon: string;
-  href: string;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <Link
-      href={href}
-      onClick={onClick}
-      className={`flex w-full flex-col items-center justify-center gap-0.5 px-1 h-full transition-all duration-200 ${
-        active ? "text-primary" : "text-zinc-500"
-      }`}
-    >
-      <span
-        className={`material-symbols-outlined text-[20px] transition-all duration-200 ${
-          active ? "icon-filled scale-110" : ""
-        }`}
-      >
-        {icon}
-      </span>
-      <span className="text-[9px] font-bold uppercase tracking-wider">
-        {label}
-      </span>
-    </Link>
   );
 }

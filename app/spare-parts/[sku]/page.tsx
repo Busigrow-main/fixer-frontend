@@ -61,7 +61,7 @@ export default async function PartDetailPage(props: {
   const discount = part.mrp ? Math.round((1 - part.price / part.mrp) * 100) : 0;
 
   return (
-    <div className="flex flex-col min-h-screen bg-white pb-24 md:pb-0">
+    <div className="flex flex-col min-h-screen bg-white pb-mobile-cta md:pb-0">
       <Navbar />
 
       <main className="flex-1 pt-4 md:pt-20 container mx-auto px-4 max-w-6xl">
@@ -256,7 +256,7 @@ export default async function PartDetailPage(props: {
       </main>
 
       {/* Mobile Sticky CTA Trio - IndiaMART Style */}
-      <div className="md:hidden fixed bottom-16 left-0 right-0 p-3 bg-white border-t border-zinc-100 grid grid-cols-3 gap-2.5 z-40 pb-safe shadow-[0_-8px_30px_rgba(0,0,0,0.1)]">
+      <div className="md:hidden fixed left-0 right-0 p-3 bg-white border-t border-zinc-100 grid grid-cols-3 gap-2.5 z-40 mobile-bottom-cta shadow-[0_-8px_30px_rgba(0,0,0,0.1)]">
         <a 
           href="tel:+919999999999"
           className="min-w-0 h-12 border-2 border-primary text-primary font-black text-[10px] uppercase tracking-widest rounded-lg flex flex-col items-center justify-center leading-none gap-1 active:bg-primary/5 transition-all"

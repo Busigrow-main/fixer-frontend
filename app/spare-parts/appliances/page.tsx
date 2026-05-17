@@ -39,7 +39,7 @@ const APPLIANCE_CATEGORIES = [
 
 export default function AppliancesPage() {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-gray-50 to-white py-8 pb-24 md:pb-12">
+    <main className="min-h-screen bg-gradient-to-b from-gray-50 to-white py-8 pb-mobile-nav md:pb-12">
       <div className="container mx-auto px-4 max-w-6xl">
         {/* Breadcrumb */}
         <nav className="mb-8 flex items-center gap-2 text-sm text-gray-600 flex-wrap">
