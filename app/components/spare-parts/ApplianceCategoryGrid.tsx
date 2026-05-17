@@ -3,6 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { cn } from '@/app/lib/utils';
+import { AC_SERVICE_IMAGE } from '@/app/lib/services';
 import { ChevronRight } from 'lucide-react';
 
 // High-quality Unsplash images keyed by appliance slug/icon
@@ -11,8 +12,8 @@ const APPLIANCE_IMAGES: Record<string, string> = {
   'refrigerator':     'https://images.unsplash.com/photo-1584568694244-14fbdf83bd30?q=80&w=800&auto=format&fit=crop',
   'washing-machine':  'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?q=80&w=800&auto=format&fit=crop',
   'microwave':        'https://images.unsplash.com/photo-1574269909862-7e1d70bb8078?q=80&w=800&auto=format&fit=crop',
-  'ac':               'https://images.unsplash.com/photo-1585771724684-38269d6639fd?q=80&w=800&auto=format&fit=crop',
-  'air-conditioner':  'https://images.unsplash.com/photo-1585771724684-38269d6639fd?q=80&w=800&auto=format&fit=crop',
+  ac: AC_SERVICE_IMAGE,
+  "air-conditioner": AC_SERVICE_IMAGE,
   'television':       'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?q=80&w=800&auto=format&fit=crop',
   'tv':               'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?q=80&w=800&auto=format&fit=crop',
   'water-purifier':   'https://images.unsplash.com/photo-1622372738946-62e02505f2b1?q=80&w=800&auto=format&fit=crop',
