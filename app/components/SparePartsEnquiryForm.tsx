@@ -140,7 +140,7 @@ export default function SparePartsEnquiryForm({
           );
         }
 
-        router.push("/my-bookings?success=true");
+        router.push("/my-bookings?success=true&tab=parts");
         return;
       } catch (e: unknown) {
         console.error(e);
@@ -185,7 +185,7 @@ export default function SparePartsEnquiryForm({
         );
       }
 
-      router.push("/my-bookings?success=true");
+      router.push("/my-bookings?success=true&tab=appliances");
     } catch (e: unknown) {
       console.error(e);
       setError(
