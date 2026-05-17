@@ -7,7 +7,8 @@ import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 import { useAuth } from "@/app/context/AuthContext";
 import { API_URL } from "@/app/config";
-import { openPartBill, openRetailInvoice } from "@/app/admin/utils/jobsheet";
+import { openRetailInvoice } from "@/app/admin/utils/jobsheet";
+import { openOrderInvoice } from "@/app/admin/utils/order-invoice";
 import { SHOP_APPLIANCES_HREF } from "@/app/lib/shop-routes";
 
 type TabType = "repairs" | "parts" | "appliances";
@@ -516,8 +517,25 @@ function ApplianceEnquiryCard({ order }: { order: any }) {
             </ul>
           </div>
         </div>
+
+        {order.isBilled && (
+          <OrderInvoiceButton order={order} label="Download Invoice" />
+        )}
       </div>
     </article>
+  );
+}
+
+function OrderInvoiceButton({ order, label }: { order: any; label: string }) {
+  return (
+    <button
+      type="button"
+      onClick={() => openOrderInvoice(order)}
+      className="w-full h-11 rounded-xl bg-primary text-on-primary text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:scale-[0.98] transition-all shadow-lg shadow-primary/20"
+    >
+      <span className="material-symbols-outlined text-lg">receipt_long</span>
+      {label}
+    </button>
   );
 }
 
@@ -637,15 +655,10 @@ function ItemsBlock({ order, showInvoice }: { order: any; showInvoice?: boolean 
         </div>
       )}
 
-      {showInvoice && order.status === "DELIVERED" && (
-        <button
-          type="button"
-          onClick={() => openPartBill(order)}
-          className="mt-6 w-full h-11 rounded-xl bg-primary text-on-primary text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:scale-[0.98] transition-all shadow-lg shadow-primary/20"
-        >
-          <span className="material-symbols-outlined text-lg">receipt_long</span>
-          Download Parts Invoice
-        </button>
+      {showInvoice && order.isBilled && (
+        <div className="mt-6">
+          <OrderInvoiceButton order={order} label="Download Invoice" />
+        </div>
       )}
     </div>
   );
