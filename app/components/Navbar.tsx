@@ -44,9 +44,16 @@ export default function Navbar() {
       return service ? service.name : "Detail";
     }
     if (pathname === "/spare-parts") return "Spare Parts";
+    // Appliance sub-routes
+    if (pathname === "/spare-parts/appliances") return "Appliances";
+    if (pathname === "/spare-parts/appliances/ac") return "Air Conditioners";
+    if (pathname.startsWith("/spare-parts/appliances/ac/")) return "AC Details";
+    if (pathname.startsWith("/spare-parts/appliances/")) return "Appliances";
+    // Generic spare-parts sub-routes
     if (pathname.startsWith("/spare-parts/")) {
       const slug = pathname.split("/").pop();
       if (slug === "enquiry") return "Part Enquiry";
+      if (slug === "verified") return "Verified Parts";
       return "Part Detail";
     }
     if (pathname === "/my-bookings") return "My Bookings";
@@ -275,46 +282,11 @@ export default function Navbar() {
       </header>
 
       {/* ════════════════════════════════════════
-          MOBILE — Bottom navigation bar (Urban Company / IndiaMART style)
+          MOBILE — Bottom navigation bar
       ════════════════════════════════════════ */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50">
         <div className="bg-white border-t border-outline-variant/30 px-1 pb-safe shadow-[0_-8px_30px_rgba(0,0,0,0.05)]">
-          {pathname.startsWith("/spare-parts") ? (
-            /* ── IndiaMART Style Bottom Nav (3 items) ── */
-            <div className="h-16 grid grid-cols-3 items-center">
-              <BottomTab
-                label="Login"
-                icon="account_circle"
-                href="/login"
-                active={pathname === "/login"}
-                onClick={() => {}}
-              />
-              <Link
-                href="/spare-parts/enquiry"
-                className="relative flex flex-col items-center justify-center gap-0.5 h-full group active:scale-95 transition-all"
-              >
-                <div className="relative">
-                  <span className="material-symbols-outlined text-[24px] text-zinc-600 group-hover:text-primary transition-colors">
-                    post_add
-                  </span>
-                  <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary rounded-full border-2 border-white shadow-sm" />
-                </div>
-                <span className="text-[9px] font-black uppercase tracking-wider text-zinc-600 group-hover:text-primary transition-colors">
-                  Post Requirement
-                </span>
-              </Link>
-              <BottomTab
-                label="Verified Exporters"
-                icon="public"
-                href="/spare-parts/verified"
-                active={pathname === "/spare-parts/verified"}
-                onClick={() => {}}
-              />
-            </div>
-          ) : (
-            /* ── Standard Bottom Nav (5 items) ── */
-            <div className="relative h-16 grid grid-cols-5 items-center">
-              {/* Left two items */}
+          <div className="relative h-16 grid grid-cols-5 items-center">
               {BOTTOM_NAV.slice(0, 2).map(({ label, icon, href }) => (
                 <BottomTab
                   key={label}
@@ -360,9 +332,8 @@ export default function Navbar() {
                   active={activeTab === label}
                   onClick={() => {}}
                 />
-              ))}
-            </div>
-          )}
+            ))}
+          </div>
         </div>
       </nav>
     </>
