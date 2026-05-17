@@ -12,7 +12,8 @@ const NAV_ITEMS = [
   { href: "/admin/technicians", icon: "engineering", label: "Technicians" },
   { href: "/admin/spare-parts", icon: "build", label: "Spare Parts" },
   { href: "/admin/spare-parts/bulk-upload", icon: "upload_file", label: "Bulk Upload" },
-  { href: "/admin/orders", icon: "local_shipping", label: "Part Orders" },
+  { href: "/admin/orders", icon: "package_2", label: "Spare Part Orders" },
+  { href: "/admin/appliance-orders", icon: "ac_unit", label: "Appliance Orders" },
   { href: "/admin/users", icon: "group", label: "Users" },
 ];
 
