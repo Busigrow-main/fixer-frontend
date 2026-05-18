@@ -98,13 +98,11 @@ export default function Hero() {
               mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
             }`}
           >
-            India&apos;s trusted platform for appliance repair.{" "}
+            India&apos;s trusted platform for appliance repair, genuine spare
+            parts, and home appliances with installation.{" "}
             <span className="font-bold text-on-surface">60-day warranty</span> &{" "}
-            <span className="font-bold text-on-surface">
-              Appliance Insurance
-            </span>{" "}
-            included. Free service charge for a year & up to 50% off on every
-            spare part.
+            <span className="font-bold text-on-surface">Appliance Insurance</span>{" "}
+            included — free service for a year and up to 50% off on spare parts.
           </p>
 
           {/* CTAs */}
@@ -124,13 +122,11 @@ export default function Hero() {
               <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
             </button>
             <Link
-              href="/services"
+              href="#shop"
               className="bg-white text-on-surface border-2 border-outline px-8 h-14 rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-all duration-200 hover:bg-surface-container hover:border-primary/20 hover:scale-[0.97] active:scale-95"
             >
-              <span className="material-symbols-outlined text-xl">
-                grid_view
-              </span>
-              <span>View Categories</span>
+              <span className="material-symbols-outlined text-xl">storefront</span>
+              <span>Shop Parts & Appliances</span>
             </Link>
           </div>
 

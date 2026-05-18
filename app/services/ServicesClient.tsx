@@ -4,31 +4,7 @@ import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useBooking } from "@/app/context/BookingContext";
-
-// ── Curated appliance-specific images ──────────────────────────────
-// These override whatever is stored in the DB so we always show the
-// correct, high-quality photo for each service type.
-const SERVICE_IMAGES: Record<string, string> = {
-  // A technician inspecting the inside of a fridge
-  refrigerator:
-    "https://images.unsplash.com/photo-1584568694244-14fbdf83bd30?q=80&w=1200&auto=format&fit=crop",
-  // Modern front-loader washing machine drum
-  "washing-machine":
-    "https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?q=80&w=1200&auto=format&fit=crop",
-  // Clean countertop microwave oven (stainless)
-  microwave:
-    "https://images.unsplash.com/photo-1574269909862-7e1d70bb8078?q=80&w=1200&auto=format&fit=crop",
-  // Wall-mounted split AC unit in a bright room
-  ac:
-    "https://images.unsplash.com/photo-1585771724684-38269d6639fd?q=80&w=1200&auto=format&fit=crop",
-  // Generic electronics technician fallback
-  default:
-    "https://images.unsplash.com/photo-1621905251918-44b7a1d1ccf6?q=80&w=1200&auto=format&fit=crop",
-};
-
-function getServiceImage(slug: string): string {
-  return SERVICE_IMAGES[slug] ?? SERVICE_IMAGES["default"];
-}
+import { getServiceImage } from "@/app/lib/services";
 
 interface ServicesClientProps {
   initialServices?: any[];
