@@ -61,7 +61,7 @@ export default async function PartDetailPage(props: {
   const discount = part.mrp ? Math.round((1 - part.price / part.mrp) * 100) : 0;
 
   return (
-    <div className="flex flex-col min-h-screen bg-white pb-24 md:pb-0">
+    <div className="flex flex-col min-h-screen bg-white pb-mobile-cta md:pb-0">
       <Navbar />
 
       <main className="flex-1 pt-4 md:pt-20 container mx-auto px-4 max-w-6xl">
@@ -256,10 +256,10 @@ export default async function PartDetailPage(props: {
       </main>
 
       {/* Mobile Sticky CTA Trio - IndiaMART Style */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 p-3 bg-white border-t border-zinc-100 flex gap-2 z-50 pb-safe shadow-[0_-8px_30px_rgba(0,0,0,0.1)]">
+      <div className="md:hidden fixed left-0 right-0 p-3 bg-white border-t border-zinc-100 grid grid-cols-3 gap-2.5 z-40 mobile-bottom-cta shadow-[0_-8px_30px_rgba(0,0,0,0.1)]">
         <a 
           href="tel:+919999999999"
-          className="flex-1 h-12 border-2 border-primary text-primary font-black text-[10px] uppercase tracking-widest rounded-lg flex flex-col items-center justify-center leading-none gap-1 active:bg-primary/5 transition-all"
+          className="min-w-0 h-12 border-2 border-primary text-primary font-black text-[10px] uppercase tracking-widest rounded-lg flex flex-col items-center justify-center leading-none gap-1 active:bg-primary/5 transition-all"
         >
           <Phone className="w-4 h-4" />
           Call
@@ -268,14 +268,14 @@ export default async function PartDetailPage(props: {
           href={`https://wa.me/919999999999?text=I'm%20interested%20in%20${encodeURIComponent(part.name)}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex-1 h-12 bg-[#25D366] text-white font-black text-[10px] uppercase tracking-widest rounded-lg flex flex-col items-center justify-center leading-none gap-1 active:brightness-90 transition-all"
+          className="min-w-0 h-12 bg-[#25D366] text-white font-black text-[10px] uppercase tracking-widest rounded-lg flex flex-col items-center justify-center leading-none gap-1 active:brightness-90 transition-all"
         >
           <MessageCircle className="w-4 h-4" />
           WhatsApp
         </a>
         <Link 
           href={`/spare-parts/enquiry?part=${part._id}`}
-          className="flex-[2] h-12 bg-primary text-white font-black text-[11px] uppercase tracking-widest rounded-lg flex flex-col items-center justify-center leading-none gap-1 shadow-lg shadow-primary/20 active:brightness-110 transition-all"
+          className="min-w-0 h-12 bg-primary text-white font-black text-[10px] uppercase tracking-widest rounded-lg flex flex-col items-center justify-center leading-none gap-1 shadow-lg shadow-primary/20 active:brightness-110 transition-all"
         >
           <Mail className="w-4 h-4" />
           Enquire Now

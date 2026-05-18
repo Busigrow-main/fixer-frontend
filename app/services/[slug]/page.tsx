@@ -6,6 +6,7 @@ import Footer from "@/app/components/Footer";
 import BookingForm from "@/app/components/BookingForm";
 import BookRepairButton from "./BookRepairButton";
 import { notFound } from "next/navigation";
+import { getServiceImage } from "@/app/lib/services";
 
 export default async function ServiceDetail({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -72,7 +73,7 @@ export default async function ServiceDetail({ params }: { params: Promise<{ slug
             <div className="w-full lg:w-1/2 relative">
                <div className="relative rounded-[2rem] md:rounded-[3rem] overflow-hidden aspect-[1.2/1] md:aspect-[4/5] shadow-2xl shadow-black/10">
                   <Image 
-                    src={service.image} 
+                    src={getServiceImage(service.slug)} 
                     alt={service.title} 
                     fill 
                     className="object-cover"
