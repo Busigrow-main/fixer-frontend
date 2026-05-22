@@ -2,8 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/app/context/AuthContext";
+import { useBooking } from "@/app/context/BookingContext";
 import { useRouter } from "next/navigation";
 import { API_URL } from "@/app/config";
+import {
+  savePendingBookingDraft,
+  BOOKING_FLOW_SOURCE,
+  safeAppRedirect,
+} from "@/app/lib/pending-booking";
 
 interface BookingFormProps {
   initialServiceSlug?: string;
@@ -14,6 +20,7 @@ interface BookingFormProps {
 export default function BookingForm({ initialServiceSlug, onSuccess, className = "" }: BookingFormProps) {
   const { user, token } = useAuth();
   const router = useRouter();
+  const { resumeDraft, clearResumeDraft, closeBooking } = useBooking();
 
   const [services, setServices] = useState<any[]>([]);
   const [formData, setFormData] = useState({
@@ -65,6 +72,22 @@ export default function BookingForm({ initialServiceSlug, onSuccess, className =
     }
   }, [user]);
 
+  // Apply one-shot resume from pending booking (after auth → "Edit details").
+  useEffect(() => {
+    if (!resumeDraft || services.length === 0) return;
+    setFormData((prev) => ({
+      ...prev,
+      serviceId: resumeDraft.serviceId,
+      subCategoryId: resumeDraft.subCategoryId,
+      name: resumeDraft.name || prev.name,
+      phone: resumeDraft.phone || prev.phone,
+      zip: resumeDraft.zip,
+      address: resumeDraft.address,
+      description: resumeDraft.description,
+    }));
+    clearResumeDraft();
+  }, [resumeDraft, services.length, clearResumeDraft]);
+
   const selectedServiceData = services.find(s => s._id === formData.serviceId);
   const selectedSubCategory = selectedServiceData?.subCategories?.find((sc: any) => sc._id === formData.subCategoryId);
 
@@ -73,7 +96,26 @@ export default function BookingForm({ initialServiceSlug, onSuccess, className =
     setError("");
 
     if (!user || !token) {
-      router.push(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
+      const returnPath = safeAppRedirect(
+        `${window.location.pathname}${window.location.search}`,
+        "/",
+      );
+      savePendingBookingDraft({
+        serviceId: formData.serviceId,
+        subCategoryId: formData.subCategoryId,
+        serviceSlug: selectedServiceData?.slug,
+        serviceName: selectedServiceData?.name,
+        subCategoryName: selectedSubCategory?.name,
+        name: formData.name,
+        phone: formData.phone,
+        zip: formData.zip,
+        address: formData.address,
+        description: formData.description,
+        returnPath,
+      });
+      const loginUrl = `/login?redirect=${encodeURIComponent(returnPath)}&source=${BOOKING_FLOW_SOURCE}`;
+      closeBooking();
+      router.push(loginUrl);
       return;
     }
 
@@ -308,6 +350,12 @@ export default function BookingForm({ initialServiceSlug, onSuccess, className =
           </>
         )}
       </button>
+      {!user && (
+        <p className="text-center text-xs text-on-surface-variant -mt-2">
+          You&apos;ll sign in or create an account next — your details stay saved on this device until the booking is
+          confirmed.
+        </p>
+      )}
     </form>
   );
 }
