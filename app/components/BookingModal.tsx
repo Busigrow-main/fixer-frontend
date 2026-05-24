@@ -1,12 +1,22 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { useBooking } from "@/app/context/BookingContext";
 import BookingForm from "./BookingForm";
 
 export default function BookingModal() {
+  const pathname = usePathname();
   const { isOpen, closeBooking, selectedService } = useBooking();
   const [mounted, setMounted] = useState(false);
+
+  // Don’t leave the repair modal open on top of auth pages (e.g. after submit → login).
+  useEffect(() => {
+    if (!pathname) return;
+    if (pathname === "/login" || pathname === "/register") {
+      closeBooking();
+    }
+  }, [pathname, closeBooking]);
 
   // Handle ESC key to close
   useEffect(() => {

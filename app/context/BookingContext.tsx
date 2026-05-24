@@ -1,6 +1,8 @@
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import type { PendingBookingDraft } from "@/app/lib/pending-booking";
+import { loadPendingBookingDraft } from "@/app/lib/pending-booking";
 
 export interface PartInquiryItem {
   partId: string;
@@ -34,9 +36,13 @@ interface CreatePartInquiryInput {
 
 interface BookingContextType {
   isOpen: boolean;
-  selectedService: string; // The ID of the service (e.g., 'refrigerator')
+  selectedService: string; // Service slug for initial selection (e.g. refrigerator)
   openBooking: (serviceId?: string) => void;
   closeBooking: () => void;
+  /** One-shot form prefill after "Edit" on pending booking (session draft still holds full payload). */
+  resumeDraft: PendingBookingDraft | null;
+  clearResumeDraft: () => void;
+  openBookingResumeFromPending: () => boolean;
   partInquiries: PartInquiry[];
   createPartInquiry: (input: CreatePartInquiryInput) => string;
 }
@@ -46,6 +52,7 @@ const BookingContext = createContext<BookingContextType | undefined>(undefined);
 export function BookingProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedService, setSelectedService] = useState("");
+  const [resumeDraft, setResumeDraft] = useState<PendingBookingDraft | null>(null);
   const [partInquiries, setPartInquiries] = useState<PartInquiry[]>([]);
 
   React.useEffect(() => {
@@ -82,6 +89,20 @@ export function BookingProvider({ children }: { children: ReactNode }) {
     // closing animations where the content might still be visible.
   };
 
+  const clearResumeDraft = useCallback(() => {
+    setResumeDraft(null);
+  }, []);
+
+  /** Open booking modal and stage draft for BookingForm to merge once. */
+  const openBookingResumeFromPending = useCallback(() => {
+    const d = loadPendingBookingDraft();
+    if (!d) return false;
+    setResumeDraft(d);
+    if (d.serviceSlug) setSelectedService(d.serviceSlug);
+    setIsOpen(true);
+    return true;
+  }, []);
+
   const createPartInquiry = (input: CreatePartInquiryInput) => {
     const inquiryId = `PI-${Date.now().toString(36).toUpperCase()}`;
     const inquiry: PartInquiry = {
@@ -109,6 +130,9 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         selectedService,
         openBooking,
         closeBooking,
+        resumeDraft,
+        clearResumeDraft,
+        openBookingResumeFromPending,
         partInquiries,
         createPartInquiry,
       }}
