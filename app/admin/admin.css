@@ -315,6 +315,22 @@
   background: var(--admin-info-soft);
   color: var(--admin-info);
 }
+.admin-badge-success {
+  background: var(--admin-success-soft);
+  color: var(--admin-success);
+}
+.admin-badge-warning {
+  background: var(--admin-warning-soft);
+  color: var(--admin-warning);
+}
+.admin-badge-ghost {
+  background: var(--admin-surface-2);
+  color: var(--admin-text-muted);
+}
+.admin-badge-error {
+  background: var(--admin-error-soft);
+  color: var(--admin-error);
+}
 
 /* ─── Buttons ────────────────────────────────────────────────── */
 .admin-btn {
