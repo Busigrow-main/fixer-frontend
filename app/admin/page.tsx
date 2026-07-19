@@ -5,7 +5,11 @@ import { useAuth } from "@/app/context/AuthContext";
 
 interface DashboardStats {
   users: { total: number };
-  bookings: { total: number; byStatus: Record<string, number> };
+  bookings: {
+    total: number;
+    byStatus: Record<string, number>;
+    needsAdminAssignment?: number;
+  };
   spareParts: { total: number };
   orders: { total: number; byStatus: Record<string, number> };
 }
@@ -44,6 +48,14 @@ export default function AdminDashboardPage() {
   }
 
   const metrics = [
+    {
+      label: "Needs Assignment",
+      value: stats.bookings.needsAdminAssignment || 0,
+      icon: "assignment_late",
+      color: "var(--admin-warning)",
+      bg: "var(--admin-warning-soft)",
+      href: "/admin/bookings?status=NEEDS_ASSIGNMENT",
+    },
     {
       label: "Total Bookings",
       value: stats.bookings.total,
@@ -102,15 +114,29 @@ export default function AdminDashboardPage() {
 
       {/* Metric Cards */}
       <div className="admin-stats-grid" style={{ marginBottom: 32 }}>
-        {metrics.map((m) => (
-          <div key={m.label} className="admin-card admin-metric-card">
-            <div className="admin-metric-icon" style={{ background: m.bg, color: m.color }}>
-              <span className="material-symbols-outlined">{m.icon}</span>
+        {metrics.map((m) => {
+          const inner = (
+            <>
+              <div className="admin-metric-icon" style={{ background: m.bg, color: m.color }}>
+                <span className="material-symbols-outlined">{m.icon}</span>
+              </div>
+              <div className="admin-metric-value">{m.value.toLocaleString()}</div>
+              <div className="admin-metric-label">{m.label}</div>
+            </>
+          );
+          if ("href" in m && m.href) {
+            return (
+              <a key={m.label} href={m.href} style={{ textDecoration: "none", color: "inherit" }}>
+                <div className="admin-card admin-metric-card">{inner}</div>
+              </a>
+            );
+          }
+          return (
+            <div key={m.label} className="admin-card admin-metric-card">
+              {inner}
             </div>
-            <div className="admin-metric-value">{m.value.toLocaleString()}</div>
-            <div className="admin-metric-label">{m.label}</div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Status Breakdown */}

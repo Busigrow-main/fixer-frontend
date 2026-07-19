@@ -164,7 +164,8 @@ export default function BookingForm({ initialServiceSlug, onSuccess, className =
         </div>
         <h3 className="font-headline text-2xl text-on-surface mb-2">Request Received!</h3>
         <p className="text-on-surface-variant max-w-xs mx-auto text-sm">
-          A master technician will call you within <span className="font-bold text-on-surface">30 minutes</span> to confirm your slot.
+          Nearby technicians have been notified. Someone will pick up your request shortly — usually within{' '}
+          <span className="font-bold text-on-surface">10 minutes</span>.
         </p>
         <div className="mt-8 p-4 bg-primary/5 rounded-xl border border-primary/10 w-full">
            <p className="text-[10px] uppercase tracking-widest font-black text-primary mb-1">Service Warranty</p>
