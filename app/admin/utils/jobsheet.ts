@@ -36,12 +36,13 @@ export function openJobSheet(booking: any) {
     const rawPrice = p.sparePartId?.price || "0";
     const numericPrice = p.cost || parseFloat(String(rawPrice).match(/(\d+)/)?.[1] || "0");
     const subtotal = numericPrice * (p.quantity || 1);
+    const serial = p.serialNumber || "";
     
     return `
     <tr>
       <td class="lbl">${p.isThirdParty ? 'EXT' : p.sparePartId?.partNumber || ''}</td>
-      <td>${p.isThirdParty ? p.partName : p.sparePartId?.name || ''}</td>
-      <td>${p.isThirdParty ? p.vendor : p.sparePartId?.manufacturer || ''}</td>
+      <td>${p.isThirdParty ? p.partName : p.sparePartId?.name || p.partName || ''}${serial ? `<br><span class="lbl">S/N: ${serial}</span>` : ''}</td>
+      <td>${p.isThirdParty ? (p.vendor || '') : (p.sparePartId?.manufacturer || '')}${p.installedAt ? `<br><span class="lbl">Installed: ${new Date(p.installedAt).toLocaleDateString('en-IN')}</span>` : ''}</td>
       <td style="text-align:center;">${p.quantity || 1}</td>
       <td style="text-align:right;">${numericPrice}</td>
       <td style="text-align:right;">${subtotal.toFixed(2)}</td>

@@ -16,7 +16,10 @@ export default function AddPartModal({ bookingId, technicianId, token, onClose, 
     vendor: "",
     quantity: 1,
     cost: 0,
-    sparePartId: ""
+    sparePartId: "",
+    serialNumber: "",
+    installedAt: new Date().toISOString().slice(0, 10),
+    warrantyMonths: "" as string | number,
   });
 
   useEffect(() => {
@@ -51,13 +54,18 @@ export default function AddPartModal({ bookingId, technicianId, token, onClose, 
     }
   };
 
+  const selectedSpare = spareParts.find((sp) => sp._id === partData.sparePartId);
+  const catalogMonths = selectedSpare?.warrantyMonths;
+  const inventoryNeedsSerial =
+    !partData.isThirdParty &&
+    (catalogMonths == null ? true : Number(catalogMonths) > 0);
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     let targetVisitId = partData.visitId;
 
     try {
-      // 1. If NO visit exists, auto-create a "Service Visit"
       if (!targetVisitId) {
         const visitPayload = {
           bookingId,
@@ -67,7 +75,6 @@ export default function AddPartModal({ bookingId, technicianId, token, onClose, 
           scheduledDate: new Date().toISOString(),
           status: "COMPLETED"
         };
-        console.log("Creating automated visit with payload:", visitPayload);
         const vRes = await fetch(`${API}/admin/visits`, {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -76,7 +83,6 @@ export default function AddPartModal({ bookingId, technicianId, token, onClose, 
         
         if (!vRes.ok) {
           const errData = await vRes.json();
-          console.error("Visit creation failed:", errData);
           alert(`Failed to create visit: ${errData.message || "Unknown error"}`);
           setSaving(false);
           return;
@@ -86,16 +92,43 @@ export default function AddPartModal({ bookingId, technicianId, token, onClose, 
         targetVisitId = newVisit._id;
       }
 
-      console.log("Adding part to visit:", targetVisitId, partData);
+      if (inventoryNeedsSerial && !partData.serialNumber.trim()) {
+        alert("Serial number is required for warranty-covered inventory parts.");
+        setSaving(false);
+        return;
+      }
+
+      const body: any = {
+        isThirdParty: partData.isThirdParty,
+        quantity: partData.quantity,
+        cost: partData.cost,
+        serialNumber: partData.serialNumber.trim() || undefined,
+        installedAt: partData.installedAt
+          ? new Date(partData.installedAt).toISOString()
+          : undefined,
+      };
+
+      if (partData.isThirdParty) {
+        body.partName = partData.partName;
+        body.vendor = partData.vendor;
+        if (partData.serialNumber.trim() && partData.warrantyMonths) {
+          body.warrantyMonths = Number(partData.warrantyMonths);
+        }
+      } else {
+        body.sparePartId = partData.sparePartId;
+        if (partData.warrantyMonths) {
+          body.warrantyMonths = Number(partData.warrantyMonths);
+        }
+      }
+
       const res = await fetch(`${API}/admin/visits/${targetVisitId}/parts`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify(partData)
+        body: JSON.stringify(body)
       });
       
       if (!res.ok) {
         const errData = await res.json();
-        console.error("Part addition failed:", errData);
         alert(`Failed to add part: ${errData.message || "Unknown error"}`);
       } else {
         onAdded();
@@ -163,10 +196,16 @@ export default function AddPartModal({ bookingId, technicianId, token, onClose, 
                     <select 
                       required 
                       className="admin-input admin-select" 
+                      value={partData.sparePartId}
                       onChange={e => setPartData({...partData, sparePartId: e.target.value})}
                     >
                       <option value="">-- select part --</option>
-                      {spareParts.map(sp => <option key={sp._id} value={sp._id}>{sp.name} [₹{sp.price}] (In Stock: {sp.stockQuantity})</option>)}
+                      {spareParts.map(sp => (
+                        <option key={sp._id} value={sp._id}>
+                          {sp.name} [₹{sp.price}] (Stock: {sp.stock ?? sp.stockQuantity})
+                          {sp.warrantyMonths ? ` · ${sp.warrantyMonths}mo` : ''}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 ) : (
@@ -190,6 +229,41 @@ export default function AddPartModal({ bookingId, technicianId, token, onClose, 
                   <div>
                     <label className="admin-label">Cost (per unit)</label>
                     <input required type="number" className="admin-input" placeholder="₹" onChange={e => setPartData({...partData, cost: +e.target.value})} />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="admin-label">
+                    Part Serial {inventoryNeedsSerial ? '(required)' : '(optional)'}
+                  </label>
+                  <input
+                    className="admin-input"
+                    value={partData.serialNumber}
+                    onChange={e => setPartData({...partData, serialNumber: e.target.value.toUpperCase()})}
+                    placeholder="UNIT-SERIAL-001"
+                    required={inventoryNeedsSerial}
+                  />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                  <div>
+                    <label className="admin-label">Installation date</label>
+                    <input
+                      type="date"
+                      className="admin-input"
+                      value={partData.installedAt}
+                      onChange={e => setPartData({...partData, installedAt: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <label className="admin-label">Warranty months</label>
+                    <input
+                      type="number"
+                      min="0"
+                      className="admin-input"
+                      value={partData.warrantyMonths}
+                      placeholder={catalogMonths != null ? String(catalogMonths) : '6'}
+                      onChange={e => setPartData({...partData, warrantyMonths: e.target.value})}
+                    />
                   </div>
                 </div>
               </>
