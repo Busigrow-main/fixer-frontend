@@ -570,7 +570,28 @@ export function openRetailInvoice(booking: any) {
   if (printWindow) {
     printWindow.document.write(html);
     printWindow.document.close();
+    return;
   }
+
+  const blob = new Blob([html], { type: "text/html" });
+  const url = URL.createObjectURL(blob);
+  const frame = document.createElement("iframe");
+  frame.style.position = "fixed";
+  frame.style.right = "0";
+  frame.style.bottom = "0";
+  frame.style.width = "0";
+  frame.style.height = "0";
+  frame.style.border = "0";
+  frame.src = url;
+  document.body.appendChild(frame);
+  frame.onload = () => {
+    frame.contentWindow?.focus();
+    frame.contentWindow?.print();
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+      frame.remove();
+    }, 1000);
+  };
 }
 
 
