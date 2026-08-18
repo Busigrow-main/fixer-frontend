@@ -106,8 +106,11 @@ function MyBookingsContent() {
         alert("Warranty claim received! A new check-up booking has been created.");
         fetchAllHistory();
       } else {
-        const data = await res.json();
-        alert(data.message || "Could not claim warranty.");
+        const data = await res.json().catch(() => ({}));
+        const message = Array.isArray(data.message)
+          ? data.message.join(" ")
+          : data.message;
+        alert(message || "Could not claim warranty.");
       }
     } catch {
       alert("Network error.");
@@ -115,9 +118,19 @@ function MyBookingsContent() {
   };
 
   const getWarrantyStatus = (booking: any) => {
-    if (booking.status !== "COMPLETED" || !booking.warrantyExpiry) return null;
+    const finished =
+      booking.jobClosed ||
+      booking.status === "COMPLETED" ||
+      booking.status === "PAYMENT_COLLECTED";
+    if (!finished) return null;
 
-    const expiry = new Date(booking.warrantyExpiry);
+    const expiry = booking.warrantyExpiry
+      ? new Date(booking.warrantyExpiry)
+      : null;
+    if (!expiry) {
+      return { label: "Active (60 Days)", isActive: true };
+    }
+
     const now = new Date();
     const diffDays = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
@@ -411,7 +424,7 @@ function RepairBookingCard({
             )}
           </div>
 
-          {booking.status === "COMPLETED" && warranty?.isActive && (
+          {warranty?.isActive && !booking.claimBookingIds?.length && (
             <button
               type="button"
               onClick={() => onClaimWarranty(booking._id)}
@@ -422,7 +435,10 @@ function RepairBookingCard({
             </button>
           )}
 
-          {booking.isBilled && (
+          {(booking.isBilled ||
+            booking.jobClosed ||
+            booking.paymentStatus === "PAID_CASH" ||
+            booking.paymentStatus === "PAID_ONLINE") && (
             <button
               type="button"
               onClick={() => openRetailInvoice(booking)}
