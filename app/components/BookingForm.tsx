@@ -95,6 +95,11 @@ export default function BookingForm({ initialServiceSlug, onSuccess, className =
     e.preventDefault();
     setError("");
 
+    if (!selectedServiceData || !selectedSubCategory) {
+      setError("Please select a valid specific service before booking.");
+      return;
+    }
+
     if (!user || !token) {
       const returnPath = safeAppRedirect(
         `${window.location.pathname}${window.location.search}`,

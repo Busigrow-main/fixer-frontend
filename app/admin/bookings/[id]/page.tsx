@@ -208,17 +208,16 @@ export default function BookingDetailPage() {
   };
 
   const handleUpdateJobDetails = async () => {
-    const formEmpty = !Object.values(jobDetails).some(
-      (v) => typeof v === "string" && v.trim() && v.trim() !== "60 Days",
-    );
-    const serverHasContent = Boolean(
-      booking?.jobDetails &&
-        Object.values(booking.jobDetails).some(
-          (v: any) => typeof v === "string" && v.trim() && v.trim() !== "60 Days",
-        ),
-    );
-    if (formEmpty && serverHasContent) {
-      alert("Cannot save empty job sheet over existing technician entries. Refresh first.");
+    // Build diff: only send fields that differ from server state
+    const serverJob = booking?.jobDetails || {};
+    const changedFields: Record<string, string> = {};
+    for (const [key, value] of Object.entries(jobDetails)) {
+      if ((value || "") !== (serverJob[key] || "")) {
+        changedFields[key] = value as string;
+      }
+    }
+    if (Object.keys(changedFields).length === 0) {
+      alert("No changes to save.");
       return;
     }
     setUpdating(true);
@@ -226,7 +225,7 @@ export default function BookingDetailPage() {
       const res = await fetch(`${API}/admin/bookings/${id}/job-details`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify(jobDetails),
+        body: JSON.stringify(changedFields),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -277,13 +276,29 @@ export default function BookingDetailPage() {
   };
 
   const handleUpdateProductDetails = async () => {
+    const serverProd = booking?.productDetails || {};
+    const changedFields: Record<string, string> = {};
+    for (const [key, value] of Object.entries(productDetails)) {
+      if ((value || "") !== (serverProd[key] || "")) {
+        changedFields[key] = value as string;
+      }
+    }
+    if (Object.keys(changedFields).length === 0) {
+      alert("No changes to save.");
+      return;
+    }
     setUpdating(true);
     try {
-      await fetch(`${API}/admin/bookings/${id}/product-details`, {
+      const res = await fetch(`${API}/admin/bookings/${id}/product-details`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify(productDetails),
+        body: JSON.stringify(changedFields),
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.message || "Failed to save product details.");
+        return;
+      }
       fetchBookingInfo();
       alert("Product details saved.");
     } catch (err) {
@@ -342,14 +357,30 @@ export default function BookingDetailPage() {
 
   const liveFromTech =
     ["EN_ROUTE", "IN_PROGRESS"].includes(booking.status) && !booking.isBilled;
-  const sheetReadOnly = Boolean(booking.isBilled || liveFromTech);
+  const sheetLocked = Boolean(booking.sheetLockedAt);
+  const sheetReadOnly = Boolean(booking.isBilled || liveFromTech || sheetLocked);
   const lastSheetUpdate = booking.jobSheetUpdatedAt
     ? new Date(booking.jobSheetUpdatedAt).toLocaleTimeString()
     : null;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24, padding: "0 8px", maxWidth: 900 }}>
-      {liveFromTech ? (
+      {sheetLocked && (
+        <div
+          style={{
+            background: "rgba(220, 38, 38, 0.08)",
+            border: "1px solid rgba(220, 38, 38, 0.3)",
+            color: "#991b1b",
+            padding: "12px 16px",
+            borderRadius: 10,
+            fontSize: 13,
+            fontWeight: 600,
+          }}
+        >
+          Sheet locked{booking.sheetLockedBy ? ` by ${booking.sheetLockedBy}` : ""} · editing disabled
+        </div>
+      )}
+      {liveFromTech && !sheetLocked ? (
         <div
           style={{
             background: "rgba(212, 143, 14, 0.12)",
