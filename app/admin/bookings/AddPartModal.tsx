@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/v1";
 
-export default function AddPartModal({ bookingId, technicianId, token, onClose, onAdded }: { bookingId: string, technicianId?: string, token: string, onClose: () => void, onAdded: () => void }) {
+export default function AddPartModal({ bookingId, technicianId, token, onClose, onAdded, originalParts = [] }: { bookingId: string, technicianId?: string, token: string, onClose: () => void, onAdded: () => void, originalParts?: any[] }) {
   const [visits, setVisits] = useState<any[]>([]);
   const [spareParts, setSpareParts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,6 +20,7 @@ export default function AddPartModal({ bookingId, technicianId, token, onClose, 
     serialNumber: "",
     installedAt: new Date().toISOString().slice(0, 10),
     warrantyMonths: "" as string | number,
+    replacedUsageId: "",
   });
 
   useEffect(() => {
@@ -108,6 +109,13 @@ export default function AddPartModal({ bookingId, technicianId, token, onClose, 
           : undefined,
       };
 
+      if (partData.replacedUsageId) {
+        body.replacedUsageId = partData.replacedUsageId;
+        if (originalParts.find((p) => p.usageId === partData.replacedUsageId && p.covered)) {
+          body.cost = 0;
+        }
+      }
+
       if (partData.isThirdParty) {
         body.partName = partData.partName;
         body.vendor = partData.vendor;
@@ -175,6 +183,40 @@ export default function AddPartModal({ bookingId, technicianId, token, onClose, 
                   <div style={{ padding: '12px', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)', borderRadius: 8, fontSize: 13, color: '#3b82f6' }}>
                     <span className="material-symbols-outlined" style={{ fontSize: 14, verticalAlign: 'middle', marginRight: 4 }}>info</span>
                     No visits recorded. A default visit will be created automatically.
+                  </div>
+                )}
+
+                {originalParts.length > 0 && (
+                  <div>
+                    <label className="admin-label">Replace original part (warranty)</label>
+                    <select
+                      className="admin-input admin-select"
+                      value={partData.replacedUsageId}
+                      onChange={(e) => {
+                        const usageId = e.target.value;
+                        const orig = originalParts.find((p) => p.usageId === usageId);
+                        setPartData({
+                          ...partData,
+                          replacedUsageId: usageId,
+                          cost: orig?.covered ? 0 : partData.cost,
+                          partName: orig?.partName || partData.partName,
+                          sparePartId: orig?.sparePartId || partData.sparePartId,
+                          isThirdParty: orig ? !!orig.isThirdParty : partData.isThirdParty,
+                        });
+                      }}
+                    >
+                      <option value="">— new part (charged) —</option>
+                      {originalParts.map((p) => (
+                        <option key={p.usageId} value={p.usageId}>
+                          {p.partName} {p.serialNumber ? `[${p.serialNumber}]` : ""} {p.covered ? "· covered free" : `· ${p.warrantyStatus}`}
+                        </option>
+                      ))}
+                    </select>
+                    {partData.replacedUsageId && originalParts.find((p) => p.usageId === partData.replacedUsageId && p.covered) ? (
+                      <div style={{ fontSize: 12, color: "#16a34a", marginTop: 6 }}>
+                        Covered warranty replacement — customer will not be charged.
+                      </div>
+                    ) : null}
                   </div>
                 )}
 

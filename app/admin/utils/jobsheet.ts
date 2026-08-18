@@ -419,10 +419,10 @@ export function openRetailInvoice(booking: any) {
     ...(booking.invoiceData?.spareParts || []).map((p: any) => `
     <tr>
       <td style="padding:12px; border:1px solid #eee;">
-        <strong>${p.partName}</strong><br>
-        <span style="font-size:11px; color:#666;">Qty: ${p.quantity} | ${p.isThirdParty ? 'Third Party' : 'Inventory'} Component</span>
+        <strong>${p.partName}</strong>${p.warrantyCovered ? ' <span style="font-size:10px; color:#16a34a; font-weight:700;">WARRANTY REPLACEMENT</span>' : ''}<br>
+        <span style="font-size:11px; color:#666;">Qty: ${p.quantity} | ${p.isThirdParty ? 'Third Party' : 'Inventory'} Component${p.serialNumber ? ` | S/N ${p.serialNumber}` : ''}</span>
       </td>
-      <td style="padding:12px; border:1px solid #eee; text-align:right;">₹${p.cost * p.quantity}</td>
+      <td style="padding:12px; border:1px solid #eee; text-align:right;">₹${p.warrantyCovered ? 0 : (p.cost * p.quantity)}</td>
     </tr>`),
     // Additional Charges
     ...(booking.invoiceData?.additionalCharges || []).map((c: any) => `

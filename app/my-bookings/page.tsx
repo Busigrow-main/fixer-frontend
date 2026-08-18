@@ -350,7 +350,7 @@ function RepairBookingCard({
             className={`h-2.5 w-2.5 rounded-full ${booking.status === "PENDING" ? "bg-amber-500 animate-pulse" : "bg-green-500"}`}
           />
           <span className="text-[10px] font-black uppercase tracking-widest text-on-surface">
-            {booking.status}
+            {booking.isWarrantyClaim || booking.serviceType === "WARRANTY_CHECK" ? "Warranty claim" : booking.status}
           </span>
         </div>
       </div>
@@ -374,7 +374,56 @@ function RepairBookingCard({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-6 pt-4 border-t border-outline-variant/40">
+          {((booking.installedParts?.length ?? 0) > 0 || (booking.originalParts?.length ?? 0) > 0) && (
+          <div className="rounded-2xl border border-outline bg-surface-container-lowest p-5">
+            <p className="text-[10px] uppercase tracking-widest font-black text-on-surface-variant mb-3">
+              {booking.isWarrantyClaim ? "Parts from original job" : "Parts installed"}
+            </p>
+            <div className="space-y-2">
+              {(booking.isWarrantyClaim ? booking.originalParts : booking.installedParts)?.map((p: any) => (
+                <div key={p.usageId} className="flex justify-between gap-3 text-sm">
+                  <div>
+                    <p className="font-medium text-on-surface">{p.partName}</p>
+                    <p className="text-xs text-on-surface-variant">
+                      {p.serialNumber ? `Serial ${p.serialNumber}` : "No serial"}
+                      {p.covered ? " · still under warranty" : p.warrantyStatus && p.warrantyStatus !== "NONE" ? ` · ${p.warrantyStatus.toLowerCase()}` : ""}
+                    </p>
+                  </div>
+                  {p.covered ? (
+                    <span className="text-[10px] font-black uppercase tracking-wider text-green-700 shrink-0">Covered</span>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+            {booking.isWarrantyClaim && (booking.installedParts?.length ?? 0) > 0 ? (
+              <div className="mt-4 pt-3 border-t border-outline space-y-2">
+                <p className="text-[10px] uppercase tracking-widest font-black text-on-surface-variant">
+                  Replacements on this claim
+                </p>
+                {booking.installedParts.map((p: any) => (
+                  <div key={p.usageId} className="flex justify-between gap-3 text-sm">
+                    <div>
+                      <p className="font-medium text-on-surface">{p.partName}</p>
+                      <p className="text-xs text-on-surface-variant">
+                        {p.serialNumber ? `Serial ${p.serialNumber}` : "No serial"}
+                      </p>
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-green-700 shrink-0">
+                      {p.warrantyCovered || p.cost === 0 ? "No charge" : `₹${p.cost}`}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+            {booking.isWarrantyClaim ? (
+              <p className="mt-3 text-xs text-on-surface-variant">
+                Covered parts replaced on this claim are not charged.
+              </p>
+            ) : null}
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 gap-6 pt-4 border-t border-outline-variant/40">
             <div>
               <p className="text-[10px] uppercase tracking-widest font-black text-on-surface-variant mb-2">
                 Technician Status

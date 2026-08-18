@@ -679,6 +679,38 @@ export default function BookingDetailPage() {
             )}
           </div>
 
+          {(booking.originalParts?.length ?? 0) > 0 && (
+          <div className="admin-card">
+            <h3 style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: 1, color: "var(--admin-text-muted)", marginBottom: 16 }}>
+              Previously installed parts (original job)
+            </h3>
+            <table style={{ width: "100%", fontSize: 13, borderCollapse: "collapse" }}>
+              <thead>
+                <tr style={{ borderBottom: "1px solid var(--admin-border)", textAlign: "left" }}>
+                  <th style={{ paddingBottom: 8, color: "var(--admin-text-muted)" }}>Part</th>
+                  <th style={{ paddingBottom: 8, color: "var(--admin-text-muted)" }}>Serial</th>
+                  <th style={{ paddingBottom: 8, color: "var(--admin-text-muted)" }}>Warranty</th>
+                </tr>
+              </thead>
+              <tbody>
+                {booking.originalParts.map((p: any) => (
+                  <tr key={p.usageId} style={{ borderBottom: "1px solid var(--admin-border)" }}>
+                    <td style={{ padding: "10px 0", fontWeight: 500 }}>{p.partName}</td>
+                    <td style={{ padding: "10px 0", fontFamily: "monospace", fontSize: 12 }}>{p.serialNumber || "—"}</td>
+                    <td style={{ padding: "10px 0" }}>
+                      {p.covered ? (
+                        <span className="admin-badge admin-badge-success" style={{ zoom: 0.85 }}>Covered — replace free</span>
+                      ) : (
+                        <span className="admin-badge" style={{ zoom: 0.85 }}>{p.warrantyStatus}</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          )}
+
           {/* Spare Parts Consumed */}
           <div className="admin-card">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
@@ -716,7 +748,7 @@ export default function BookingDetailPage() {
                       <tr key={p._id || `part-${idx}`} style={{ borderBottom: "1px solid var(--admin-border)" }}>
                         <td style={{ padding: "12px 0", fontWeight: 500 }}>
                           {isSelf ? p.partName : (p.sparePartId?.name || p.partName || p.sparePartId)}
-                          {isSelf ? (
+                          {isSelf && !p.warrantyCovered ? (
                             <div style={{ fontSize: 11, color: "var(--admin-text-dim)", marginTop: 2 }}>
                               ₹100 tech fee{p.platformFeeApplied ? " · applied" : " · pending"}
                             </div>
@@ -739,7 +771,9 @@ export default function BookingDetailPage() {
                           )}
                         </td>
                         <td style={{ padding: "12px 0" }}>{p.quantity}</td>
-                        <td style={{ padding: "12px 0", textAlign: "right", fontWeight: 600 }}>₹{p.cost}</td>
+                        <td style={{ padding: "12px 0", textAlign: "right", fontWeight: 600 }}>
+                          {p.warrantyCovered ? "Warranty ₹0" : `₹${p.cost}`}
+                        </td>
                       </tr>
                       );
                     })}
@@ -1008,7 +1042,11 @@ export default function BookingDetailPage() {
               {booking.technicianSettlement && (
                 <div style={{ marginTop: 16, padding: 12, background: 'var(--admin-surface-muted, #f6f6f6)', borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13 }}>
                   <div style={{ fontWeight: 700, fontSize: 11, letterSpacing: 0.8, textTransform: 'uppercase', color: 'var(--admin-text-muted)' }}>
-                    Technician settlement
+                    This collection — Fixxer vs technician
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Customer paid</span>
+                    <span>₹{booking.technicianSettlement.customerTotal ?? booking.invoiceData?.totalAmount ?? 0}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span>Service charges (100% to technician)</span>
@@ -1062,6 +1100,7 @@ export default function BookingDetailPage() {
           bookingId={id as string}
           technicianId={booking.technicianId?._id || booking.technicianId}
           token={token || ""}
+          originalParts={booking.originalParts || []}
           onAdded={() => fetchBookingInfo()}
           onClose={() => setAddPartModalVisible(false)}
         />
