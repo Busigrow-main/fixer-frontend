@@ -1004,6 +1004,42 @@ export default function BookingDetailPage() {
                 <span>Grand Total:</span>
                 <span style={{ color: 'var(--admin-primary)' }}>₹{booking.invoiceData?.totalAmount || 0}</span>
               </div>
+
+              {booking.technicianSettlement && (
+                <div style={{ marginTop: 16, padding: 12, background: 'var(--admin-surface-muted, #f6f6f6)', borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13 }}>
+                  <div style={{ fontWeight: 700, fontSize: 11, letterSpacing: 0.8, textTransform: 'uppercase', color: 'var(--admin-text-muted)' }}>
+                    Technician settlement
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Service charges (100% to technician)</span>
+                    <span>₹{booking.technicianSettlement.labour}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Inventory parts (10% commission)</span>
+                    <span>₹{booking.technicianSettlement.inventoryCommission}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Inventory parts (90% to Fixxer)</span>
+                    <span>₹{booking.technicianSettlement.inventoryToFixxer}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Outside parts (technician keeps sale)</span>
+                    <span>₹{booking.technicianSettlement.selfPartsTotal}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Outside-parts fee (₹100 × {booking.technicianSettlement.selfPartCount})</span>
+                    <span>₹{booking.technicianSettlement.selfPartFee}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, borderTop: '1px solid var(--admin-border)', paddingTop: 8, marginTop: 4 }}>
+                    <span>Technician keeps</span>
+                    <span>₹{booking.technicianSettlement.technicianNet}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}>
+                    <span>Fixxer share</span>
+                    <span>₹{booking.technicianSettlement.fixxerNet}</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
