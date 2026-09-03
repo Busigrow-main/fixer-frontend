@@ -248,7 +248,7 @@ export default function Navbar() {
                 href="/login"
                 className="h-11 px-6 flex items-center justify-center rounded-xl border-2 border-outline hover:border-zinc-900 transition-all font-bold text-sm tracking-wide"
               >
-                Login
+                Continue
               </Link>
             )}
 
@@ -310,16 +310,6 @@ export default function Navbar() {
                 <span className="material-symbols-outlined text-zinc-600 text-[22px]">
                   search
                 </span>
-              </button>
-            )}
-
-            {/* Notification */}
-            {!isSubpage && (
-              <button className="relative w-10 h-10 flex items-center justify-center rounded-full active:bg-surface-container transition-colors">
-                <span className="material-symbols-outlined text-zinc-600 text-[22px]">
-                  notifications
-                </span>
-                <span className="absolute top-2.5 right-2.5 w-1.5 h-1.5 bg-primary rounded-full border-2 border-white" />
               </button>
             )}
 

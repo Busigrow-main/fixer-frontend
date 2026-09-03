@@ -35,6 +35,9 @@ export function PendingBookingConfirmDialog({ draft, token, onDismiss, redirectT
           serviceId: draft.serviceId,
           subCategoryId: draft.subCategoryId,
           contactPhone: draft.phone,
+          ...(draft.brand
+            ? { productDetails: { brand: draft.brand } }
+            : {}),
           addressData: {
             zip: draft.zip,
             text: draft.address,
@@ -96,6 +99,12 @@ export function PendingBookingConfirmDialog({ draft, token, onDismiss, redirectT
               <p className="text-on-surface">{draft.phone}</p>
             </div>
           </div>
+          {draft.brand ? (
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Brand</p>
+              <p className="text-on-surface">{draft.brand}</p>
+            </div>
+          ) : null}
           <div>
             <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Address</p>
             <p className="text-on-surface">

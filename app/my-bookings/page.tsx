@@ -263,13 +263,13 @@ function MyBookingsContent() {
               <span className="material-symbols-outlined text-5xl text-on-surface-variant/40">lock</span>
               <p className="mt-4 text-on-surface text-lg font-bold">Authentication Required</p>
               <p className="mt-2 text-sm text-on-surface-variant max-w-md mx-auto">
-                Please login to view your order history and tracking details.
+                Enter your mobile number to view order history and tracking.
               </p>
               <a
                 href="/login"
                 className="mt-8 inline-flex h-12 px-8 bg-primary text-on-primary rounded-xl items-center font-bold uppercase tracking-wider shadow-lg shadow-primary/20 hover:scale-95 transition-transform"
               >
-                Login Now
+                Continue with phone
               </a>
             </div>
           ) : loading ? (
