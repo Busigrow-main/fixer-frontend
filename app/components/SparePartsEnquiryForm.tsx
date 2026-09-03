@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
 import { API_URL } from "@/app/config";
 import type { ACProduct } from "@/app/components/appliances/types";
+import { isValidPhone } from "@/app/lib/auth";
 
 interface EnquiryPartItem {
   partId: string;
@@ -28,7 +29,7 @@ export default function SparePartsEnquiryForm({
   applianceLoadError = false,
 }: SparePartsEnquiryFormProps) {
   const router = useRouter();
-  const { user, token } = useAuth();
+  const { user, token, continueWithPhone } = useAuth();
 
   const [items, setItems] = useState<EnquiryPartItem[]>([
     { partId: initialPartId ?? "", quantity: 1 },
@@ -93,10 +94,8 @@ export default function SparePartsEnquiryForm({
     event.preventDefault();
     setError("");
 
-    if (!user || !token) {
-      router.push(
-        `/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`,
-      );
+    if (!isValidPhone(phone)) {
+      setError("Enter a valid 10-digit mobile number.");
       return;
     }
 
@@ -114,15 +113,29 @@ export default function SparePartsEnquiryForm({
         }));
 
       if (normalizedItems.length === 0) return;
+    }
 
-      setIsSubmitting(true);
+    setIsSubmitting(true);
 
-      try {
+    let authToken = token;
+    try {
+      if (!user || !authToken) {
+        authToken = await continueWithPhone(phone, customerName);
+      }
+
+      if (!isApplianceEnquiry) {
+        const normalizedItems = items
+          .filter((item) => item.partId)
+          .map((item) => ({
+            partId: item.partId,
+            quantity: Math.max(1, item.quantity),
+          }));
+
         const res = await fetch(`${API_URL}/part-orders`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${authToken}`,
           },
           body: JSON.stringify({
             orderType: "part",
@@ -142,24 +155,13 @@ export default function SparePartsEnquiryForm({
 
         router.push("/my-bookings?success=true&tab=parts");
         return;
-      } catch (e: unknown) {
-        console.error(e);
-        setError(
-          e instanceof Error ? e.message : "Something went wrong. Please try again.",
-        );
-        setIsSubmitting(false);
-        return;
       }
-    }
 
-    setIsSubmitting(true);
-
-    try {
       const res = await fetch(`${API_URL}/part-orders`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${authToken}`,
         },
         body: JSON.stringify({
           orderType: "appliance",

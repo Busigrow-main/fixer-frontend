@@ -17,6 +17,7 @@ export type PendingBookingDraft = {
   subCategoryName?: string;
   name: string;
   phone: string;
+  brand?: string;
   zip: string;
   address: string;
   description: string;

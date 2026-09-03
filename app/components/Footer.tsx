@@ -124,7 +124,7 @@ export default function Footer() {
         {/* Bottom Credits Bar */}
         <div className="pt-6 md:pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-zinc-400 font-label text-[9px] md:text-[10px] uppercase tracking-[0.2em] text-center md:text-left">
-            © 2024 Fixxer Technical Mastery. All rights reserved.
+            © 2026 built by busigrow
           </p>
           <div className="flex items-center gap-2 text-zinc-400">
             <span className="material-symbols-outlined text-sm md:text-base text-primary icon-filled">
