@@ -313,16 +313,6 @@ export default function Navbar() {
               </button>
             )}
 
-            {/* Notification */}
-            {!isSubpage && (
-              <button className="relative w-10 h-10 flex items-center justify-center rounded-full active:bg-surface-container transition-colors">
-                <span className="material-symbols-outlined text-zinc-600 text-[22px]">
-                  notifications
-                </span>
-                <span className="absolute top-2.5 right-2.5 w-1.5 h-1.5 bg-primary rounded-full border-2 border-white" />
-              </button>
-            )}
-
             {/* Profile */}
             <button
               onClick={() => router.push(user ? "/my-bookings" : "/login")}

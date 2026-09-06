@@ -15,9 +15,9 @@ export default function Home() {
       <main className="pb-mobile-nav md:pb-0">
         <Hero />
         <HomeShopSection />
+        <AppliancesSection />
         <DifferenceSection />
         <InsuranceBanner />
-        <AppliancesSection />
         <SocialProofSection />
       </main>
       <Footer />

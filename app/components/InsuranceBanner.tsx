@@ -36,15 +36,17 @@ export default function InsuranceBanner() {
           </p>
         </div>
 
-        <div className="relative z-10 flex flex-col items-center md:items-end gap-4 shrink-0">
+        <div className="relative z-10 flex flex-col items-center md:items-end gap-3 md:gap-4 w-full md:w-auto shrink-0">
           <button
             onClick={() => openBooking()}
-            className="bg-primary text-on-primary px-10 h-16 rounded-2xl font-black uppercase tracking-widest hover:scale-[0.98] transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-2"
+            className="bg-primary text-on-primary w-full sm:w-auto px-6 sm:px-8 md:px-10 h-12 sm:h-14 md:h-16 rounded-xl md:rounded-2xl text-xs sm:text-sm md:text-base font-black uppercase tracking-wider md:tracking-widest hover:scale-[0.98] transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-1.5 sm:gap-2"
           >
-            <span className="material-symbols-outlined icon-filled">bolt</span>
+            <span className="material-symbols-outlined icon-filled text-base sm:text-xl md:text-2xl">
+              bolt
+            </span>
             Get Protected
           </button>
-          <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">
+          <p className="text-[9px] sm:text-[10px] text-zinc-500 uppercase tracking-widest font-bold text-center md:text-right">
             *Available on all major home appliances
           </p>
         </div>

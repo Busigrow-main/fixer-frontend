@@ -36,12 +36,13 @@ export function openJobSheet(booking: any) {
     const rawPrice = p.sparePartId?.price || "0";
     const numericPrice = p.cost || parseFloat(String(rawPrice).match(/(\d+)/)?.[1] || "0");
     const subtotal = numericPrice * (p.quantity || 1);
+    const serial = p.serialNumber || "";
     
     return `
     <tr>
       <td class="lbl">${p.isThirdParty ? 'EXT' : p.sparePartId?.partNumber || ''}</td>
-      <td>${p.isThirdParty ? p.partName : p.sparePartId?.name || ''}</td>
-      <td>${p.isThirdParty ? p.vendor : p.sparePartId?.manufacturer || ''}</td>
+      <td>${p.isThirdParty ? p.partName : p.sparePartId?.name || p.partName || ''}${serial ? `<br><span class="lbl">S/N: ${serial}</span>` : ''}</td>
+      <td>${p.isThirdParty ? (p.vendor || '') : (p.sparePartId?.manufacturer || '')}${p.installedAt ? `<br><span class="lbl">Installed: ${new Date(p.installedAt).toLocaleDateString('en-IN')}</span>` : ''}</td>
       <td style="text-align:center;">${p.quantity || 1}</td>
       <td style="text-align:right;">${numericPrice}</td>
       <td style="text-align:right;">${subtotal.toFixed(2)}</td>
@@ -418,10 +419,10 @@ export function openRetailInvoice(booking: any) {
     ...(booking.invoiceData?.spareParts || []).map((p: any) => `
     <tr>
       <td style="padding:12px; border:1px solid #eee;">
-        <strong>${p.partName}</strong><br>
-        <span style="font-size:11px; color:#666;">Qty: ${p.quantity} | ${p.isThirdParty ? 'Third Party' : 'Inventory'} Component</span>
+        <strong>${p.partName}</strong>${p.warrantyCovered ? ' <span style="font-size:10px; color:#16a34a; font-weight:700;">WARRANTY REPLACEMENT</span>' : ''}<br>
+        <span style="font-size:11px; color:#666;">Qty: ${p.quantity} | ${p.isThirdParty ? 'Third Party' : 'Inventory'} Component${p.serialNumber ? ` | S/N ${p.serialNumber}` : ''}</span>
       </td>
-      <td style="padding:12px; border:1px solid #eee; text-align:right;">₹${p.cost * p.quantity}</td>
+      <td style="padding:12px; border:1px solid #eee; text-align:right;">₹${p.warrantyCovered ? 0 : (p.cost * p.quantity)}</td>
     </tr>`),
     // Additional Charges
     ...(booking.invoiceData?.additionalCharges || []).map((c: any) => `
@@ -569,7 +570,28 @@ export function openRetailInvoice(booking: any) {
   if (printWindow) {
     printWindow.document.write(html);
     printWindow.document.close();
+    return;
   }
+
+  const blob = new Blob([html], { type: "text/html" });
+  const url = URL.createObjectURL(blob);
+  const frame = document.createElement("iframe");
+  frame.style.position = "fixed";
+  frame.style.right = "0";
+  frame.style.bottom = "0";
+  frame.style.width = "0";
+  frame.style.height = "0";
+  frame.style.border = "0";
+  frame.src = url;
+  document.body.appendChild(frame);
+  frame.onload = () => {
+    frame.contentWindow?.focus();
+    frame.contentWindow?.print();
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+      frame.remove();
+    }, 1000);
+  };
 }
 
 

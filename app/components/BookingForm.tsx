@@ -5,11 +5,8 @@ import { useAuth } from "@/app/context/AuthContext";
 import { useBooking } from "@/app/context/BookingContext";
 import { useRouter } from "next/navigation";
 import { API_URL } from "@/app/config";
-import {
-  savePendingBookingDraft,
-  BOOKING_FLOW_SOURCE,
-  safeAppRedirect,
-} from "@/app/lib/pending-booking";
+import { isValidPhone } from "@/app/lib/auth";
+import { APPLIANCE_BRANDS, OTHER_BRAND } from "@/app/lib/appliance-brands";
 
 interface BookingFormProps {
   initialServiceSlug?: string;
@@ -18,14 +15,16 @@ interface BookingFormProps {
 }
 
 export default function BookingForm({ initialServiceSlug, onSuccess, className = "" }: BookingFormProps) {
-  const { user, token } = useAuth();
+  const { user, token, continueWithPhone } = useAuth();
   const router = useRouter();
-  const { resumeDraft, clearResumeDraft, closeBooking } = useBooking();
+  const { resumeDraft, clearResumeDraft } = useBooking();
 
   const [services, setServices] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     serviceId: "", // This will be the _id from backend
     subCategoryId: "", // This will be the _id from backend
+    brand: "",
+    brandOther: "",
     name: user?.fullName || "",
     phone: user?.phone || "",
     zip: "",
@@ -79,6 +78,7 @@ export default function BookingForm({ initialServiceSlug, onSuccess, className =
       ...prev,
       serviceId: resumeDraft.serviceId,
       subCategoryId: resumeDraft.subCategoryId,
+      brand: resumeDraft.brand || prev.brand,
       name: resumeDraft.name || prev.name,
       phone: resumeDraft.phone || prev.phone,
       zip: resumeDraft.zip,
@@ -91,53 +91,60 @@ export default function BookingForm({ initialServiceSlug, onSuccess, className =
   const selectedServiceData = services.find(s => s._id === formData.serviceId);
   const selectedSubCategory = selectedServiceData?.subCategories?.find((sc: any) => sc._id === formData.subCategoryId);
 
+  const resolvedBrand =
+    formData.brand === OTHER_BRAND ? formData.brandOther.trim() : formData.brand.trim();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    if (!user || !token) {
-      const returnPath = safeAppRedirect(
-        `${window.location.pathname}${window.location.search}`,
-        "/",
-      );
-      savePendingBookingDraft({
-        serviceId: formData.serviceId,
-        subCategoryId: formData.subCategoryId,
-        serviceSlug: selectedServiceData?.slug,
-        serviceName: selectedServiceData?.name,
-        subCategoryName: selectedSubCategory?.name,
-        name: formData.name,
-        phone: formData.phone,
-        zip: formData.zip,
-        address: formData.address,
-        description: formData.description,
-        returnPath,
-      });
-      const loginUrl = `/login?redirect=${encodeURIComponent(returnPath)}&source=${BOOKING_FLOW_SOURCE}`;
-      closeBooking();
-      router.push(loginUrl);
+    if (!selectedServiceData || !selectedSubCategory) {
+      setError("Please select a valid specific service before booking.");
+      return;
+    }
+
+    if (!isValidPhone(formData.phone)) {
+      setError("Enter a valid 10-digit mobile number.");
+      return;
+    }
+
+    if (!formData.brand) {
+      setError("Please select your appliance brand.");
+      return;
+    }
+
+    if (formData.brand === OTHER_BRAND && !resolvedBrand) {
+      setError("Please enter your appliance brand name.");
       return;
     }
 
     setIsSubmitting(true);
-    
+
+    let authToken = token;
     try {
+      if (!user || !authToken) {
+        authToken = await continueWithPhone(formData.phone, formData.name);
+      }
+
       const res = await fetch(`${API_URL}/bookings`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
+          Authorization: `Bearer ${authToken}`,
         },
         body: JSON.stringify({
           serviceId: formData.serviceId,
           subCategoryId: formData.subCategoryId,
           contactPhone: formData.phone,
+          productDetails: {
+            brand: resolvedBrand,
+          },
           addressData: {
             zip: formData.zip,
-            text: formData.address
+            text: formData.address,
           },
-          description: formData.description
-        })
+          description: formData.description,
+        }),
       });
 
       if (!res.ok) {
@@ -149,8 +156,10 @@ export default function BookingForm({ initialServiceSlug, onSuccess, className =
       if (onSuccess) {
         setTimeout(onSuccess, 2000);
       }
-    } catch (err: any) {
-      setError(err.message || "Something went wrong. Please try again.");
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : "Something went wrong. Please try again.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -164,7 +173,8 @@ export default function BookingForm({ initialServiceSlug, onSuccess, className =
         </div>
         <h3 className="font-headline text-2xl text-on-surface mb-2">Request Received!</h3>
         <p className="text-on-surface-variant max-w-xs mx-auto text-sm">
-          A master technician will call you within <span className="font-bold text-on-surface">30 minutes</span> to confirm your slot.
+          Nearby technicians have been notified. Someone will pick up your request shortly — usually within{' '}
+          <span className="font-bold text-on-surface">10 minutes</span>.
         </p>
         <div className="mt-8 p-4 bg-primary/5 rounded-xl border border-primary/10 w-full">
            <p className="text-[10px] uppercase tracking-widest font-black text-primary mb-1">Service Warranty</p>
@@ -238,6 +248,50 @@ export default function BookingForm({ initialServiceSlug, onSuccess, className =
             </span>
           </div>
         </div>
+      </div>
+
+      {/* Brand */}
+      <div className={`space-y-2 transition-all duration-300 ${formData.serviceId ? "opacity-100" : "opacity-40 pointer-events-none"}`}>
+        <label htmlFor="brand" className="block font-label text-[10px] uppercase tracking-widest font-black text-on-surface-variant">
+          Appliance Brand
+        </label>
+        <div className="relative group">
+          <select
+            id="brand"
+            required
+            value={formData.brand}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                brand: e.target.value,
+                brandOther: e.target.value === OTHER_BRAND ? formData.brandOther : "",
+              })
+            }
+            className="w-full h-13 bg-surface-container-low border-2 border-outline rounded-xl px-4 appearance-none outline-none focus:border-primary transition-all duration-200 text-on-surface font-medium"
+          >
+            <option value="" disabled>
+              Select brand...
+            </option>
+            {APPLIANCE_BRANDS.map((brand) => (
+              <option key={brand} value={brand}>
+                {brand}
+              </option>
+            ))}
+          </select>
+          <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">
+            expand_more
+          </span>
+        </div>
+        {formData.brand === OTHER_BRAND ? (
+          <input
+            type="text"
+            required
+            placeholder="Enter brand name"
+            value={formData.brandOther}
+            onChange={(e) => setFormData({ ...formData, brandOther: e.target.value })}
+            className="w-full h-13 bg-surface-container-low border-2 border-outline rounded-xl px-4 outline-none focus:border-primary transition-all duration-200 text-on-surface"
+          />
+        ) : null}
       </div>
 
       {/* Dynamic Price Display */}
@@ -352,8 +406,7 @@ export default function BookingForm({ initialServiceSlug, onSuccess, className =
       </button>
       {!user && (
         <p className="text-center text-xs text-on-surface-variant -mt-2">
-          You&apos;ll sign in or create an account next — your details stay saved on this device until the booking is
-          confirmed.
+          We&apos;ll use your mobile number to save this booking — no password needed.
         </p>
       )}
     </form>

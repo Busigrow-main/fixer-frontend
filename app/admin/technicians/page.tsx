@@ -6,11 +6,28 @@ import Link from "next/link";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/v1";
 
+type FilterTab = "all" | "pending" | "verified";
+
+function verificationBadgeClass(status?: string) {
+  switch (status) {
+    case "VERIFIED":
+      return "admin-badge-success";
+    case "PENDING":
+    case "REQUESTED":
+      return "admin-badge-pending";
+    case "REJECTED":
+      return "admin-badge-error";
+    default:
+      return "admin-badge-ghost";
+  }
+}
+
 export default function TechniciansPage() {
   const { token } = useAuth();
   const [technicians, setTechnicians] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [filter, setFilter] = useState<FilterTab>("all");
   const [formData, setFormData] = useState({ name: "", phone: "", email: "", skills: "" });
 
   useEffect(() => {
@@ -57,6 +74,16 @@ export default function TechniciansPage() {
     }
   };
 
+  const filtered = technicians.filter((t) => {
+    if (filter === "pending") {
+      return ["PENDING", "REQUESTED"].includes(t.verificationStatus);
+    }
+    if (filter === "verified") {
+      return t.verificationStatus === "VERIFIED";
+    }
+    return true;
+  });
+
   if (loading) {
     return <div style={{ padding: 20 }}>Loading...</div>;
   }
@@ -66,12 +93,26 @@ export default function TechniciansPage() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
           <h2 style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.5 }}>Technicians</h2>
-          <p style={{ fontSize: 13, color: "var(--admin-text-dim)", marginTop: 4 }}>Manage technicians, availability, and skills</p>
+          <p style={{ fontSize: 13, color: "var(--admin-text-dim)", marginTop: 4 }}>
+            Manage technicians, verification, and skills
+          </p>
         </div>
         <button className="admin-btn admin-btn-primary admin-btn-sm" onClick={() => setShowModal(true)}>
           <span className="material-symbols-outlined" style={{ fontSize: 16 }}>add</span>
           Add Technician
         </button>
+      </div>
+
+      <div style={{ display: "flex", gap: 8 }}>
+        {(["all", "pending", "verified"] as FilterTab[]).map((tab) => (
+          <button
+            key={tab}
+            className={`admin-btn admin-btn-sm ${filter === tab ? "admin-btn-primary" : "admin-btn-secondary"}`}
+            onClick={() => setFilter(tab)}
+          >
+            {tab === "all" ? "All" : tab === "pending" ? "Pending Verification" : "Verified"}
+          </button>
+        ))}
       </div>
 
       <div className="admin-table-wrap">
@@ -80,6 +121,7 @@ export default function TechniciansPage() {
             <tr>
               <th>Name</th>
               <th>Phone</th>
+              <th>Verification</th>
               <th>Status</th>
               <th>Jobs</th>
               <th>Rating</th>
@@ -88,35 +130,40 @@ export default function TechniciansPage() {
             </tr>
           </thead>
           <tbody>
-            {technicians.length === 0 ? (
+            {filtered.length === 0 ? (
               <tr>
-                <td colSpan={6} style={{ textAlign: "center", padding: 40, color: "var(--admin-text-muted)" }}>
+                <td colSpan={8} style={{ textAlign: "center", padding: 40, color: "var(--admin-text-muted)" }}>
                   No technicians found.
                 </td>
               </tr>
             ) : (
-              technicians.map((t) => (
+              filtered.map((t) => (
                 <tr key={t._id}>
                   <td style={{ fontWeight: 600 }}>{t.name}</td>
                   <td>{t.phone}</td>
                   <td>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                      <span className={`admin-badge admin-badge-${t.isActive ? 'success' : 'ghost'}`} style={{ zoom: 0.8 }}>
-                        {t.isActive ? 'ACCOUNT ACTIVE' : 'ACCOUNT INACTIVE'}
+                    <span className={`admin-badge ${verificationBadgeClass(t.verificationStatus)}`}>
+                      {(t.verificationStatus || "NOT_REQUESTED").replace("_", " ")}
+                    </span>
+                  </td>
+                  <td>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      <span className={`admin-badge admin-badge-${t.isActive ? "success" : "ghost"}`} style={{ zoom: 0.8 }}>
+                        {t.isActive ? "ACCOUNT ACTIVE" : "ACCOUNT INACTIVE"}
                       </span>
-                      <span className={`admin-badge admin-badge-${t.availabilityStatus === 'AVAILABLE' ? 'success' : 'warning'}`} style={{ zoom: 0.8 }}>
+                      <span className={`admin-badge admin-badge-${t.availabilityStatus === "AVAILABLE" ? "success" : "warning"}`} style={{ zoom: 0.8 }}>
                         {t.availabilityStatus}
                       </span>
                     </div>
                   </td>
                   <td>{t.totalCompletedJobs}</td>
                   <td>{t.averageRating} ★</td>
-                  <td style={{ maxWidth: 200, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {t.skills.join(', ')}
+                  <td style={{ maxWidth: 200, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {t.skills?.join(", ")}
                   </td>
                   <td style={{ textAlign: "right" }}>
                     <Link href={`/admin/technicians/${t._id}`} className="admin-btn admin-btn-ghost admin-btn-sm">
-                      View
+                      {["PENDING", "REQUESTED"].includes(t.verificationStatus) ? "Review" : "View"}
                     </Link>
                   </td>
                 </tr>
@@ -136,7 +183,7 @@ export default function TechniciansPage() {
               </button>
             </div>
             <form onSubmit={handleSave}>
-              <div className="admin-modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div className="admin-modal-body" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 <div>
                   <label className="admin-label">Name</label>
                   <input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="admin-input" placeholder="John Doe" />

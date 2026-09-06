@@ -1,6 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
+import { AC_SERVICE_IMAGE } from "@/app/lib/services";
 import {
   SHOP_APPLIANCES_HREF,
   SHOP_SPARE_PARTS_HREF,
@@ -10,26 +12,21 @@ const SHOP_PATHS = [
   {
     id: "spare-parts",
     title: "Spare Parts",
-    tagline: "OEM & verified catalog",
-    description:
-      "Genuine parts for refrigerators, ACs, washing machines, and more. Up to 50% off with Appliance Insurance.",
-    icon: "build_circle",
+    tagline: "OEM Catalog",
+    overlayLabel: "Up to",
+    overlayValue: "50% Off",
     href: SHOP_SPARE_PARTS_HREF,
-    cta: "Browse catalog",
-    highlights: ["OEM sourced", "Model-fit search", "Patna delivery"],
-    accent: "from-primary/10 to-primary-container",
+    image:
+      "https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?q=80&w=2000&auto=format&fit=crop",
   },
   {
     id: "appliances",
     title: "Appliances",
-    tagline: "Buy · Install · Warranty",
-    description:
-      "Shop complete units with professional Fixxer installation, trial run, and post-install service included.",
-    icon: "ac_unit",
+    tagline: "Buy · Install",
+    overlayLabel: "Includes",
+    overlayValue: "Installation",
     href: SHOP_APPLIANCES_HREF,
-    cta: "Shop appliances",
-    highlights: ["Free installation", "Godrej ACs in stock", "60-day service"],
-    accent: "from-secondary-container/80 to-surface-container",
+    image: AC_SERVICE_IMAGE,
   },
 ] as const;
 
@@ -67,55 +64,69 @@ export default function HomeShopSection() {
           <div className="mx-auto mt-5 h-0.5 w-12 rounded-full bg-primary md:w-16" />
         </div>
 
-        {/* Two business pillars */}
-        <div className="grid gap-5 md:grid-cols-2 md:gap-8">
+        {/* Shop cards — same pattern as repair service cards */}
+        <div className="mx-auto grid max-w-3xl grid-cols-2 gap-4 md:gap-8">
           {SHOP_PATHS.map((path) => (
-            <Link
+            <div
               key={path.id}
-              href={path.href}
-              className="group relative flex flex-col overflow-hidden rounded-[1.75rem] border border-outline bg-surface-bright p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-xl hover:shadow-black/[0.06] active:scale-[0.99] md:rounded-[2rem] md:p-8"
+              className="group cursor-pointer transition-transform duration-200 active:scale-[0.98]"
             >
-              <div
-                className={`absolute inset-0 bg-gradient-to-br ${path.accent} opacity-60 transition-opacity group-hover:opacity-100`}
-              />
-              <div className="relative z-10 flex flex-1 flex-col">
-                <div className="mb-5 flex items-start justify-between gap-4">
-                  <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-outline">
-                    <span className="material-symbols-outlined text-3xl text-primary icon-filled">
-                      {path.icon}
+              <div className="relative mb-3 aspect-[4/5] overflow-hidden rounded-[1.5rem] border border-outline/50 shadow-sm md:mb-5 md:rounded-[2rem]">
+                <Image
+                  src={path.image}
+                  alt={path.title}
+                  fill
+                  sizes="(max-width: 768px) 50vw, 400px"
+                  className="object-cover transition-transform duration-700 group-hover:scale-110"
+                />
+
+                <Link
+                  href={path.href}
+                  className="absolute inset-0 z-10"
+                  aria-label={`Browse ${path.title}`}
+                />
+
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 transition-opacity duration-300 group-hover:opacity-90" />
+
+                <div className="absolute bottom-3 left-3 right-3 z-20 flex items-end justify-between md:bottom-6 md:left-6 md:right-6">
+                  <div>
+                    <p className="mb-0.5 font-label text-[7px] font-bold uppercase tracking-[0.2em] text-white/60 md:text-[9px]">
+                      {path.overlayLabel}
+                    </p>
+                    <p className="font-headline text-sm font-black text-white md:text-lg">
+                      {path.overlayValue}
+                    </p>
+                  </div>
+                  <Link
+                    href={path.href}
+                    className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-zinc-900 shadow-xl transition-all duration-300 hover:scale-110 hover:bg-primary hover:text-white active:scale-95 md:h-12 md:w-12"
+                    aria-label={`Go to ${path.title}`}
+                  >
+                    <span className="material-symbols-outlined text-sm icon-filled md:text-lg">
+                      arrow_forward
                     </span>
-                  </span>
-                  <span className="font-label text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
-                    {path.tagline}
-                  </span>
+                  </Link>
                 </div>
-
-                <h3 className="font-headline text-2xl tracking-tight text-on-surface transition-colors group-hover:text-primary md:text-3xl">
-                  {path.title}
-                </h3>
-                <p className="mt-2 flex-1 font-body text-sm leading-relaxed text-on-surface-variant md:text-base">
-                  {path.description}
-                </p>
-
-                <ul className="mt-5 flex flex-wrap gap-2">
-                  {path.highlights.map((item) => (
-                    <li
-                      key={item}
-                      className="rounded-full border border-outline bg-surface-container px-3 py-1 font-label text-[10px] font-bold uppercase tracking-wide text-on-surface-variant"
-                    >
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-
-                <span className="mt-6 inline-flex items-center gap-2 font-label text-xs font-black uppercase tracking-widest text-primary">
-                  {path.cta}
-                  <span className="material-symbols-outlined text-lg transition-transform group-hover:translate-x-1">
-                    arrow_forward
-                  </span>
-                </span>
               </div>
-            </Link>
+
+              <div className="flex items-center justify-between px-1">
+                <div>
+                  <h3 className="font-headline text-lg text-on-surface transition-colors duration-300 group-hover:text-primary md:text-2xl">
+                    {path.title}
+                  </h3>
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 transition-colors group-hover:text-primary/60 md:text-[10px]">
+                    {path.tagline}
+                  </p>
+                </div>
+                <Link
+                  href={path.href}
+                  className="hidden h-8 w-8 items-center justify-center rounded-full border border-outline text-on-surface-variant transition-all hover:border-primary hover:text-primary sm:flex"
+                  aria-label={`Open ${path.title}`}
+                >
+                  <span className="material-symbols-outlined text-sm">arrow_outward</span>
+                </Link>
+              </div>
+            </div>
           ))}
         </div>
 

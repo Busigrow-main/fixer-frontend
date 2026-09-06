@@ -5,17 +5,20 @@ import { useAuth } from "@/app/context/AuthContext";
 import { openJobSheet } from "@/app/admin/utils/jobsheet";
 import ManageVisitsModal from "./ManageVisitsModal";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
-const STATUSES = ["ALL", "PENDING", "CONFIRMED", "ASSIGNED", "IN_PROGRESS", "COMPLETED", "RESCHEDULED", "CANCELLED"];
+const STATUSES = ["ALL", "NEEDS_ASSIGNMENT", "PENDING", "CONFIRMED", "ASSIGNED", "IN_PROGRESS", "COMPLETED", "RESCHEDULED", "CANCELLED"];
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/v1";
 
 export default function AdminBookingsPage() {
   const { token } = useAuth();
+  const searchParams = useSearchParams();
+  const initialStatus = searchParams.get("status") || "ALL";
   const [bookings, setBookings] = useState<any[]>([]);
   const [technicians, setTechnicians] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [status, setStatus] = useState("ALL");
+  const [status, setStatus] = useState(initialStatus);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [noteModal, setNoteModal] = useState<string | null>(null);
@@ -140,11 +143,38 @@ export default function AdminBookingsPage() {
             key={s}
             className={`admin-btn admin-btn-sm ${status === s ? "admin-btn-primary" : "admin-btn-secondary"}`}
             onClick={() => { setStatus(s); setPage(1); }}
+            style={
+              s === "NEEDS_ASSIGNMENT" && status !== s
+                ? { borderColor: "var(--admin-warning)", color: "var(--admin-warning)" }
+                : undefined
+            }
           >
-            {s.replace("_", " ")}
+            {s === "NEEDS_ASSIGNMENT" ? "Needs Assignment" : s.replace("_", " ")}
           </button>
         ))}
       </div>
+
+      {status === "NEEDS_ASSIGNMENT" ? (
+        <div
+          className="admin-card"
+          style={{
+            marginBottom: 16,
+            padding: "12px 16px",
+            borderColor: "var(--admin-warning)",
+            background: "var(--admin-warning-soft)",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+          }}
+        >
+          <span className="material-symbols-outlined" style={{ color: "var(--admin-warning)" }}>
+            priority_high
+          </span>
+          <p style={{ fontSize: 13, margin: 0 }}>
+            These jobs stayed unclaimed for 10+ minutes. Assign a technician below.
+          </p>
+        </div>
+      ) : null}
 
       {/* Table */}
       <div className="admin-table-wrap">
@@ -194,9 +224,23 @@ export default function AdminBookingsPage() {
                     </select>
                   </td>
                   <td>
-                    <span className={`admin-badge admin-badge-${b.status?.toLowerCase()}`}>
-                      {b.status?.replace("_", " ")}
-                    </span>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      <span className={`admin-badge admin-badge-${b.status?.toLowerCase()}`}>
+                        {b.status?.replace("_", " ")}
+                      </span>
+                      {b.dispatchStatus === "NEEDS_ADMIN" ? (
+                        <span
+                          className="admin-badge"
+                          style={{
+                            background: "var(--admin-warning-soft)",
+                            color: "var(--admin-warning)",
+                            fontSize: 10,
+                          }}
+                        >
+                          Needs admin
+                        </span>
+                      ) : null}
+                    </div>
                   </td>
                   <td>{b.createdAt ? new Date(b.createdAt).toLocaleDateString() : "—"}</td>
                   <td>
