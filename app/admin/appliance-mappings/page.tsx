@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
@@ -46,6 +46,20 @@ type SearchResult = {
 };
 
 export default function AdminApplianceMappingsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="admin-empty">
+          <div className="admin-spinner" style={{ margin: "0 auto" }} />
+        </div>
+      }
+    >
+      <AdminApplianceMappingsContent />
+    </Suspense>
+  );
+}
+
+function AdminApplianceMappingsContent() {
   const { token } = useAuth();
   const searchParams = useSearchParams();
   const [phoneQuery, setPhoneQuery] = useState("");
