@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
 import ManageVisitsModal from "../ManageVisitsModal";
@@ -502,6 +503,15 @@ export default function BookingDetailPage() {
                     onChange={e => setProductDetails({...productDetails, serialNumber: e.target.value})}
                     disabled={sheetReadOnly}
                   />
+                  {productDetails.serialNumber && (
+                    <Link
+                      href={`/admin/appliance-mappings?serial=${encodeURIComponent(productDetails.serialNumber)}&phone=${encodeURIComponent(booking.contactPhone || booking.userId?.phone || "")}`}
+                      style={{ fontSize: 11, color: "var(--admin-info)", marginTop: 6, display: "inline-flex", alignItems: "center", gap: 4 }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: 14 }}>qr_code_2</span>
+                      Manage serial mapping
+                    </Link>
+                  )}
                 </div>
                 <div>
                   <label className="admin-label">Service Category</label>

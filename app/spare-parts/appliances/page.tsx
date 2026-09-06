@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { ApplianceCategoryCard } from "@/app/components/appliances/ApplianceCategoryCard";
+import {
+  ApplianceCategoryCard,
+  APPLIANCE_CATEGORY_IMAGES,
+} from "@/app/components/appliances/ApplianceCategoryCard";
 import { SHOP_SPARE_PARTS_HREF } from "@/app/lib/shop-routes";
 
 const APPLIANCE_CATEGORIES = [
@@ -14,6 +17,8 @@ const APPLIANCE_CATEGORIES = [
     status: "active" as const,
     productCount: 7,
     href: "/spare-parts/appliances/ac",
+    image: APPLIANCE_CATEGORY_IMAGES.ac,
+    tagline: "Install included",
   },
   {
     id: "fridge",
@@ -24,6 +29,8 @@ const APPLIANCE_CATEGORIES = [
     status: "coming-soon" as const,
     productCount: 0,
     href: "#",
+    image: APPLIANCE_CATEGORY_IMAGES.fridge,
+    tagline: "Coming soon",
   },
   {
     id: "washing-machine",
@@ -34,6 +41,8 @@ const APPLIANCE_CATEGORIES = [
     status: "coming-soon" as const,
     productCount: 0,
     href: "#",
+    image: APPLIANCE_CATEGORY_IMAGES["washing-machine"],
+    tagline: "Coming soon",
   },
 ] as const;
 
@@ -84,7 +93,7 @@ export default function AppliancesPage() {
           <div className="mx-auto mt-5 h-0.5 w-12 rounded-full bg-primary md:w-16" />
         </header>
 
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
+        <div className="grid grid-cols-2 gap-4 md:gap-8 lg:grid-cols-3">
           {APPLIANCE_CATEGORIES.map((category) => (
             <ApplianceCategoryCard key={category.id} category={category} />
           ))}

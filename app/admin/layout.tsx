@@ -9,6 +9,7 @@ import "./admin.css";
 const NAV_ITEMS = [
   { href: "/admin", icon: "dashboard", label: "Dashboard", exact: true },
   { href: "/admin/bookings", icon: "calendar_month", label: "Bookings" },
+  { href: "/admin/appliance-mappings", icon: "qr_code_2", label: "Serial Mapping" },
   { href: "/admin/technicians", icon: "engineering", label: "Technicians" },
   { href: "/admin/spare-parts", icon: "build", label: "Spare Parts" },
   { href: "/admin/spare-parts/bulk-upload", icon: "upload_file", label: "Bulk Upload" },
