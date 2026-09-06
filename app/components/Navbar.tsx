@@ -248,7 +248,7 @@ export default function Navbar() {
                 href="/login"
                 className="h-11 px-6 flex items-center justify-center rounded-xl border-2 border-outline hover:border-zinc-900 transition-all font-bold text-sm tracking-wide"
               >
-                Continue
+                Login
               </Link>
             )}
 

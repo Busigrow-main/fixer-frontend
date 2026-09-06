@@ -34,6 +34,7 @@ function MyBookingsContent() {
   const [activeTab, setActiveTab] = useState<TabType>("repairs");
   const [orders, setOrders] = useState<any[]>([]);
   const [bookings, setBookings] = useState<any[]>([]);
+  const [appliances, setAppliances] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -69,17 +70,24 @@ function MyBookingsContent() {
   const fetchAllHistory = async () => {
     setLoading(true);
     try {
-      const [ordersRes, bookingsRes] = await Promise.all([
+      const [ordersRes, bookingsRes, appliancesRes] = await Promise.all([
         fetch(`${API_URL}/user/part-orders`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
         fetch(`${API_URL}/user/bookings`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
+        fetch(`${API_URL}/user/appliances`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
       ]);
 
       if (ordersRes.ok) setOrders(await ordersRes.json());
       if (bookingsRes.ok) setBookings(await bookingsRes.json());
+      if (appliancesRes.ok) {
+        const data = await appliancesRes.json();
+        setAppliances(Array.isArray(data) ? data : []);
+      }
     } catch {
       setError("Network error. Could not load history.");
     } finally {
@@ -257,6 +265,38 @@ function MyBookingsContent() {
               </div>
             </div>
           </div>
+
+          {appliances.length > 0 && (
+            <div className="mb-8 rounded-2xl border border-outline bg-surface-bright p-5 md:p-6">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="material-symbols-outlined text-primary text-xl">qr_code_2</span>
+                <h2 className="font-headline text-lg font-bold text-on-surface">
+                  Your registered appliances
+                </h2>
+              </div>
+              <p className="text-sm text-on-surface-variant mb-4">
+                These units are linked to your phone via serial number — future service visits stay tied to the same appliance.
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {appliances.map((a) => (
+                  <div
+                    key={a._id || a.serialNumber}
+                    className="rounded-xl border border-outline bg-surface-container-low px-4 py-3"
+                  >
+                    <p className="font-label text-[10px] font-black uppercase tracking-widest text-primary">
+                      Serial
+                    </p>
+                    <p className="font-headline text-base font-bold text-on-surface mt-0.5">
+                      {a.serialNumber}
+                    </p>
+                    <p className="text-xs text-on-surface-variant mt-1">
+                      {[a.brand, a.modelNumber].filter(Boolean).join(" · ") || "Appliance"}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {!token && !authLoading ? (
             <div className="rounded-3xl border border-outline bg-white p-12 text-center">
