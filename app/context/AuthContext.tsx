@@ -16,6 +16,8 @@ interface AuthContextType {
   token: string | null;
   loading: boolean;
   login: (phone: string, password: string) => Promise<void>;
+  /** Phone-only sign-in; returns JWT for immediate API calls. */
+  continueWithPhone: (phone: string, fullName?: string) => Promise<string>;
   register: (data: any) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
@@ -61,6 +63,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const persistSession = async (access_token: string) => {
+    Cookies.set("fixxer_token", access_token, { expires: 7 });
+    setToken(access_token);
+    await fetchUser(access_token);
+    return access_token;
+  };
+
   const login = async (phone: string, password: string) => {
     const res = await fetch(`${API_URL}/login`, {
       method: "POST",
@@ -74,9 +83,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const { access_token } = await res.json();
-    Cookies.set("fixxer_token", access_token, { expires: 7 }); // 7 days
-    setToken(access_token);
-    await fetchUser(access_token);
+    await persistSession(access_token);
+  };
+
+  const continueWithPhone = async (phone: string, fullName?: string) => {
+    const res = await fetch(`${API_URL}/quick-login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone, fullName: fullName?.trim() || undefined }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(
+        typeof err.message === "string"
+          ? err.message
+          : "Could not sign in with this phone number",
+      );
+    }
+
+    const { access_token } = await res.json();
+    return persistSession(access_token);
   };
 
   const register = async (data: any) => {
@@ -92,9 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const { access_token } = await res.json();
-    Cookies.set("fixxer_token", access_token, { expires: 7 });
-    setToken(access_token);
-    await fetchUser(access_token);
+    await persistSession(access_token);
   };
 
   const logout = () => {
@@ -110,7 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, token, loading, login, register, logout, refreshUser }}
+      value={{ user, token, loading, login, continueWithPhone, register, logout, refreshUser }}
     >
       {children}
     </AuthContext.Provider>

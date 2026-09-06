@@ -34,6 +34,7 @@ function MyBookingsContent() {
   const [activeTab, setActiveTab] = useState<TabType>("repairs");
   const [orders, setOrders] = useState<any[]>([]);
   const [bookings, setBookings] = useState<any[]>([]);
+  const [appliances, setAppliances] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -69,17 +70,24 @@ function MyBookingsContent() {
   const fetchAllHistory = async () => {
     setLoading(true);
     try {
-      const [ordersRes, bookingsRes] = await Promise.all([
+      const [ordersRes, bookingsRes, appliancesRes] = await Promise.all([
         fetch(`${API_URL}/user/part-orders`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
         fetch(`${API_URL}/user/bookings`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
+        fetch(`${API_URL}/user/appliances`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
       ]);
 
       if (ordersRes.ok) setOrders(await ordersRes.json());
       if (bookingsRes.ok) setBookings(await bookingsRes.json());
+      if (appliancesRes.ok) {
+        const data = await appliancesRes.json();
+        setAppliances(Array.isArray(data) ? data : []);
+      }
     } catch {
       setError("Network error. Could not load history.");
     } finally {
@@ -106,8 +114,11 @@ function MyBookingsContent() {
         alert("Warranty claim received! A new check-up booking has been created.");
         fetchAllHistory();
       } else {
-        const data = await res.json();
-        alert(data.message || "Could not claim warranty.");
+        const data = await res.json().catch(() => ({}));
+        const message = Array.isArray(data.message)
+          ? data.message.join(" ")
+          : data.message;
+        alert(message || "Could not claim warranty.");
       }
     } catch {
       alert("Network error.");
@@ -115,9 +126,19 @@ function MyBookingsContent() {
   };
 
   const getWarrantyStatus = (booking: any) => {
-    if (booking.status !== "COMPLETED" || !booking.warrantyExpiry) return null;
+    const finished =
+      booking.jobClosed ||
+      booking.status === "COMPLETED" ||
+      booking.status === "PAYMENT_COLLECTED";
+    if (!finished) return null;
 
-    const expiry = new Date(booking.warrantyExpiry);
+    const expiry = booking.warrantyExpiry
+      ? new Date(booking.warrantyExpiry)
+      : null;
+    if (!expiry) {
+      return { label: "Active (60 Days)", isActive: true };
+    }
+
     const now = new Date();
     const diffDays = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
@@ -245,18 +266,50 @@ function MyBookingsContent() {
             </div>
           </div>
 
+          {appliances.length > 0 && (
+            <div className="mb-8 rounded-2xl border border-outline bg-surface-bright p-5 md:p-6">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="material-symbols-outlined text-primary text-xl">qr_code_2</span>
+                <h2 className="font-headline text-lg font-bold text-on-surface">
+                  Your registered appliances
+                </h2>
+              </div>
+              <p className="text-sm text-on-surface-variant mb-4">
+                These units are linked to your phone via serial number — future service visits stay tied to the same appliance.
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {appliances.map((a) => (
+                  <div
+                    key={a._id || a.serialNumber}
+                    className="rounded-xl border border-outline bg-surface-container-low px-4 py-3"
+                  >
+                    <p className="font-label text-[10px] font-black uppercase tracking-widest text-primary">
+                      Serial
+                    </p>
+                    <p className="font-headline text-base font-bold text-on-surface mt-0.5">
+                      {a.serialNumber}
+                    </p>
+                    <p className="text-xs text-on-surface-variant mt-1">
+                      {[a.brand, a.modelNumber].filter(Boolean).join(" · ") || "Appliance"}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {!token && !authLoading ? (
             <div className="rounded-3xl border border-outline bg-white p-12 text-center">
               <span className="material-symbols-outlined text-5xl text-on-surface-variant/40">lock</span>
               <p className="mt-4 text-on-surface text-lg font-bold">Authentication Required</p>
               <p className="mt-2 text-sm text-on-surface-variant max-w-md mx-auto">
-                Please login to view your order history and tracking details.
+                Enter your mobile number to view order history and tracking.
               </p>
               <a
                 href="/login"
                 className="mt-8 inline-flex h-12 px-8 bg-primary text-on-primary rounded-xl items-center font-bold uppercase tracking-wider shadow-lg shadow-primary/20 hover:scale-95 transition-transform"
               >
-                Login Now
+                Continue with phone
               </a>
             </div>
           ) : loading ? (
@@ -337,7 +390,7 @@ function RepairBookingCard({
             className={`h-2.5 w-2.5 rounded-full ${booking.status === "PENDING" ? "bg-amber-500 animate-pulse" : "bg-green-500"}`}
           />
           <span className="text-[10px] font-black uppercase tracking-widest text-on-surface">
-            {booking.status}
+            {booking.isWarrantyClaim || booking.serviceType === "WARRANTY_CHECK" ? "Warranty claim" : booking.status}
           </span>
         </div>
       </div>
@@ -361,7 +414,56 @@ function RepairBookingCard({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-6 pt-4 border-t border-outline-variant/40">
+          {((booking.installedParts?.length ?? 0) > 0 || (booking.originalParts?.length ?? 0) > 0) && (
+          <div className="rounded-2xl border border-outline bg-surface-container-lowest p-5">
+            <p className="text-[10px] uppercase tracking-widest font-black text-on-surface-variant mb-3">
+              {booking.isWarrantyClaim ? "Parts from original job" : "Parts installed"}
+            </p>
+            <div className="space-y-2">
+              {(booking.isWarrantyClaim ? booking.originalParts : booking.installedParts)?.map((p: any) => (
+                <div key={p.usageId} className="flex justify-between gap-3 text-sm">
+                  <div>
+                    <p className="font-medium text-on-surface">{p.partName}</p>
+                    <p className="text-xs text-on-surface-variant">
+                      {p.serialNumber ? `Serial ${p.serialNumber}` : "No serial"}
+                      {p.covered ? " · still under warranty" : p.warrantyStatus && p.warrantyStatus !== "NONE" ? ` · ${p.warrantyStatus.toLowerCase()}` : ""}
+                    </p>
+                  </div>
+                  {p.covered ? (
+                    <span className="text-[10px] font-black uppercase tracking-wider text-green-700 shrink-0">Covered</span>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+            {booking.isWarrantyClaim && (booking.installedParts?.length ?? 0) > 0 ? (
+              <div className="mt-4 pt-3 border-t border-outline space-y-2">
+                <p className="text-[10px] uppercase tracking-widest font-black text-on-surface-variant">
+                  Replacements on this claim
+                </p>
+                {booking.installedParts.map((p: any) => (
+                  <div key={p.usageId} className="flex justify-between gap-3 text-sm">
+                    <div>
+                      <p className="font-medium text-on-surface">{p.partName}</p>
+                      <p className="text-xs text-on-surface-variant">
+                        {p.serialNumber ? `Serial ${p.serialNumber}` : "No serial"}
+                      </p>
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-green-700 shrink-0">
+                      {p.warrantyCovered || p.cost === 0 ? "No charge" : `₹${p.cost}`}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+            {booking.isWarrantyClaim ? (
+              <p className="mt-3 text-xs text-on-surface-variant">
+                Covered parts replaced on this claim are not charged.
+              </p>
+            ) : null}
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 gap-6 pt-4 border-t border-outline-variant/40">
             <div>
               <p className="text-[10px] uppercase tracking-widest font-black text-on-surface-variant mb-2">
                 Technician Status
@@ -411,7 +513,7 @@ function RepairBookingCard({
             )}
           </div>
 
-          {booking.status === "COMPLETED" && warranty?.isActive && (
+          {warranty?.isActive && !booking.claimBookingIds?.length && (
             <button
               type="button"
               onClick={() => onClaimWarranty(booking._id)}
@@ -422,7 +524,10 @@ function RepairBookingCard({
             </button>
           )}
 
-          {booking.isBilled && (
+          {(booking.isBilled ||
+            booking.jobClosed ||
+            booking.paymentStatus === "PAID_CASH" ||
+            booking.paymentStatus === "PAID_ONLINE") && (
             <button
               type="button"
               onClick={() => openRetailInvoice(booking)}

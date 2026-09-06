@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
 import ManageVisitsModal from "../ManageVisitsModal";
@@ -51,65 +52,117 @@ export default function BookingDetailPage() {
     serviceType: "REPAIR",
     paymentStatus: "UNPAID"
   });
+  const [warranties, setWarranties] = useState<any[]>([]);
+  const [serialLookup, setSerialLookup] = useState("");
+  const [serialLookupResult, setSerialLookupResult] = useState<any>(null);
+  const jobSheetRevisionRef = useRef<number>(-1);
 
-  useEffect(() => {
-    if (token && id) {
-      fetchBookingInfo();
-      fetchTechnicians();
+  const applyBookingData = useCallback((data: any) => {
+    setBooking(data);
+    if (data.visits) {
+      setVisits(data.visits);
     }
-  }, [token, id]);
 
-  const fetchBookingInfo = async () => {
+    setJobDetails({
+      diagnosis: data.jobDetails?.diagnosis || "",
+      workDone: data.jobDetails?.workDone || "",
+      recommendations: data.jobDetails?.recommendations || "",
+      warrantyPeriod: data.jobDetails?.warrantyPeriod || "60 Days",
+      asset: data.jobDetails?.asset || "",
+      warrantyCode: data.jobDetails?.warrantyCode || "",
+      warrantyDesc: data.jobDetails?.warrantyDesc || "",
+      assetSaleDate: data.jobDetails?.assetSaleDate || "",
+      assetExpiryDate: data.jobDetails?.assetExpiryDate || "",
+      contractCode: data.jobDetails?.contractCode || "",
+      contractDesc: data.jobDetails?.contractDesc || "",
+      contractStartDate: data.jobDetails?.contractStartDate || "",
+      contractExpiryDate: data.jobDetails?.contractExpiryDate || "",
+      visitCategory: data.jobDetails?.visitCategory || "",
+      invoiceNumber: data.jobDetails?.invoiceNumber || ""
+    });
+
+    setProductDetails({
+      brand: data.productDetails?.brand || "",
+      modelNumber: data.productDetails?.modelNumber || "",
+      serialNumber: data.productDetails?.serialNumber || ""
+    });
+
+    if (data.invoiceData) {
+      setServiceFee(data.invoiceData.serviceTotal || 0);
+      setAdditionalCharges(data.invoiceData.additionalCharges || []);
+    }
+    setServiceProperties({
+      serviceType: data.serviceType || "REPAIR",
+      paymentStatus: data.paymentStatus || "UNPAID"
+    });
+    jobSheetRevisionRef.current = data.jobSheetRevision ?? 0;
+  }, []);
+
+  const fetchBookingInfo = useCallback(async (opts?: { silent?: boolean }) => {
     try {
       const res = await fetch(`${API}/admin/bookings/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
-      setBooking(data);
-      if (data.visits) {
-        setVisits(data.visits);
+      if (!opts?.silent) {
+        applyBookingData(data);
+        return;
       }
-      
-      // Robust population for Job Details
-      setJobDetails({
-        diagnosis: data.jobDetails?.diagnosis || "",
-        workDone: data.jobDetails?.workDone || "",
-        recommendations: data.jobDetails?.recommendations || "",
-        warrantyPeriod: data.jobDetails?.warrantyPeriod || "60 Days",
-        asset: data.jobDetails?.asset || "",
-        warrantyCode: data.jobDetails?.warrantyCode || "",
-        warrantyDesc: data.jobDetails?.warrantyDesc || "",
-        assetSaleDate: data.jobDetails?.assetSaleDate || "",
-        assetExpiryDate: data.jobDetails?.assetExpiryDate || "",
-        contractCode: data.jobDetails?.contractCode || "",
-        contractDesc: data.jobDetails?.contractDesc || "",
-        contractStartDate: data.jobDetails?.contractStartDate || "",
-        contractExpiryDate: data.jobDetails?.contractExpiryDate || "",
-        visitCategory: data.jobDetails?.visitCategory || "",
-        invoiceNumber: data.jobDetails?.invoiceNumber || ""
-      });
-
-      // Robust population for Product Details
-      setProductDetails({
-        brand: data.productDetails?.brand || "",
-        modelNumber: data.productDetails?.modelNumber || "",
-        serialNumber: data.productDetails?.serialNumber || ""
-      });
-
-      if (data.invoiceData) {
-        setServiceFee(data.invoiceData.serviceTotal || 0);
-        setAdditionalCharges(data.invoiceData.additionalCharges || []);
+      const nextRev = data.jobSheetRevision ?? 0;
+      if (nextRev !== jobSheetRevisionRef.current) {
+        applyBookingData(data);
+      } else {
+        setBooking(data);
+        if (data.visits) setVisits(data.visits);
       }
-      setServiceProperties({
-        serviceType: data.serviceType || "REPAIR",
-        paymentStatus: data.paymentStatus || "UNPAID"
-      });
+      void fetchWarranties();
     } catch (err) {
       console.error(err);
     } finally {
-      setLoading(false);
+      if (!opts?.silent) setLoading(false);
     }
-  };
+  }, [token, id, applyBookingData]);
+
+  const fetchWarranties = useCallback(async () => {
+    if (!token || !id) return;
+    try {
+      const res = await fetch(`${API}/admin/bookings/${id}/warranties`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setWarranties(Array.isArray(data) ? data : []);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }, [token, id]);
+
+  useEffect(() => {
+    if (token && id) {
+      fetchBookingInfo();
+      fetchTechnicians();
+      fetchWarranties();
+    }
+  }, [token, id]);
+
+  // Poll every 5s while detail page is open (pause when tab hidden)
+  useEffect(() => {
+    if (!token || !id) return;
+    const tick = () => {
+      if (document.visibilityState === "hidden") return;
+      void fetchBookingInfo({ silent: true });
+    };
+    const timer = setInterval(tick, 5000);
+    const onVis = () => {
+      if (document.visibilityState === "visible") tick();
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [token, id, fetchBookingInfo]);
 
   const fetchTechnicians = async () => {
     try {
@@ -156,13 +209,30 @@ export default function BookingDetailPage() {
   };
 
   const handleUpdateJobDetails = async () => {
+    // Build diff: only send fields that differ from server state
+    const serverJob = booking?.jobDetails || {};
+    const changedFields: Record<string, string> = {};
+    for (const [key, value] of Object.entries(jobDetails)) {
+      if ((value || "") !== (serverJob[key] || "")) {
+        changedFields[key] = value as string;
+      }
+    }
+    if (Object.keys(changedFields).length === 0) {
+      alert("No changes to save.");
+      return;
+    }
     setUpdating(true);
     try {
-      await fetch(`${API}/admin/bookings/${id}/job-details`, {
+      const res = await fetch(`${API}/admin/bookings/${id}/job-details`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify(jobDetails),
+        body: JSON.stringify(changedFields),
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.message || "Failed to save details.");
+        return;
+      }
       fetchBookingInfo();
       alert("Job Sheet details saved successfully.");
     } catch (err) {
@@ -170,6 +240,21 @@ export default function BookingDetailPage() {
       alert("Failed to save details.");
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const handleSerialLookup = async () => {
+    if (!serialLookup.trim()) return;
+    try {
+      const res = await fetch(
+        `${API}/admin/warranties?serial=${encodeURIComponent(serialLookup.trim())}`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      const data = await res.json();
+      setSerialLookupResult(data);
+    } catch (err) {
+      console.error(err);
+      setSerialLookupResult({ found: false });
     }
   };
 
@@ -192,13 +277,29 @@ export default function BookingDetailPage() {
   };
 
   const handleUpdateProductDetails = async () => {
+    const serverProd = booking?.productDetails || {};
+    const changedFields: Record<string, string> = {};
+    for (const [key, value] of Object.entries(productDetails)) {
+      if ((value || "") !== (serverProd[key] || "")) {
+        changedFields[key] = value as string;
+      }
+    }
+    if (Object.keys(changedFields).length === 0) {
+      alert("No changes to save.");
+      return;
+    }
     setUpdating(true);
     try {
-      await fetch(`${API}/admin/bookings/${id}/product-details`, {
+      const res = await fetch(`${API}/admin/bookings/${id}/product-details`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify(productDetails),
+        body: JSON.stringify(changedFields),
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.message || "Failed to save product details.");
+        return;
+      }
       fetchBookingInfo();
       alert("Product details saved.");
     } catch (err) {
@@ -255,8 +356,49 @@ export default function BookingDetailPage() {
   if (loading) return <div style={{ padding: 40 }}>Loading booking details...</div>;
   if (!booking) return <div style={{ padding: 40 }}>Booking not found.</div>;
 
+  const liveFromTech =
+    ["EN_ROUTE", "IN_PROGRESS"].includes(booking.status) && !booking.isBilled;
+  const sheetLocked = Boolean(booking.sheetLockedAt);
+  const sheetReadOnly = Boolean(booking.isBilled || liveFromTech || sheetLocked);
+  const lastSheetUpdate = booking.jobSheetUpdatedAt
+    ? new Date(booking.jobSheetUpdatedAt).toLocaleTimeString()
+    : null;
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24, padding: "0 8px", maxWidth: 900 }}>
+      {sheetLocked && (
+        <div
+          style={{
+            background: "rgba(220, 38, 38, 0.08)",
+            border: "1px solid rgba(220, 38, 38, 0.3)",
+            color: "#991b1b",
+            padding: "12px 16px",
+            borderRadius: 10,
+            fontSize: 13,
+            fontWeight: 600,
+          }}
+        >
+          Sheet locked{booking.sheetLockedBy ? ` by ${booking.sheetLockedBy}` : ""} · editing disabled
+        </div>
+      )}
+      {liveFromTech && !sheetLocked ? (
+        <div
+          style={{
+            background: "rgba(212, 143, 14, 0.12)",
+            border: "1px solid rgba(212, 143, 14, 0.35)",
+            color: "#92400e",
+            padding: "12px 16px",
+            borderRadius: 10,
+            fontSize: 13,
+            fontWeight: 600,
+          }}
+        >
+          Live from technician
+          {booking.jobSheetUpdatedBy === "TECHNICIAN" ? " · technician editing" : ""}
+          {lastSheetUpdate ? ` · last update ${lastSheetUpdate}` : ""}
+          {" · sheet fields are read-only until the job leaves mid-job status"}
+        </div>
+      ) : null}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => router.back()}>
@@ -326,7 +468,7 @@ export default function BookingDetailPage() {
                 <button 
                   className="admin-btn admin-btn-ghost admin-btn-sm" 
                   onClick={handleUpdateProductDetails}
-                  disabled={updating || booking.isBilled}
+                  disabled={updating || sheetReadOnly}
                 >
                   {updating ? "Saving..." : "Save Info"}
                 </button>
@@ -339,7 +481,7 @@ export default function BookingDetailPage() {
                     placeholder="e.g. Samsung" 
                     value={productDetails.brand}
                     onChange={e => setProductDetails({...productDetails, brand: e.target.value})}
-                    disabled={booking.isBilled}
+                    disabled={sheetReadOnly}
                   />
                 </div>
                 <div>
@@ -349,7 +491,7 @@ export default function BookingDetailPage() {
                     placeholder="e.g. RF28" 
                     value={productDetails.modelNumber}
                     onChange={e => setProductDetails({...productDetails, modelNumber: e.target.value})}
-                    disabled={booking.isBilled}
+                    disabled={sheetReadOnly}
                   />
                 </div>
                 <div>
@@ -359,8 +501,17 @@ export default function BookingDetailPage() {
                     placeholder="e.g. SN-998811" 
                     value={productDetails.serialNumber}
                     onChange={e => setProductDetails({...productDetails, serialNumber: e.target.value})}
-                    disabled={booking.isBilled}
+                    disabled={sheetReadOnly}
                   />
+                  {productDetails.serialNumber && (
+                    <Link
+                      href={`/admin/appliance-mappings?serial=${encodeURIComponent(productDetails.serialNumber)}&phone=${encodeURIComponent(booking.contactPhone || booking.userId?.phone || "")}`}
+                      style={{ fontSize: 11, color: "var(--admin-info)", marginTop: 6, display: "inline-flex", alignItems: "center", gap: 4 }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: 14 }}>qr_code_2</span>
+                      Manage serial mapping
+                    </Link>
+                  )}
                 </div>
                 <div>
                   <label className="admin-label">Service Category</label>
@@ -396,7 +547,7 @@ export default function BookingDetailPage() {
                 <button 
                   className="admin-btn admin-btn-secondary admin-btn-sm" 
                   onClick={handleUpdateJobDetails}
-                  disabled={updating || booking.isBilled}
+                  disabled={updating || sheetReadOnly}
                 >
                   {updating ? "Saving..." : "Save Entries"}
                 </button>
@@ -410,7 +561,7 @@ export default function BookingDetailPage() {
                     style={{ minHeight: 80 }}
                     value={jobDetails.diagnosis}
                     onChange={e => setJobDetails({...jobDetails, diagnosis: e.target.value})}
-                    disabled={booking.isBilled}
+                    disabled={sheetReadOnly}
                   />
                 </div>
                 <div>
@@ -421,7 +572,7 @@ export default function BookingDetailPage() {
                     style={{ minHeight: 80 }}
                     value={jobDetails.workDone}
                     onChange={e => setJobDetails({...jobDetails, workDone: e.target.value})}
-                    disabled={booking.isBilled}
+                    disabled={sheetReadOnly}
                   />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
@@ -432,7 +583,7 @@ export default function BookingDetailPage() {
                       placeholder="e.g. Clean filters weekly" 
                       value={jobDetails.recommendations}
                       onChange={e => setJobDetails({...jobDetails, recommendations: e.target.value})}
-                      disabled={booking.isBilled}
+                      disabled={sheetReadOnly}
                     />
                   </div>
                   <div>
@@ -442,7 +593,7 @@ export default function BookingDetailPage() {
                       placeholder="e.g. 60 Days" 
                       value={jobDetails.warrantyPeriod}
                       onChange={e => setJobDetails({...jobDetails, warrantyPeriod: e.target.value})}
-                      disabled={booking.isBilled}
+                      disabled={sheetReadOnly}
                     />
                   </div>
                 </div>
@@ -452,27 +603,27 @@ export default function BookingDetailPage() {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                     <div>
                       <label className="admin-label">Asset</label>
-                      <input className="admin-input" value={jobDetails.asset} onChange={e => setJobDetails({...jobDetails, asset: e.target.value})} placeholder="Asset ID / Name" />
+                      <input className="admin-input" value={jobDetails.asset} onChange={e => setJobDetails({...jobDetails, asset: e.target.value})} placeholder="Asset ID / Name" disabled={sheetReadOnly} />
                     </div>
                     <div>
                       <label className="admin-label">Invoice Number</label>
-                      <input className="admin-input" value={jobDetails.invoiceNumber} onChange={e => setJobDetails({...jobDetails, invoiceNumber: e.target.value})} placeholder="INV-2026-..." />
+                      <input className="admin-input" value={jobDetails.invoiceNumber} onChange={e => setJobDetails({...jobDetails, invoiceNumber: e.target.value})} placeholder="INV-2026-..." disabled={sheetReadOnly} />
                     </div>
                     <div>
                       <label className="admin-label">Warranty Code</label>
-                      <input className="admin-input" value={jobDetails.warrantyCode} onChange={e => setJobDetails({...jobDetails, warrantyCode: e.target.value})} placeholder="W-990" />
+                      <input className="admin-input" value={jobDetails.warrantyCode} onChange={e => setJobDetails({...jobDetails, warrantyCode: e.target.value})} placeholder="W-990" disabled={sheetReadOnly} />
                     </div>
                     <div>
                       <label className="admin-label">Warranty Desc</label>
-                      <input className="admin-input" value={jobDetails.warrantyDesc} onChange={e => setJobDetails({...jobDetails, warrantyDesc: e.target.value})} placeholder="Manufacturer Standard" />
+                      <input className="admin-input" value={jobDetails.warrantyDesc} onChange={e => setJobDetails({...jobDetails, warrantyDesc: e.target.value})} placeholder="Manufacturer Standard" disabled={sheetReadOnly} />
                     </div>
                     <div>
                       <label className="admin-label">Asset Sale Date</label>
-                      <input className="admin-input" value={jobDetails.assetSaleDate} onChange={e => setJobDetails({...jobDetails, assetSaleDate: e.target.value})} placeholder="DD/MM/YYYY" />
+                      <input className="admin-input" value={jobDetails.assetSaleDate} onChange={e => setJobDetails({...jobDetails, assetSaleDate: e.target.value})} placeholder="DD/MM/YYYY" disabled={sheetReadOnly} />
                     </div>
                     <div>
                       <label className="admin-label">Asset Expiry Date</label>
-                      <input className="admin-input" value={jobDetails.assetExpiryDate} onChange={e => setJobDetails({...jobDetails, assetExpiryDate: e.target.value})} placeholder="DD/MM/YYYY" />
+                      <input className="admin-input" value={jobDetails.assetExpiryDate} onChange={e => setJobDetails({...jobDetails, assetExpiryDate: e.target.value})} placeholder="DD/MM/YYYY" disabled={sheetReadOnly} />
                     </div>
                   </div>
                 </div>
@@ -482,23 +633,23 @@ export default function BookingDetailPage() {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                     <div>
                       <label className="admin-label">Contract Code</label>
-                      <input className="admin-input" value={jobDetails.contractCode} onChange={e => setJobDetails({...jobDetails, contractCode: e.target.value})} placeholder="C-100" />
+                      <input className="admin-input" value={jobDetails.contractCode} onChange={e => setJobDetails({...jobDetails, contractCode: e.target.value})} placeholder="C-100" disabled={sheetReadOnly} />
                     </div>
                     <div>
                       <label className="admin-label">Contract Desc</label>
-                      <input className="admin-input" value={jobDetails.contractDesc} onChange={e => setJobDetails({...jobDetails, contractDesc: e.target.value})} placeholder="Annual Maintenance" />
+                      <input className="admin-input" value={jobDetails.contractDesc} onChange={e => setJobDetails({...jobDetails, contractDesc: e.target.value})} placeholder="Annual Maintenance" disabled={sheetReadOnly} />
                     </div>
                     <div>
                       <label className="admin-label">Contract Start Date</label>
-                      <input className="admin-input" value={jobDetails.contractStartDate} onChange={e => setJobDetails({...jobDetails, contractStartDate: e.target.value})} placeholder="DD/MM/YYYY" />
+                      <input className="admin-input" value={jobDetails.contractStartDate} onChange={e => setJobDetails({...jobDetails, contractStartDate: e.target.value})} placeholder="DD/MM/YYYY" disabled={sheetReadOnly} />
                     </div>
                     <div>
                       <label className="admin-label">Contract Expiry Date</label>
-                      <input className="admin-input" value={jobDetails.contractExpiryDate} onChange={e => setJobDetails({...jobDetails, contractExpiryDate: e.target.value})} placeholder="DD/MM/YYYY" />
+                      <input className="admin-input" value={jobDetails.contractExpiryDate} onChange={e => setJobDetails({...jobDetails, contractExpiryDate: e.target.value})} placeholder="DD/MM/YYYY" disabled={sheetReadOnly} />
                     </div>
                     <div>
                       <label className="admin-label">Visit Category</label>
-                      <input className="admin-input" value={jobDetails.visitCategory} onChange={e => setJobDetails({...jobDetails, visitCategory: e.target.value})} placeholder="Standard / Breakdown" />
+                      <input className="admin-input" value={jobDetails.visitCategory} onChange={e => setJobDetails({...jobDetails, visitCategory: e.target.value})} placeholder="Standard / Breakdown" disabled={sheetReadOnly} />
                     </div>
                   </div>
                 </div>
@@ -538,6 +689,38 @@ export default function BookingDetailPage() {
             )}
           </div>
 
+          {(booking.originalParts?.length ?? 0) > 0 && (
+          <div className="admin-card">
+            <h3 style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: 1, color: "var(--admin-text-muted)", marginBottom: 16 }}>
+              Previously installed parts (original job)
+            </h3>
+            <table style={{ width: "100%", fontSize: 13, borderCollapse: "collapse" }}>
+              <thead>
+                <tr style={{ borderBottom: "1px solid var(--admin-border)", textAlign: "left" }}>
+                  <th style={{ paddingBottom: 8, color: "var(--admin-text-muted)" }}>Part</th>
+                  <th style={{ paddingBottom: 8, color: "var(--admin-text-muted)" }}>Serial</th>
+                  <th style={{ paddingBottom: 8, color: "var(--admin-text-muted)" }}>Warranty</th>
+                </tr>
+              </thead>
+              <tbody>
+                {booking.originalParts.map((p: any) => (
+                  <tr key={p.usageId} style={{ borderBottom: "1px solid var(--admin-border)" }}>
+                    <td style={{ padding: "10px 0", fontWeight: 500 }}>{p.partName}</td>
+                    <td style={{ padding: "10px 0", fontFamily: "monospace", fontSize: 12 }}>{p.serialNumber || "—"}</td>
+                    <td style={{ padding: "10px 0" }}>
+                      {p.covered ? (
+                        <span className="admin-badge admin-badge-success" style={{ zoom: 0.85 }}>Covered — replace free</span>
+                      ) : (
+                        <span className="admin-badge" style={{ zoom: 0.85 }}>{p.warrantyStatus}</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          )}
+
           {/* Spare Parts Consumed */}
           <div className="admin-card">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
@@ -561,28 +744,129 @@ export default function BookingDetailPage() {
                   <thead>
                     <tr style={{ borderBottom: "1px solid var(--admin-border)", textAlign: "left" }}>
                       <th style={{ paddingBottom: 8, color: "var(--admin-text-muted)" }}>Part Name</th>
+                      <th style={{ paddingBottom: 8, color: "var(--admin-text-muted)" }}>Serial</th>
+                      <th style={{ paddingBottom: 8, color: "var(--admin-text-muted)" }}>Installed</th>
                       <th style={{ paddingBottom: 8, color: "var(--admin-text-muted)" }}>Type</th>
                       <th style={{ paddingBottom: 8, color: "var(--admin-text-muted)" }}>Qty</th>
                       <th style={{ paddingBottom: 8, textAlign: "right", color: "var(--admin-text-muted)" }}>Cost</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {allParts.map((p: any, idx: number) => (
+                    {allParts.map((p: any, idx: number) => {
+                      const isSelf = p.isThirdParty || p.sourcedBy === "SELF";
+                      return (
                       <tr key={p._id || `part-${idx}`} style={{ borderBottom: "1px solid var(--admin-border)" }}>
                         <td style={{ padding: "12px 0", fontWeight: 500 }}>
-                          {p.isThirdParty ? p.partName : (p.sparePartId?.name || p.sparePartId)}
+                          {isSelf ? p.partName : (p.sparePartId?.name || p.partName || p.sparePartId)}
+                          {isSelf && !p.warrantyCovered ? (
+                            <div style={{ fontSize: 11, color: "var(--admin-text-dim)", marginTop: 2 }}>
+                              ₹100 tech fee{p.platformFeeApplied ? " · applied" : " · pending"}
+                            </div>
+                          ) : null}
+                        </td>
+                        <td style={{ padding: "12px 0", fontFamily: "monospace", fontSize: 12 }}>
+                          {p.serialNumber || "—"}
+                          {p.warrantyMonths ? (
+                            <div style={{ fontSize: 11, color: "var(--admin-text-dim)" }}>{p.warrantyMonths} mo</div>
+                          ) : null}
+                        </td>
+                        <td style={{ padding: "12px 0", fontSize: 12 }}>
+                          {p.installedAt ? new Date(p.installedAt).toLocaleDateString() : "—"}
                         </td>
                         <td style={{ padding: "12px 0" }}>
-                          {p.isThirdParty ? <span className="admin-badge admin-badge-warning" style={{ zoom: 0.8 }}>3rd Party</span> : <span className="admin-badge admin-badge-success" style={{ zoom: 0.8 }}>Inventory</span>}
+                          {isSelf ? (
+                            <span className="admin-badge admin-badge-warning" style={{ zoom: 0.8 }}>Self</span>
+                          ) : (
+                            <span className="admin-badge admin-badge-success" style={{ zoom: 0.8 }}>Inventory</span>
+                          )}
                         </td>
                         <td style={{ padding: "12px 0" }}>{p.quantity}</td>
-                        <td style={{ padding: "12px 0", textAlign: "right", fontWeight: 600 }}>₹{p.cost}</td>
+                        <td style={{ padding: "12px 0", textAlign: "right", fontWeight: 600 }}>
+                          {p.warrantyCovered ? "Warranty ₹0" : `₹${p.cost}`}
+                        </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               );
             })()}
+          </div>
+
+          {/* Part & Service Warranties */}
+          <div className="admin-card">
+            <h3 style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: 1, color: "var(--admin-text-muted)", marginBottom: 16 }}>
+              Warranties
+            </h3>
+            <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+              <input
+                className="admin-input"
+                style={{ flex: 1 }}
+                placeholder="Lookup by part serial…"
+                value={serialLookup}
+                onChange={(e) => setSerialLookup(e.target.value.toUpperCase())}
+              />
+              <button type="button" className="admin-btn admin-btn-secondary admin-btn-sm" onClick={handleSerialLookup}>
+                Lookup
+              </button>
+            </div>
+            {serialLookupResult ? (
+              <div style={{ fontSize: 13, marginBottom: 16, padding: 12, background: "var(--admin-surface-2)", borderRadius: 8 }}>
+                {serialLookupResult.found && serialLookupResult.warranty ? (
+                  <>
+                    <div><strong>{serialLookupResult.warranty.serialNumber}</strong> · {serialLookupResult.warranty.status}</div>
+                    <div style={{ color: "var(--admin-text-dim)", marginTop: 4 }}>
+                      {serialLookupResult.warranty.partName || "Part"} ·{" "}
+                      {new Date(serialLookupResult.warranty.startDate).toLocaleDateString()} →{" "}
+                      {new Date(serialLookupResult.warranty.endDate).toLocaleDateString()}
+                    </div>
+                    {serialLookupResult.warranty.bookingId && (
+                      <a
+                        href={`/admin/bookings/${serialLookupResult.warranty.bookingId?._id || serialLookupResult.warranty.bookingId}`}
+                        style={{ color: "var(--admin-primary)", fontWeight: 600 }}
+                      >
+                        Open booking
+                      </a>
+                    )}
+                  </>
+                ) : (
+                  <span style={{ color: "var(--admin-text-dim)" }}>No warranty found for that serial.</span>
+                )}
+              </div>
+            ) : null}
+            {warranties.length === 0 ? (
+              <div style={{ color: "var(--admin-text-dim)", fontSize: 13 }}>
+                No warranties registered yet (created when job is completed).
+              </div>
+            ) : (
+              <table style={{ width: "100%", fontSize: 13, borderCollapse: "collapse" }}>
+                <thead>
+                  <tr style={{ borderBottom: "1px solid var(--admin-border)", textAlign: "left" }}>
+                    <th style={{ paddingBottom: 8, color: "var(--admin-text-muted)" }}>Type</th>
+                    <th style={{ paddingBottom: 8, color: "var(--admin-text-muted)" }}>Serial / Desc</th>
+                    <th style={{ paddingBottom: 8, color: "var(--admin-text-muted)" }}>Start</th>
+                    <th style={{ paddingBottom: 8, color: "var(--admin-text-muted)" }}>End</th>
+                    <th style={{ paddingBottom: 8, color: "var(--admin-text-muted)" }}>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {warranties.map((w: any) => (
+                    <tr key={w._id} style={{ borderBottom: "1px solid var(--admin-border)" }}>
+                      <td style={{ padding: "10px 0" }}>{w.type}</td>
+                      <td style={{ padding: "10px 0" }}>
+                        {w.serialNumber || w.description || "—"}
+                        {w.partName ? (
+                          <div style={{ fontSize: 11, color: "var(--admin-text-dim)" }}>{w.partName}</div>
+                        ) : null}
+                      </td>
+                      <td style={{ padding: "10px 0" }}>{w.startDate ? new Date(w.startDate).toLocaleDateString() : "—"}</td>
+                      <td style={{ padding: "10px 0" }}>{w.endDate ? new Date(w.endDate).toLocaleDateString() : "—"}</td>
+                      <td style={{ padding: "10px 0" }}>{w.status}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
 
@@ -688,7 +972,7 @@ export default function BookingDetailPage() {
                 <button 
                   className="admin-btn admin-btn-secondary admin-btn-sm" 
                   onClick={handleSaveInvoiceManual}
-                  disabled={updating}
+                  disabled={updating || sheetReadOnly}
                 >
                   {updating ? "Saving..." : "Save Bill"}
                 </button>
@@ -704,7 +988,7 @@ export default function BookingDetailPage() {
                   style={{ height: 32, padding: '4px 8px', textAlign: 'right' }}
                   value={serviceFee}
                   onChange={e => setServiceFee(Number(e.target.value))}
-                  disabled={booking.isBilled}
+                  disabled={sheetReadOnly}
                 />
               </div>
 
@@ -719,7 +1003,7 @@ export default function BookingDetailPage() {
                       newCharges[idx].label = e.target.value;
                       setAdditionalCharges(newCharges);
                     }}
-                    disabled={booking.isBilled}
+                    disabled={sheetReadOnly}
                   />
                   <input 
                     type="number"
@@ -731,9 +1015,9 @@ export default function BookingDetailPage() {
                       newCharges[idx].amount = Number(e.target.value);
                       setAdditionalCharges(newCharges);
                     }}
-                    disabled={booking.isBilled}
+                    disabled={sheetReadOnly}
                   />
-                  {!booking.isBilled && (
+                  {!sheetReadOnly && (
                     <button 
                       className="admin-btn admin-btn-ghost admin-btn-sm"
                       style={{ padding: 0 }}
@@ -745,7 +1029,7 @@ export default function BookingDetailPage() {
                 </div>
               ))}
 
-              {!booking.isBilled && (
+              {!sheetReadOnly && (
                 <button 
                    className="admin-btn admin-btn-ghost admin-btn-sm"
                    style={{ fontSize: 11, alignSelf: 'flex-start' }}
@@ -764,6 +1048,46 @@ export default function BookingDetailPage() {
                 <span>Grand Total:</span>
                 <span style={{ color: 'var(--admin-primary)' }}>₹{booking.invoiceData?.totalAmount || 0}</span>
               </div>
+
+              {booking.technicianSettlement && (
+                <div style={{ marginTop: 16, padding: 12, background: 'var(--admin-surface-muted, #f6f6f6)', borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13 }}>
+                  <div style={{ fontWeight: 700, fontSize: 11, letterSpacing: 0.8, textTransform: 'uppercase', color: 'var(--admin-text-muted)' }}>
+                    This collection — Fixxer vs technician
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Customer paid</span>
+                    <span>₹{booking.technicianSettlement.customerTotal ?? booking.invoiceData?.totalAmount ?? 0}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Service charges (100% to technician)</span>
+                    <span>₹{booking.technicianSettlement.labour}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Inventory parts (10% commission)</span>
+                    <span>₹{booking.technicianSettlement.inventoryCommission}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Inventory parts (90% to Fixxer)</span>
+                    <span>₹{booking.technicianSettlement.inventoryToFixxer}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Outside parts (technician keeps sale)</span>
+                    <span>₹{booking.technicianSettlement.selfPartsTotal}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Outside-parts fee (₹100 × {booking.technicianSettlement.selfPartCount})</span>
+                    <span>₹{booking.technicianSettlement.selfPartFee}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, borderTop: '1px solid var(--admin-border)', paddingTop: 8, marginTop: 4 }}>
+                    <span>Technician keeps</span>
+                    <span>₹{booking.technicianSettlement.technicianNet}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}>
+                    <span>Fixxer share</span>
+                    <span>₹{booking.technicianSettlement.fixxerNet}</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -786,6 +1110,7 @@ export default function BookingDetailPage() {
           bookingId={id as string}
           technicianId={booking.technicianId?._id || booking.technicianId}
           token={token || ""}
+          originalParts={booking.originalParts || []}
           onAdded={() => fetchBookingInfo()}
           onClose={() => setAddPartModalVisible(false)}
         />
