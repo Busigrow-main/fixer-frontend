@@ -299,7 +299,7 @@ function MyBookingsContent() {
           )}
 
           {!token && !authLoading ? (
-            <div className="rounded-3xl border border-outline bg-white p-12 text-center">
+            <div className="rounded-3xl border border-outline bg-white px-5 py-10 text-center sm:px-8 sm:py-12 md:p-12">
               <span className="material-symbols-outlined text-5xl text-on-surface-variant/40">lock</span>
               <p className="mt-4 text-on-surface text-lg font-bold">Authentication Required</p>
               <p className="mt-2 text-sm text-on-surface-variant max-w-md mx-auto">
@@ -307,7 +307,7 @@ function MyBookingsContent() {
               </p>
               <a
                 href="/login"
-                className="mt-8 inline-flex h-12 px-8 bg-primary text-on-primary rounded-xl items-center font-bold uppercase tracking-wider shadow-lg shadow-primary/20 hover:scale-95 transition-transform"
+                className="mt-8 inline-flex h-11 items-center justify-center whitespace-nowrap rounded-xl bg-primary px-5 text-[13px] font-bold tracking-wide text-on-primary shadow-md shadow-primary/20 transition-transform hover:scale-[0.98] active:scale-95 sm:h-12 sm:px-6 sm:text-sm"
               >
                 Continue with phone
               </a>
