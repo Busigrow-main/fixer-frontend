@@ -1,9 +1,15 @@
+"use client";
+
 import Link from "next/link";
+import { useBooking } from "@/app/context/BookingContext";
 
 const EXPLORE_LINKS = ["Local Expertise", "Service Areas", "OEM Catalog"];
 const LEGAL_LINKS = ["Privacy Policy", "Terms of Service"];
 
 export default function Footer() {
+
+  const { openBooking } = useBooking();
+
   return (
     <footer className="bg-zinc-50 border-t border-zinc-200 max-md:pb-mobile-footer">
       <div className="max-w-screen-2xl mx-auto px-6 md:px-10 pt-8 md:pt-12 pb-6 md:pb-8">
@@ -113,7 +119,9 @@ export default function Footer() {
               </div>
 
               {/* Mobile CTA: Large, accessible button */}
-              <button className="w-full mt-2 bg-primary text-white py-3.5 rounded-xl font-bold text-sm uppercase tracking-wide hover:opacity-90 active:scale-95 transition-all duration-200 shadow-md shadow-primary/10 flex items-center justify-center gap-2">
+              <button 
+                onClick={() => openBooking()}
+                className="w-full mt-2 bg-primary text-white py-3.5 rounded-xl font-bold text-sm uppercase tracking-wide hover:opacity-90 active:scale-95 transition-all duration-200 shadow-md shadow-primary/10 flex items-center justify-center gap-2">
                 <span className="material-symbols-outlined text-base icon-filled">build</span>
                 Book a Repair
               </button>
