@@ -98,6 +98,15 @@ export default function BookingForm({ initialServiceSlug, onSuccess, className =
     e.preventDefault();
     setError("");
 
+    const pincode = formData.zip.trim();
+
+    if (!/^\d{6}$/.test(pincode)) {
+      setError("Please enter a valid 6-digit pincode.");
+      return;
+    }
+
+    console.log("BOOKING PINCODE SENT:", pincode);
+
     if (!selectedServiceData || !selectedSubCategory) {
       setError("Please select a valid specific service before booking.");
       return;
