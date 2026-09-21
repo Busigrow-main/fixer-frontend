@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/app/context/AuthContext";
 import { useBooking } from "@/app/context/BookingContext";
 import { useRouter } from "next/navigation";
@@ -35,6 +35,7 @@ export default function BookingForm({ initialServiceSlug, onSuccess, className =
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState("");
+  const errorRef = useRef<HTMLFormElement>(null);
 
   // Fetch services on mount
   useEffect(() => {
@@ -163,7 +164,7 @@ export default function BookingForm({ initialServiceSlug, onSuccess, className =
 
       setIsSuccess(true);
       if (onSuccess) {
-        setTimeout(onSuccess, 2000);
+        setTimeout(onSuccess, 10000);
       }
     } catch (err: unknown) {
       setError(
@@ -173,6 +174,15 @@ export default function BookingForm({ initialServiceSlug, onSuccess, className =
       setIsSubmitting(false);
     }
   };
+
+  useEffect(() => {
+    if (error) {
+      errorRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
+  }, [error]);
 
   if (isSuccess) {
     return (
@@ -202,7 +212,7 @@ export default function BookingForm({ initialServiceSlug, onSuccess, className =
   return (
     <form onSubmit={handleSubmit} className={`space-y-6 ${className}`}>
       {error && (
-        <div className="p-4 rounded-2xl bg-error/10 border border-error/20 flex items-center gap-3 text-error text-sm font-bold">
+        <div ref={errorRef} className="p-4 rounded-2xl bg-error/10 border border-error/20 flex items-center gap-3 text-error text-sm font-bold">
           <span className="material-symbols-outlined text-lg">error</span>
           {error}
         </div>
@@ -366,8 +376,19 @@ export default function BookingForm({ initialServiceSlug, onSuccess, className =
             placeholder="000000"
             value={formData.zip}
             onChange={(e) => setFormData({ ...formData, zip: e.target.value })}
-            className="w-full h-13 bg-surface-container-low border-2 border-outline rounded-xl px-4 outline-none focus:border-primary"
+            className={`w-full h-13 bg-surface-container-low border-2 rounded-xl px-4 outline-none transition-all duration-200 text-on-surface ${
+              formData.zip.length > 6
+                ? "border-error focus:border-error"
+                : "border-outline focus:border-primary"
+            }`}
           />
+          {
+            formData.zip.length > 6 && (
+              <p className="text-error text-xs font-medium">
+                Enter 6 digit pincode
+              </p>
+            )
+          }
         </div>
         <div className="space-y-2">
           <label htmlFor="address" className="block font-label text-[10px] uppercase tracking-widest font-black text-on-surface-variant">
