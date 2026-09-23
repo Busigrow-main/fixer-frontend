@@ -535,8 +535,10 @@ export function openRetailInvoice(booking: any) {
                ${booking.jobDetails?.warrantyPeriod || '60 Days'} Master Warranty
              </p>
              <p style="margin: 4px 0 0 0; color: #71717a; font-size: 11px; line-height: 1.4;">
-               This warranty covers labor and genuine parts replaced during this service. 
-               Keep this invoice for future claims.
+               Covers labour for the same fault for ${booking.jobDetails?.warrantyPeriod || '60 Days'} from job completion,
+               and genuine Fixxer-installed parts for 6 months (unless a longer manufacturer warranty applies).
+               Exclusions apply (misuse, third-party parts, unrelated faults, consumables unless listed).
+               Full policy: ${typeof window !== 'undefined' ? window.location.origin : ''}/warranty — keep this invoice for claims.
              </p>
            </div>
         </div>

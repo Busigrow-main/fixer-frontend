@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRef, useState } from "react";
 
 const POINTS = [
@@ -9,6 +10,7 @@ const POINTS = [
     body: "Two decades of technical mastery. Every Fixxer pro is background-checked and highly trained for your complete peace of mind.",
     color: "bg-primary-container",
     iconColor: "text-primary",
+    href: "/services",
   },
   {
     icon: "security",
@@ -16,13 +18,15 @@ const POINTS = [
     body: "Free service charge for a full year and up to 50% off on every spare part. Ultimate protection for your home essentials.",
     color: "bg-secondary-container",
     iconColor: "text-secondary",
+    href: "/services",
   },
   {
     icon: "workspace_premium",
     title: "60-Day Warranty",
-    body: "We stand by our mastery. All repairs come with a rock-solid 60-day service warranty and up to 30 days on parts.",
+    body: "We stand by our mastery. All repairs include a 60-day service warranty and 6 months on genuine Fixxer-installed parts.",
     color: "bg-tertiary-container",
     iconColor: "text-tertiary",
+    href: "/warranty",
   },
 ] as const;
 
@@ -64,7 +68,7 @@ export default function DifferenceSection() {
             onScroll={handleScroll}
             className="flex md:grid md:grid-cols-3 gap-5 md:gap-6 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory hide-scrollbar pb-6 md:pb-0"
           >
-            {POINTS.map(({ icon, title, body, color, iconColor }, i) => (
+            {POINTS.map(({ icon, title, body, color, iconColor, href }, i) => (
               <div
                 key={title}
                 className="group flex-shrink-0 w-[86%] md:w-full snap-center bg-surface-container-lowest p-8 md:p-10 rounded-[2rem] md:rounded-3xl border border-outline shadow-sm hover:shadow-xl hover:shadow-black/[0.04] transition-all duration-300 hover:-translate-y-1 cursor-default active:scale-[0.98]"
@@ -93,13 +97,15 @@ export default function DifferenceSection() {
                   {body}
                 </p>
 
-                {/* Link */}
-                <div className="mt-6 md:mt-8 flex items-center gap-2 text-xs md:text-sm font-bold text-on-surface-variant group-hover:text-primary transition-colors duration-300">
+                <Link
+                  href={href}
+                  className="mt-6 md:mt-8 inline-flex items-center gap-2 text-xs md:text-sm font-bold text-on-surface-variant group-hover:text-primary transition-colors duration-300"
+                >
                   <span>Learn more</span>
                   <span className="material-symbols-outlined text-base transition-transform duration-300 group-hover:translate-x-1">
                     arrow_forward
                   </span>
-                </div>
+                </Link>
               </div>
             ))}
           </div>
