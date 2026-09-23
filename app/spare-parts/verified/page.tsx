@@ -34,7 +34,7 @@ export default function VerifiedExportersPage() {
                <div className="p-6 bg-zinc-50 rounded-2xl border border-zinc-100">
                 <ShieldCheck className="w-8 h-8 text-primary mb-3 mx-auto" />
                 <h3 className="font-black text-zinc-900 mb-1">Warranty Shield</h3>
-                <p className="text-xs text-zinc-500 font-medium tracking-tight">Up to 12 months warranty on all spares.</p>
+                <p className="text-xs text-zinc-500 font-medium tracking-tight">Manufacturer warranty up to 12 months on listed catalog spares, plus Fixxer&apos;s 6-month labour-installed part cover where applicable.</p>
               </div>
             </div>
 

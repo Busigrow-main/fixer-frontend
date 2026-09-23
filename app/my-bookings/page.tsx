@@ -10,6 +10,13 @@ import { API_URL } from "@/app/config";
 import { openRetailInvoice } from "@/app/admin/utils/jobsheet";
 import { openOrderInvoice } from "@/app/admin/utils/order-invoice";
 import { SHOP_APPLIANCES_HREF } from "@/app/lib/shop-routes";
+import {
+  buildCustomerPricingSummary,
+  formatInr,
+  formatScheduleLabel,
+  getCustomerStatusView,
+  statusToneClasses,
+} from "@/app/lib/customer-booking";
 
 type TabType = "repairs" | "parts" | "appliances";
 
@@ -96,13 +103,14 @@ function MyBookingsContent() {
   };
 
   const handleClaimWarranty = async (bookingId: string) => {
-    if (
-      !token ||
-      !confirm(
-        "Are you sure you want to claim warranty for this service? We will dispatch a master technician for a warranty check.",
-      )
-    )
-      return;
+    if (!token) return;
+    const confirmed = confirm(
+      "Claim warranty for this completed service?\n\n" +
+        "We will create a warranty-check visit with a master technician.\n\n" +
+        "Coverage: labour for the same fault (60 days from completion) and genuine Fixxer-installed parts (6 months), subject to exclusions in the Warranty Policy.\n\n" +
+        "Open /warranty for full terms before confirming.",
+    );
+    if (!confirmed) return;
 
     try {
       const res = await fetch(`${API_URL}/user/bookings/${bookingId}/claim-warranty`, {
@@ -373,6 +381,36 @@ function RepairBookingCard({
   onClaimWarranty: (id: string) => void;
 }) {
   const warranty = getWarrantyStatus(booking);
+  const technician = booking.technician || (
+    typeof booking.technicianId === "object" && booking.technicianId?.name
+      ? booking.technicianId
+      : null
+  );
+  const techName =
+    typeof technician === "object" && technician?.name ? technician.name : null;
+  const techPhone =
+    typeof technician === "object" && technician?.phone ? technician.phone : null;
+  const hasTechnicianAssigned = !!(
+    booking.hasTechnicianAssigned ||
+    techName ||
+    (booking.technicianId &&
+      (typeof booking.technicianId === "string" ||
+        typeof booking.technicianId === "object"))
+  );
+
+  const statusView =
+    booking.statusView ||
+    getCustomerStatusView(booking.status, {
+      isWarrantyClaim: booking.isWarrantyClaim || booking.serviceType === "WARRANTY_CHECK",
+      arrivalAt: booking.arrivalAt,
+    });
+  const tone = statusToneClasses(statusView.tone);
+  const pricing = buildCustomerPricingSummary(booking);
+  const scheduleLabel = formatScheduleLabel(booking);
+  const showAmount = pricing.estimatedAmount > 0 || pricing.totalAmount > 0;
+  const displayAmount = pricing.isFinal || pricing.hasExtras
+    ? pricing.totalAmount
+    : pricing.estimatedAmount || pricing.serviceTotal;
 
   return (
     <article className="rounded-3xl border border-outline bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow">
@@ -386,11 +424,11 @@ function RepairBookingCard({
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <span className={`h-2.5 w-2.5 rounded-full ${tone.dot}`} />
           <span
-            className={`h-2.5 w-2.5 rounded-full ${booking.status === "PENDING" ? "bg-amber-500 animate-pulse" : "bg-green-500"}`}
-          />
-          <span className="text-[10px] font-black uppercase tracking-widest text-on-surface">
-            {booking.isWarrantyClaim || booking.serviceType === "WARRANTY_CHECK" ? "Warranty claim" : booking.status}
+            className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg border ${tone.badge}`}
+          >
+            {statusView.label}
           </span>
         </div>
       </div>
@@ -463,20 +501,47 @@ function RepairBookingCard({
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-6 pt-4 border-t border-outline-variant/40">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4 border-t border-outline-variant/40">
             <div>
               <p className="text-[10px] uppercase tracking-widest font-black text-on-surface-variant mb-2">
-                Technician Status
+                Technician
               </p>
-              {booking.status === "PENDING" ? (
-                <p className="text-sm font-medium text-amber-700 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-100 inline-block">
-                  Awaiting Dispatch
+              {techName ? (
+                <div>
+                  <p className="text-sm font-semibold text-on-surface">{techName}</p>
+                  {techPhone ? (
+                    <a
+                      href={`tel:${techPhone}`}
+                      className="text-xs text-primary font-medium hover:underline mt-0.5 inline-block"
+                    >
+                      {techPhone}
+                    </a>
+                  ) : null}
+                </div>
+              ) : hasTechnicianAssigned ||
+                (booking.status && booking.status !== "PENDING" && booking.status !== "CANCELLED") ? (
+                <p className="text-sm font-medium text-on-surface-variant">
+                  Master technician assigned
                 </p>
               ) : (
-                <p className="text-sm font-medium text-primary">Assigned to Master Tech</p>
+                <p className="text-sm font-medium text-amber-700 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-100 inline-block">
+                  Awaiting assignment
+                </p>
               )}
             </div>
             <div>
+              <p className="text-[10px] uppercase tracking-widest font-black text-on-surface-variant mb-2">
+                Schedule / ETA
+              </p>
+              {scheduleLabel ? (
+                <p className="text-sm font-medium text-on-surface">{scheduleLabel}</p>
+              ) : (
+                <p className="text-sm text-on-surface-variant">
+                  We&apos;ll share arrival timing once a technician is scheduled.
+                </p>
+              )}
+            </div>
+            <div className="sm:col-span-2">
               <p className="text-[10px] uppercase tracking-widest font-black text-on-surface-variant mb-2">
                 Visit Address
               </p>
@@ -489,12 +554,60 @@ function RepairBookingCard({
 
         <div className="bg-surface-container-lowest rounded-2xl p-6 border border-outline flex flex-col justify-center text-center">
           <p className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant mb-2">
-            Service Charges
+            {pricing.displayLabel} charge
           </p>
-          <p className="text-3xl font-headline font-bold text-on-surface">Verified</p>
-          <p className="text-xs text-on-surface-variant mt-2">
-            Final pricing shared after inspection. No upfront payment.
-          </p>
+          {showAmount ? (
+            <>
+              <p className="text-3xl font-headline font-bold text-on-surface">
+                {formatInr(displayAmount)}
+              </p>
+              <div className="mt-3 text-left space-y-1.5 text-xs text-on-surface-variant border-t border-outline pt-3">
+                <div className="flex justify-between gap-3">
+                  <span>Base service</span>
+                  <span className="font-medium text-on-surface">
+                    {formatInr(pricing.serviceTotal || pricing.estimatedAmount)}
+                  </span>
+                </div>
+                {pricing.partsTotal > 0 ? (
+                  <div className="flex justify-between gap-3">
+                    <span>Parts</span>
+                    <span className="font-medium text-on-surface">{formatInr(pricing.partsTotal)}</span>
+                  </div>
+                ) : null}
+                {pricing.additionalChargesTotal > 0 ? (
+                  <div className="flex justify-between gap-3">
+                    <span>Additional</span>
+                    <span className="font-medium text-on-surface">
+                      {formatInr(pricing.additionalChargesTotal)}
+                    </span>
+                  </div>
+                ) : null}
+                {(booking.invoiceData?.additionalCharges || []).map(
+                  (c: { label?: string; amount?: number }, i: number) =>
+                    c?.label && Number(c.amount) > 0 ? (
+                      <div key={`${c.label}-${i}`} className="flex justify-between gap-3 pl-2 opacity-80">
+                        <span>{c.label}</span>
+                        <span>{formatInr(Number(c.amount))}</span>
+                      </div>
+                    ) : null,
+                )}
+              </div>
+              <p className="text-xs text-on-surface-variant mt-3">
+                {pricing.isFinal
+                  ? "Final amount after approved work. No upfront payment required at booking."
+                  : pricing.hasExtras
+                    ? "Includes approved parts or extras. Final bill available after job close."
+                    : "Base estimate includes visit. Parts or extra repairs are confirmed before charge."}
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-2xl font-headline font-bold text-on-surface">Pending quote</p>
+              <p className="text-xs text-on-surface-variant mt-2">
+                Pricing will appear once your service charge is confirmed.
+              </p>
+            </>
+          )}
           <div className="flex flex-col items-center justify-center gap-2 my-4">
             {warranty ? (
               <div
@@ -511,6 +624,12 @@ function RepairBookingCard({
                 {booking.jobDetails?.warrantyPeriod || "60 Days"} Warranty Included
               </div>
             )}
+            <Link
+              href="/warranty"
+              className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline"
+            >
+              View warranty policy
+            </Link>
           </div>
 
           {warranty?.isActive && !booking.claimBookingIds?.length && (
