@@ -43,6 +43,12 @@ export function PendingBookingConfirmDialog({ draft, token, onDismiss, redirectT
             text: draft.address,
           },
           description: draft.description,
+          ...(draft.preferredVisitDate
+            ? { preferredVisitDate: draft.preferredVisitDate }
+            : {}),
+          ...(draft.preferredVisitSlot
+            ? { preferredVisitSlot: draft.preferredVisitSlot }
+            : {}),
         }),
       });
       if (!res.ok) {
@@ -89,6 +95,17 @@ export function PendingBookingConfirmDialog({ draft, token, onDismiss, redirectT
               {[draft.serviceName, draft.subCategoryName].filter(Boolean).join(" · ") || "Selected service"}
             </p>
           </div>
+          {draft.priceLabel ? (
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+                Standard service charge
+              </p>
+              <p className="font-headline text-xl font-bold text-on-surface">{draft.priceLabel}</p>
+              <p className="text-[11px] text-on-surface-variant mt-1">
+                Visit fee included. Parts or extra repairs are priced after diagnosis and confirmed before charge.
+              </p>
+            </div>
+          ) : null}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Name</p>
@@ -105,6 +122,16 @@ export function PendingBookingConfirmDialog({ draft, token, onDismiss, redirectT
               <p className="text-on-surface">{draft.brand}</p>
             </div>
           ) : null}
+          {(draft.preferredVisitDate || draft.preferredVisitSlot) ? (
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+                Preferred visit
+              </p>
+              <p className="text-on-surface">
+                {[draft.preferredVisitDate, draft.preferredVisitSlot].filter(Boolean).join(" · ")}
+              </p>
+            </div>
+          ) : null}
           <div>
             <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Address</p>
             <p className="text-on-surface">
@@ -118,6 +145,12 @@ export function PendingBookingConfirmDialog({ draft, token, onDismiss, redirectT
               <p className="text-on-surface whitespace-pre-wrap">{draft.description}</p>
             </div>
           ) : null}
+          <p className="text-[11px] text-on-surface-variant">
+            Includes 60-day service warranty (activates on completion).{" "}
+            <a href="/warranty" className="text-primary font-semibold hover:underline">
+              View policy
+            </a>
+          </p>
         </div>
 
         {error ? (

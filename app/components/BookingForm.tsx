@@ -30,6 +30,8 @@ export default function BookingForm({ initialServiceSlug, onSuccess, className =
     zip: "",
     address: "",
     description: "",
+    preferredVisitDate: "",
+    preferredVisitSlot: "",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -85,6 +87,8 @@ export default function BookingForm({ initialServiceSlug, onSuccess, className =
       zip: resumeDraft.zip,
       address: resumeDraft.address,
       description: resumeDraft.description,
+      preferredVisitDate: resumeDraft.preferredVisitDate || prev.preferredVisitDate,
+      preferredVisitSlot: resumeDraft.preferredVisitSlot || prev.preferredVisitSlot,
     }));
     clearResumeDraft();
   }, [resumeDraft, services.length, clearResumeDraft]);
@@ -154,6 +158,12 @@ export default function BookingForm({ initialServiceSlug, onSuccess, className =
             text: formData.address,
           },
           description: formData.description,
+          ...(formData.preferredVisitDate
+            ? { preferredVisitDate: formData.preferredVisitDate }
+            : {}),
+          ...(formData.preferredVisitSlot
+            ? { preferredVisitSlot: formData.preferredVisitSlot }
+            : {}),
         }),
       });
 
@@ -195,9 +205,15 @@ export default function BookingForm({ initialServiceSlug, onSuccess, className =
           Nearby technicians have been notified. Someone will pick up your request shortly — usually within{' '}
           <span className="font-bold text-on-surface">10 minutes</span>.
         </p>
-        <div className="mt-8 p-4 bg-primary/5 rounded-xl border border-primary/10 w-full">
+        <div className="mt-8 p-4 bg-primary/5 rounded-xl border border-primary/10 w-full space-y-2">
            <p className="text-[10px] uppercase tracking-widest font-black text-primary mb-1">Service Warranty</p>
-           <p className="text-xs font-medium text-on-surface">60 Days Protection Enabled</p>
+           <p className="text-xs font-medium text-on-surface">
+             60-day warranty included — activates when your job is completed.
+           </p>
+           <a href="/warranty" className="text-[11px] font-bold text-primary hover:underline inline-flex items-center gap-1">
+             View warranty policy
+             <span className="material-symbols-outlined text-sm">arrow_forward</span>
+           </a>
         </div>
         <button 
           onClick={() => router.push('/my-bookings')}
@@ -259,7 +275,9 @@ export default function BookingForm({ initialServiceSlug, onSuccess, className =
             >
               <option value="" disabled>Select type...</option>
               {selectedServiceData?.subCategories?.map((sc: any) => (
-                <option key={sc._id} value={sc._id}>{sc.name}</option>
+                <option key={sc._id} value={sc._id}>
+                  {sc.name}{sc.price ? ` — ${sc.price}` : ""}
+                </option>
               ))}
             </select>
             <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">
@@ -316,21 +334,69 @@ export default function BookingForm({ initialServiceSlug, onSuccess, className =
       {/* Dynamic Price Display */}
       {selectedSubCategory && (
         <div className="bg-primary/5 border border-primary/10 rounded-2xl p-4 flex flex-col gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
-           <div className="flex items-center justify-between">
+           <div className="flex items-center justify-between gap-3">
               <div>
                  <p className="text-[9px] uppercase tracking-widest font-black text-primary">Standard Service Charge</p>
                  <p className="text-xl font-headline text-on-surface font-bold">{selectedSubCategory.price}</p>
               </div>
               <div className="text-right">
-                 <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider">
+                 <a
+                   href="/warranty"
+                   className="inline-flex items-center gap-1 bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider hover:bg-green-200 transition-colors"
+                 >
                     <span className="material-symbols-outlined text-[10px] icon-filled">verified</span>
                     60 Days Warranty
-                 </span>
-                 <p className="text-[10px] text-on-surface-variant mt-1">Visit fee included</p>
+                 </a>
+                 <p className="text-[10px] text-on-surface-variant mt-1">Visit fee included in this charge</p>
               </div>
            </div>
+           <p className="text-[11px] text-on-surface-variant leading-relaxed border-t border-primary/10 pt-3">
+             Base charge covers the technician visit and standard labour for this service.
+             Spare parts or additional repairs, if needed, are diagnosed on site, priced before work proceeds, and added only with your confirmation.
+             {" "}
+             <a href="/warranty" className="text-primary font-semibold hover:underline">Warranty terms</a>
+             {" · "}
+             <a href="/terms" className="text-primary font-semibold hover:underline">Pricing terms</a>
+           </p>
         </div>
       )}
+
+      {/* Preferred visit window */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div className="space-y-2">
+          <label htmlFor="preferredVisitDate" className="block font-label text-[10px] uppercase tracking-widest font-black text-on-surface-variant">
+            Preferred visit date <span className="opacity-50 normal-case tracking-normal">(optional)</span>
+          </label>
+          <input
+            id="preferredVisitDate"
+            type="date"
+            value={formData.preferredVisitDate}
+            onChange={(e) => setFormData({ ...formData, preferredVisitDate: e.target.value })}
+            className="w-full h-13 bg-surface-container-low border-2 border-outline rounded-xl px-4 outline-none focus:border-primary transition-all duration-200 text-on-surface"
+          />
+        </div>
+        <div className="space-y-2">
+          <label htmlFor="preferredVisitSlot" className="block font-label text-[10px] uppercase tracking-widest font-black text-on-surface-variant">
+            Preferred time window
+          </label>
+          <div className="relative">
+            <select
+              id="preferredVisitSlot"
+              value={formData.preferredVisitSlot}
+              onChange={(e) => setFormData({ ...formData, preferredVisitSlot: e.target.value })}
+              className="w-full h-13 bg-surface-container-low border-2 border-outline rounded-xl px-4 appearance-none outline-none focus:border-primary transition-all duration-200 text-on-surface font-medium"
+            >
+              <option value="">Any time</option>
+              <option value="MORNING">Morning (8am–12pm)</option>
+              <option value="AFTERNOON">Afternoon (12pm–4pm)</option>
+              <option value="EVENING">Evening (4pm–8pm)</option>
+            </select>
+            <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">
+              expand_more
+            </span>
+          </div>
+        </div>
+      </div>
 
       {/* Grid for Name & Phone */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">

@@ -109,13 +109,53 @@ export default async function ServiceDetail({ params }: { params: Promise<{ slug
                        </div>
                        <h3 className="font-headline text-lg md:text-xl text-on-surface">{feature}</h3>
                        <p className="text-xs md:text-sm text-on-surface-variant leading-relaxed opacity-70">
-                          Comprehensive maintenance from industrial-grade components to smart home integration.
+                          {feature.toLowerCase().includes("warranty")
+                            ? "Coverage details, exclusions, and claim steps are listed in our warranty policy."
+                            : "Comprehensive maintenance from industrial-grade components to smart home integration."}
                        </p>
+                       {feature.toLowerCase().includes("warranty") ? (
+                         <Link href="/warranty" className="text-xs font-bold text-primary hover:underline inline-flex items-center gap-1">
+                           View warranty policy
+                           <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                         </Link>
+                       ) : null}
                     </div>
                  ))}
               </div>
            </div>
         </section>
+
+        {/* ── Service menu pricing ── */}
+        {Array.isArray(service.subCategories) && service.subCategories.length > 0 ? (
+          <section className="py-12 md:py-20 bg-white border-y border-outline">
+            <div className="container mx-auto px-6 md:px-10 max-w-screen-2xl">
+              <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
+                <div>
+                  <h2 className="font-headline text-3xl md:text-5xl text-on-surface tracking-tight">
+                    Service charges
+                  </h2>
+                  <p className="text-sm md:text-base text-on-surface-variant mt-2 max-w-xl">
+                    Listed prices are the standard service charge (visit included). Spare parts and additional repairs are priced after diagnosis and confirmed before work.
+                  </p>
+                </div>
+                <Link href="/warranty" className="text-xs font-black uppercase tracking-widest text-primary hover:underline">
+                  60-day warranty included
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {service.subCategories.map((sc: { _id?: string; name: string; price?: string }) => (
+                  <div
+                    key={sc._id || sc.name}
+                    className="rounded-2xl border border-outline bg-surface-container-lowest px-5 py-4 flex items-center justify-between gap-4"
+                  >
+                    <p className="font-medium text-on-surface text-sm md:text-base">{sc.name}</p>
+                    <p className="font-headline text-lg font-bold text-primary shrink-0">{sc.price || "—"}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        ) : null}
 
         {/* ── Bottom Section: Form ── */}
         <section className="py-16 md:py-32 bg-white relative overflow-hidden">
