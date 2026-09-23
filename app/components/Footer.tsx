@@ -1,7 +1,15 @@
 import Link from "next/link";
 
-const EXPLORE_LINKS = ["Local Expertise", "Service Areas", "OEM Catalog"];
-const LEGAL_LINKS = ["Privacy Policy", "Terms of Service"];
+const EXPLORE_LINKS = [
+  { label: "Services", href: "/services" },
+  { label: "Warranty", href: "/warranty" },
+  { label: "My Bookings", href: "/my-bookings" },
+];
+const LEGAL_LINKS = [
+  { label: "Privacy Policy", href: "/privacy" },
+  { label: "Terms of Service", href: "/terms" },
+  { label: "Warranty Policy", href: "/warranty" },
+];
 
 export default function Footer() {
   return (
@@ -52,12 +60,12 @@ export default function Footer() {
               </h4>
               <ul className="space-y-2.5 md:space-y-3">
                 {EXPLORE_LINKS.map((item) => (
-                  <li key={item}>
+                  <li key={item.label}>
                     <Link
-                      href="#"
+                      href={item.href}
                       className="font-label text-sm text-zinc-500 hover:text-primary transition-colors duration-200 inline-block"
                     >
-                      {item}
+                      {item.label}
                     </Link>
                   </li>
                 ))}
@@ -69,12 +77,12 @@ export default function Footer() {
               </h4>
               <ul className="space-y-2.5 md:space-y-3">
                 {LEGAL_LINKS.map((item) => (
-                  <li key={item}>
+                  <li key={item.label}>
                     <Link
-                      href="#"
+                      href={item.href}
                       className="font-label text-sm text-zinc-500 hover:text-primary transition-colors duration-200 inline-block"
                     >
-                      {item}
+                      {item.label}
                     </Link>
                   </li>
                 ))}

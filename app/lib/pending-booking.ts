@@ -15,12 +15,16 @@ export type PendingBookingDraft = {
   serviceSlug?: string;
   serviceName?: string;
   subCategoryName?: string;
+  /** Display price string e.g. ₹499 */
+  priceLabel?: string;
   name: string;
   phone: string;
   brand?: string;
   zip: string;
   address: string;
   description: string;
+  preferredVisitDate?: string;
+  preferredVisitSlot?: string;
   returnPath: string;
   savedAt: string;
 };
