@@ -345,12 +345,12 @@ export default function SparePartsClient({
                   and we'll source it for you.
                 </p>
                 <div className="flex items-center justify-center gap-4 pt-6">
-                  <Link
-                    href="/contact"
-                    className="h-14 px-10 bg-primary text-white rounded-2xl flex items-center justify-center font-black text-sm uppercase tracking-widest hover:scale-105 shadow-xl shadow-primary/20 transition-all"
-                  >
-                    Consult an Expert
-                  </Link>
+                <a
+                  href="tel:+917004771388"
+                  className="h-14 px-10 bg-primary                text-white rounded-2xl flex               items-center justify-center               font-black text-sm uppercase              tracking-widest hover:scale-105               shadow-xl shadow-primary/20             transition-all"
+                >
+                  Consult an Expert
+                </a>
                 </div>
               </div>
             </div>
