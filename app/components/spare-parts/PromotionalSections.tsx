@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Truck, 
   ShieldCheck, 
@@ -11,8 +11,10 @@ import {
   Sparkles,
   Zap
 } from 'lucide-react';
+import { useAuth } from "@/app/context/AuthContext";
 import Link from 'next/link';
 import { cn } from '@/app/lib/utils';
+import LeadFormModal from '@/app/components/LeadFormModal';
 
 export const ServicePromiseGrid = () => {
   const promises = [
@@ -93,39 +95,124 @@ export const UniversalPartsTeaser = () => {
 };
 
 export const BulkBusinessInquiry = () => {
+  const [activeForm, setActiveForm] = useState<
+    "business" | "technician" | null
+  >(null);
+
+  const { token } = useAuth();
+
+  const handleLeadSubmit = async (
+    data: Record<string, string>,
+  ) => {
+    if (!token) {
+      throw new Error("Please login to submit this form.");
+    }
+
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081/api/v1"}/leads`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          type: activeForm === "business" ? "BUSINESS" : "TECHNICIAN",
+          name: data.name,
+          phone: data.phone.trim(),
+          email: data.email.trim() || undefined,
+
+          ...(activeForm === "business"
+            ? {
+                shopName: data.shopName,
+                shopAddress: data.shopAddress,
+              }
+            : {
+                address: data.address,
+                applianceExpertise: data.applianceExpertise,
+              }),
+        }),
+      },
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        result?.message || "Failed to submit your request.",
+      );
+    }
+
+    console.log("LEAD CREATED:", result);
+  };
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-       <div className="p-8 md:p-12 rounded-[2.5rem] bg-primary/5 border border-primary/10 flex flex-col justify-between">
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Business */}
+        <div className="p-8 md:p-12 rounded-[2.5rem] bg-primary/5 border border-primary/10 flex flex-col justify-between">
           <div>
             <div className="w-14 h-14 rounded-2xl bg-primary text-white flex items-center justify-center mb-8">
               <Building2 className="w-8 h-8" />
             </div>
-            <h3 className="text-2xl font-black text-zinc-900 mb-4 tracking-tight">For Businesses & Retailers</h3>
+
+            <h3 className="text-2xl font-black text-zinc-900 mb-4 tracking-tight">
+              For Businesses & Retailers
+            </h3>
+
             <p className="text-zinc-600 font-medium text-sm leading-relaxed mb-8">
-              Are you a repair shop owner or a local retailer in Bihar? Get exclusive trade pricing, credit facilities, and prioritized logistics for bulk orders.
+              Are you a repair shop owner or a local retailer in Bihar?
+              Get exclusive trade pricing, credit facilities, and prioritized
+              logistics for bulk orders.
             </p>
           </div>
-          <Link href="/contact?type=business" className="flex items-center gap-3 text-primary font-black uppercase text-xs tracking-widest hover:translate-x-2 transition-transform">
-             Apply for Business Account
-             <ArrowRight className="w-4 h-4" />
-          </Link>
-       </div>
 
-       <div className="p-8 md:p-12 rounded-[2.5rem] bg-zinc-900 border border-zinc-800 flex flex-col justify-between text-white">
+          <button
+            type="button"
+            onClick={() => setActiveForm("business")}
+            className="flex items-center gap-3 text-primary font-black uppercase text-xs tracking-widest hover:translate-x-2 transition-transform"
+          >
+            Apply for Business Account
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Technician */}
+        <div className="p-8 md:p-12 rounded-[2.5rem] bg-zinc-900 border border-zinc-800 flex flex-col justify-between text-white">
           <div>
             <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center mb-8">
               <Users className="w-8 h-8 text-primary" />
             </div>
-            <h3 className="text-2xl font-black mb-4 tracking-tight">Join as a Technician</h3>
+
+            <h3 className="text-2xl font-black mb-4 tracking-tight">
+              Join as a Technician
+            </h3>
+
             <p className="text-zinc-400 font-medium text-sm leading-relaxed mb-8">
-              Verified technicians get special discounts on every spare part purchase and access to our technical training workshops.
+              Verified technicians get special discounts on every spare part
+              purchase and access to our technical training workshops.
             </p>
           </div>
-          <Link href="/technician-signup" className="flex items-center gap-3 text-white font-black uppercase text-xs tracking-widest hover:translate-x-2 transition-transform">
-             Become a Partner
-             <ArrowRight className="w-4 h-4 text-primary" />
-          </Link>
-       </div>
-    </div>
+
+          <button
+            type="button"
+            onClick={() => setActiveForm("technician")}
+            className="flex items-center gap-3 text-white font-black uppercase text-xs tracking-widest hover:translate-x-2 transition-transform"
+          >
+            Become a Partner
+            <ArrowRight className="w-4 h-4 text-primary" />
+          </button>
+        </div>
+      </div>
+
+      {/* Popup */}
+      {activeForm && (
+        <LeadFormModal
+          type={activeForm}
+          onClose={() => setActiveForm(null)}
+          onSubmit={handleLeadSubmit}
+        />
+      )}
+    </>
   );
 };

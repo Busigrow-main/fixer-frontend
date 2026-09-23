@@ -1,10 +1,10 @@
 import Image from "next/image";
 
 const TECH_HANDS_IMG =
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuCguhSK33TG_RhXjxPbw7POcfXs9-NRuQIySs8uBnSClHaAKf0MDJYwoSAfFrvsewluvm_QPxXCndf98FvCShQnI3QL2ZPqdAw8O-6Udb7201x4ePL_6jIVmEema2AxlxRCKkGRybo5ys033s0j4Nn_WOpJxeUqrCJwz5lnz1Fi9ViBQ9oY_3TPoJMiRELHZouZ8BA753Yu7hGJEDdi-tFlQYh7IfX_sUlfTEInIu82mD1JZnub_wLfWRgrO5KC3U2n0vYkFH9MY6o";
+  "https://images.pexels.com/photos/10521714/pexels-photo-10521714.jpeg";
 
 const SERVICE_VAN_IMG =
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuAlRn2GIMR81b1Q3zRZmqoxQJgcPZ-4Veug5O-QfGpunsv8HlwrRIdCnHvfOpNWwuucu0dpjp1rX6AYg22x434EpalzupYaUUov-O4b1hDQvbchx9TAueQoHGoQN0oA7MiRTH1Mc5XYrhYhfNggAR66uJiKSxS7CnqruWEDqyHUGH4SPhNYSiyCtnZLbefeo_yDMAlgniiGiGe2tsfvXQI4x7vEYebqAIEBHsLv1GW6JsLAoDqaDSKdhZu3q1vWcTzeGkfLcr_X3_M";
+  "https://images.pexels.com/photos/34848274/pexels-photo-34848274.jpeg";
 
 export default function SocialProofSection() {
   return (

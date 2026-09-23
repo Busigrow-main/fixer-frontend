@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { href: "/admin/offers", icon: "local_offer", label: "Offers" },
   { href: "/admin/appliance-mappings", icon: "qr_code_2", label: "Serial Mapping" },
   { href: "/admin/serviceable-pincodes", icon: "location_on", label: "Serviceable Pincodes" },
+  { href: "/admin/leads", icon: "contact_page", label: "Leads" },
   { href: "/admin/technicians", icon: "engineering", label: "Technicians" },
   { href: "/admin/spare-parts", icon: "build", label: "Spare Parts" },
   { href: "/admin/spare-parts/bulk-upload", icon: "upload_file", label: "Bulk Upload" },
