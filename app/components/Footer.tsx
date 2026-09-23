@@ -96,9 +96,11 @@ export default function Footer() {
             <div className="space-y-4">
               <div className="flex items-start gap-3 group">
                 <div className="w-8 h-8 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-primary-container flex items-center justify-center flex-shrink-0 group-active:bg-primary transition-colors">
-                  <span className="material-symbols-outlined text-primary group-active:text-white text-base md:text-lg icon-filled">
-                    call
-                  </span>
+                  <a href="tel:+917004771388">
+                    <span   className="material-symbols-outlined   text-primary   group-active:text-white text-base   md:text-lg icon-filled">
+                      call
+                    </span>
+                  </a>
                 </div>
                 <div>
                   <p className="font-bold text-zinc-800 text-sm">+91 70047 71388</p>
@@ -108,9 +110,15 @@ export default function Footer() {
 
               <div className="flex items-start gap-3 group">
                 <div className="w-8 h-8 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-primary-container flex items-center justify-center flex-shrink-0 group-active:bg-primary transition-colors">
+                <a
+                  href="https://www.google.com/maps/search/?api=1&query=MLA+Colony%2C+Raja+Bazar%2C+Patna+800014"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   <span className="material-symbols-outlined text-primary group-active:text-white text-base md:text-lg icon-filled">
                     location_on
                   </span>
+                </a>
                 </div>
                 <div>
                   <p className="font-bold text-zinc-800 text-sm">Cool Air Refrigeration</p>
