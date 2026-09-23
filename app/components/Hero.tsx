@@ -6,9 +6,9 @@ import HeroOffersCarousel from "@/app/components/HeroOffersCarousel";
 import { useBooking } from "@/app/context/BookingContext";
 
 const TRUST_ITEMS = [
-  { icon: "verified_user", value: "60-Day", label: "Warranty" },
-  { icon: "schedule", value: "30-Min", label: "Avg. arrival" },
-  { icon: "groups", value: "12k+", label: "Repairs" },
+  { icon: "verified_user", value: "60-Day", label: "Warranty", href: "/warranty" },
+  { icon: "schedule", value: "30-Min", label: "Avg. arrival", href: "/services" },
+  { icon: "groups", value: "12k+", label: "Repairs", href: "/services" },
 ] as const;
 
 export default function Hero() {
@@ -39,10 +39,11 @@ export default function Hero() {
           </h1>
 
           <div className="mt-6 hidden grid-cols-3 border-t border-outline pt-5 lg:mt-10 lg:grid">
-            {TRUST_ITEMS.map(({ icon, value, label }, index) => (
-              <div
+            {TRUST_ITEMS.map(({ icon, value, label, href }, index) => (
+              <Link
                 key={label}
-                className={`flex items-center gap-2.5 ${
+                href={href}
+                className={`flex items-center gap-2.5 hover:opacity-80 transition-opacity ${
                   index > 0 ? "border-l border-outline pl-3 md:pl-5" : ""
                 }`}
               >
@@ -57,7 +58,7 @@ export default function Hero() {
                     {label}
                   </p>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
@@ -92,10 +93,11 @@ export default function Hero() {
           </div>
 
           <div className="grid grid-cols-3 border-t border-outline pt-3.5 lg:hidden">
-            {TRUST_ITEMS.map(({ icon, value, label }, index) => (
-              <div
+            {TRUST_ITEMS.map(({ icon, value, label, href }, index) => (
+              <Link
                 key={label}
-                className={`flex items-center gap-1.5 ${
+                href={href}
+                className={`flex items-center gap-1.5 hover:opacity-80 transition-opacity ${
                   index > 0 ? "border-l border-outline pl-2.5" : ""
                 }`}
               >
@@ -110,7 +112,7 @@ export default function Hero() {
                     {label}
                   </p>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
