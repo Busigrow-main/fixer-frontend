@@ -35,15 +35,25 @@ export default function MyBookingsPage() {
 function MyBookingsContent() {
   const { token, loading: authLoading } = useAuth();
   const searchParams = useSearchParams();
-  const showSuccess = searchParams.get("success") === "true";
+  const [showSuccess, setShowSuccess] = useState(searchParams.get("success") === "true");
   const tabParam = searchParams.get("tab");
-
+  
   const [activeTab, setActiveTab] = useState<TabType>("repairs");
   const [orders, setOrders] = useState<any[]>([]);
   const [bookings, setBookings] = useState<any[]>([]);
   const [appliances, setAppliances] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if(!showSuccess) return;
+
+    const timer = setTimeout(() => {
+      setShowSuccess(false);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [showSuccess]);
 
   const partOrders = useMemo(
     () => orders.filter((o) => !isApplianceOrder(o)),

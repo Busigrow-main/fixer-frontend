@@ -161,39 +161,78 @@ export default function HomeShopSection() {
           </div>
         </div>
 
-        {/* Trust row */}
-        <div className="mt-8 flex gap-3 overflow-x-auto pb-1 no-scrollbar md:mt-10 md:grid md:grid-cols-4 md:gap-4 md:overflow-visible">
-          {TRUST_POINTS.map(({ icon, label }) => (
-            <div
-              key={label}
-              className="flex min-w-[140px] shrink-0 items-center gap-2.5 rounded-xl border border-outline bg-surface-bright px-4 py-3 md:min-w-0"
-            >
-              <span className="material-symbols-outlined text-xl text-primary">{icon}</span>
-              <span className="font-label text-[11px] font-bold uppercase tracking-wide text-on-surface">
-                {label}
-              </span>
-            </div>
-          ))}
-        </div>
+        {/* Trust points */}
+<div className="mt-8 sm:mt-10 md:mt-12">
+  <div className="mb-4 flex items-center justify-between md:mb-5">
+    <div>
+      <p className="font-label text-[9px] font-black uppercase tracking-[0.22em] text-primary sm:text-[10px]">
+        Why shop with us
+      </p>
+      <p className="mt-1 text-xs text-on-surface-variant sm:text-sm">
+        Trusted products. Reliable service.
+      </p>
+    </div>
 
-        {/* Bottom links */}
-        <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4 md:mt-10">
-          <Link
-            href={SHOP_SPARE_PARTS_HREF}
-            className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border-2 border-outline bg-surface-bright px-8 font-label text-xs font-black uppercase tracking-widest text-on-surface transition-all hover:border-primary/30 hover:text-primary active:scale-[0.98]"
-          >
-            <span className="material-symbols-outlined text-lg">storefront</span>
-            Spare parts catalog
-          </Link>
-          <Link
-            href="/spare-parts/enquiry"
-            className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-zinc-900 px-8 font-label text-xs font-black uppercase tracking-widest text-white transition-all hover:bg-primary active:scale-[0.98]"
-          >
-            <span className="material-symbols-outlined text-lg">post_add</span>
-            Post a requirement
-          </Link>
-        </div>
+    <span
+      aria-hidden="true"
+      className="hidden h-px flex-1 bg-outline/40 ml-6 md:block"
+    />
+  </div>
+
+  <div className="grid grid-cols-2 gap-2.5 sm:gap-3 md:grid-cols-2 lg:grid-cols-4 lg:gap-4">
+    {TRUST_POINTS.map(({ icon, label }) => (
+      <div
+        key={label}
+        className="group flex min-h-[88px] items-center gap-3 rounded-2xl border border-outline/50 bg-surface-container-lowest px-3.5 py-3.5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-md sm:min-h-[96px] sm:px-4 sm:py-4 md:min-h-[100px] md:px-5 lg:min-h-[92px] lg:rounded-xl lg:px-4"
+      >
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-container text-primary transition-transform duration-300 group-hover:scale-105 sm:h-11 sm:w-11">
+          <span className="material-symbols-outlined text-[20px] sm:text-[21px]">
+            {icon}
+          </span>
+        </span>
+
+        <span className="min-w-0">
+          <span className="block text-[10px] font-bold leading-[1.35] tracking-wide text-on-surface sm:text-[11px] md:text-xs">
+            {label}
+          </span>
+        </span>
       </div>
-    </section>
+    ))}
+  </div>
+</div>
+{/* Bottom actions */}
+<div className="mt-8 w-full md:mt-10">
+  <div className="mx-auto flex w-full max-w-xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-center sm:gap-4">
+    {/* Spare parts catalog */}
+    <Link
+      href={SHOP_SPARE_PARTS_HREF}
+      className="group inline-flex h-12 w-full items-center justify-center gap-2.5 rounded-xl border border-outline bg-surface-bright px-5 text-center font-label text-[10px] font-black uppercase tracking-[0.12em] text-on-surface shadow-sm transition-all duration-200 hover:border-primary/40 hover:text-primary hover:shadow-md active:scale-[0.98] sm:w-auto sm:min-w-[190px] sm:px-6"
+    >
+      <span className="material-symbols-outlined text-[19px] transition-transform duration-200 group-hover:scale-105">
+        storefront
+      </span>
+
+      <span>Spare parts catalog</span>
+    </Link>
+
+    {/* Post a requirement */}
+    <Link
+      href="/spare-parts/enquiry"
+      className="group inline-flex h-12 w-full items-center justify-center gap-2.5 rounded-xl bg-zinc-900 px-5 text-center font-label text-[10px] font-black uppercase tracking-[0.12em] text-white shadow-md shadow-black/10 transition-all duration-200 hover:bg-primary hover:shadow-lg hover:shadow-primary/20 active:scale-[0.98] sm:w-auto sm:min-w-[190px] sm:px-6"
+    >
+      <span className="material-symbols-outlined text-[19px] transition-transform duration-200 group-hover:scale-105">
+        post_add
+      </span>
+
+      <span>Post a requirement</span>
+
+      <span className="material-symbols-outlined text-[16px] opacity-60 transition-transform duration-200 group-hover:translate-x-0.5">
+        arrow_forward
+      </span>
+    </Link>
+  </div>
+</div>
+  </div>
+</section>
   );
 }

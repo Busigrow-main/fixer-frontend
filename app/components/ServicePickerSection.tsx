@@ -12,7 +12,10 @@ const PROMPTS: Record<string, string> = {
   microwave: "Not heating?",
 };
 
-const SHORT_NAMES: Record<string, string> = { ac: "AC" };
+const SHORT_NAMES: Record<string, string> = {
+  ac: "AC",
+};
+
 const SERVICE_ORDER = [
   "refrigerator",
   "washing-machine",
@@ -22,7 +25,9 @@ const SERVICE_ORDER = [
 
 const SERVICE_CARDS = SERVICE_ORDER.map((id) => {
   const service = SERVICES.find((item) => item.id === id);
+
   if (!service) return null;
+
   return {
     id: service.id,
     slug: service.slug,
@@ -31,157 +36,231 @@ const SERVICE_CARDS = SERVICE_ORDER.map((id) => {
     image: service.image,
     mostBooked: service.id === "refrigerator",
   };
-}).filter((item): item is NonNullable<typeof item> => item !== null);
+}).filter(
+  (item): item is NonNullable<typeof item> => item !== null
+);
 
 export default function ServicePickerSection() {
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const resumeTimer = useRef<number | null>(null);
+
   const [activeIndex, setActiveIndex] = useState(0);
   const [paused, setPaused] = useState(false);
-  const resumeTimer = useRef<number | null>(null);
 
   const syncActiveCard = useCallback(() => {
     const scroller = scrollerRef.current;
+
     if (!scroller) return;
+
     const cards = Array.from(
-      scroller.querySelectorAll<HTMLElement>("[data-service-card]"),
+      scroller.querySelectorAll<HTMLElement>("[data-service-card]")
     );
+
     if (!cards.length) return;
 
-    const center = scroller.scrollLeft + scroller.clientWidth / 2;
+    const containerCenter =
+      scroller.scrollLeft + scroller.clientWidth / 2;
+
     let nearestIndex = 0;
     let nearestDistance = Infinity;
+
     cards.forEach((card, index) => {
-      const distance = Math.abs(
-        card.offsetLeft + card.offsetWidth / 2 - center,
-      );
+      const cardCenter =
+        card.offsetLeft + card.offsetWidth / 2;
+
+      const distance = Math.abs(cardCenter - containerCenter);
+
       if (distance < nearestDistance) {
         nearestDistance = distance;
         nearestIndex = index;
       }
     });
+
     setActiveIndex(nearestIndex);
   }, []);
 
-  const showCard = useCallback((index: number, smooth = true) => {
-    const scroller = scrollerRef.current;
-    const card = scroller?.querySelectorAll<HTMLElement>(
-      "[data-service-card]",
-    )[index];
-    if (!scroller || !card) return;
-    scroller.scrollTo({
-      left: Math.max(card.offsetLeft, 0),
-      behavior: smooth ? "smooth" : "auto",
-    });
-  }, []);
+  const showCard = useCallback(
+    (index: number, smooth = true) => {
+      const scroller = scrollerRef.current;
+
+      if (!scroller) return;
+
+      const cards = scroller.querySelectorAll<HTMLElement>(
+        "[data-service-card]"
+      );
+
+      const card = cards[index];
+
+      if (!card) return;
+
+      scroller.scrollTo({
+        left: card.offsetLeft,
+        behavior: smooth ? "smooth" : "auto",
+      });
+
+      setActiveIndex(index);
+    },
+    []
+  );
 
   useEffect(() => {
     const scroller = scrollerRef.current;
+
     if (!scroller) return;
+
     syncActiveCard();
-    scroller.addEventListener("scroll", syncActiveCard, { passive: true });
-    return () => scroller.removeEventListener("scroll", syncActiveCard);
+
+    scroller.addEventListener("scroll", syncActiveCard, {
+      passive: true,
+    });
+
+    window.addEventListener("resize", syncActiveCard);
+
+    return () => {
+      scroller.removeEventListener("scroll", syncActiveCard);
+      window.removeEventListener("resize", syncActiveCard);
+    };
   }, [syncActiveCard]);
 
   useEffect(() => {
     if (paused) return;
+
     if (typeof window === "undefined") return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    if (window.matchMedia("(min-width: 768px)").matches) return;
+
+    if (
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      return;
+    }
+
+    if (window.matchMedia("(min-width: 768px)").matches) {
+      return;
+    }
 
     const timer = window.setInterval(() => {
-      const next = (activeIndex + 1) % SERVICE_CARDS.length;
-      showCard(next);
-    }, 4000);
-    return () => window.clearInterval(timer);
+      const nextIndex =
+        (activeIndex + 1) % SERVICE_CARDS.length;
+
+      showCard(nextIndex);
+    }, 4500);
+
+    return () => {
+      window.clearInterval(timer);
+    };
   }, [activeIndex, paused, showCard]);
 
-  useEffect(
-    () => () => {
-      if (resumeTimer.current) window.clearTimeout(resumeTimer.current);
-    },
-    [],
-  );
+  useEffect(() => {
+    return () => {
+      if (resumeTimer.current) {
+        window.clearTimeout(resumeTimer.current);
+      }
+    };
+  }, []);
 
   const pauseBriefly = () => {
     setPaused(true);
-    if (resumeTimer.current) window.clearTimeout(resumeTimer.current);
-    resumeTimer.current = window.setTimeout(() => setPaused(false), 5000);
+
+    if (resumeTimer.current) {
+      window.clearTimeout(resumeTimer.current);
+    }
+
+    resumeTimer.current = window.setTimeout(() => {
+      setPaused(false);
+    }, 5000);
   };
 
   return (
     <section
       id="service-picker"
-      className="overflow-hidden bg-white py-7 md:py-16"
       aria-labelledby="service-picker-heading"
+      className="overflow-hidden bg-white py-10 sm:py-12 md:py-16 lg:py-20"
     >
-      <div className="container mx-auto max-w-screen-2xl px-5 md:px-10">
-        <div className="mb-4 flex items-end justify-between gap-6 md:mb-9">
-          <div>
-            <h2
-              id="service-picker-heading"
-              className="inline-flex rounded-lg bg-primary px-3 py-1.5 font-headline text-lg font-medium tracking-tight text-white md:rounded-xl md:bg-transparent md:p-0 md:text-5xl md:text-on-surface"
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12">
+        {/* Header */}
+        <div className="mb-7 sm:mb-8 md:mb-10 lg:mb-12">
+          <div className="flex items-end justify-between gap-6">
+            <div className="min-w-0">
+              <p className="mb-2 text-[9px] font-black uppercase tracking-[0.25em] text-primary sm:text-[10px] md:text-xs">
+                Repair services
+              </p>
+
+              <h2
+                id="service-picker-heading"
+                className="font-headline text-[1.8rem] font-medium leading-[1.08] tracking-tight text-on-surface sm:text-3xl md:text-4xl lg:text-5xl"
+              >
+                What needs fixing?
+              </h2>
+
+              <p className="mt-2 max-w-xl text-xs leading-5 text-on-surface-variant sm:text-sm sm:leading-6 md:mt-3 md:text-base lg:text-lg">
+                Choose your appliance and we&apos;ll take it from there.
+              </p>
+            </div>
+
+            <Link
+              href="/services"
+              className="group hidden shrink-0 items-center gap-2 pb-1 text-[10px] font-black uppercase tracking-[0.16em] text-primary transition-colors hover:text-primary/70 md:inline-flex lg:text-xs"
             >
-              What needs fixing?
-            </h2>
-            <p className="mt-2 text-xs font-semibold text-on-surface-variant md:mt-3 md:text-lg md:text-on-surface">
-              Choose your appliance and we&apos;ll take it from there.
-            </p>
+              <span>All repair services</span>
+
+              <span className="material-symbols-outlined text-[17px] transition-transform duration-200 group-hover:translate-x-1">
+                arrow_forward
+              </span>
+            </Link>
           </div>
-          <Link
-            href="/services"
-            className="hidden items-center gap-2 font-label text-xs font-black uppercase tracking-widest text-primary hover:text-primary/70 md:inline-flex"
-          >
-            All repair services
-            <span className="material-symbols-outlined text-base">
-              arrow_forward
-            </span>
-          </Link>
         </div>
 
+        {/* Mobile carousel / Tablet + Desktop grid */}
         <div
           ref={scrollerRef}
-          className="-mr-5 flex snap-x snap-mandatory gap-2.5 overflow-x-auto scroll-pl-1 pr-5 pb-1 no-scrollbar md:mx-auto md:mr-auto md:grid md:max-w-3xl md:grid-cols-4 md:gap-4 md:overflow-visible md:pr-0 lg:max-w-4xl"
           aria-label="Repair service categories"
           onTouchStart={pauseBriefly}
           onPointerDown={pauseBriefly}
+          className="flex w-full snap-x snap-mandatory gap-0 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] md:grid md:grid-cols-2 md:gap-5 md:overflow-visible md:px-0 md:pb-0 lg:grid-cols-4 lg:gap-5 xl:gap-6"
         >
           {SERVICE_CARDS.map((item) => (
             <Link
               key={item.id}
-              data-service-card
               href={`/services/${item.slug}`}
-              className={`group relative flex w-34 shrink-0 snap-start flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98] md:w-auto md:max-w-none ${
-                item.mostBooked
-                  ? "border-primary ring-1 ring-primary/10"
-                  : "border-outline/70 hover:border-primary/30"
-              }`}
+              data-service-card
               aria-label={`View ${item.name} repair`}
+              className={`group relative flex w-full min-w-full shrink-0 snap-start flex-col overflow-hidden rounded-[1.4rem] border bg-white shadow-[0_5px_20px_rgba(0,0,0,0.05)] transition-all duration-300 active:scale-[0.99] sm:rounded-[1.5rem] md:min-w-0 md:rounded-3xl md:hover:-translate-y-1 md:hover:shadow-lg lg:rounded-[1.75rem] ${
+                item.mostBooked
+                  ? "border-primary/60 ring-1 ring-primary/10"
+                  : "border-outline/60 hover:border-primary/30"
+              }`}
             >
+              {/* Badge */}
               {item.mostBooked && (
-                <span className="absolute left-2 top-2 z-10 rounded-full bg-primary px-2 py-0.5 font-label text-[7px] font-black uppercase tracking-wider text-white shadow-sm">
+                <span className="absolute left-3 top-3 z-20 rounded-full bg-primary px-2.5 py-1 text-[7px] font-black uppercase tracking-[0.14em] text-white shadow-md sm:text-[8px]">
                   Most booked
                 </span>
               )}
-              <div className="relative aspect-3/4 overflow-hidden bg-surface-container-low">
+
+              {/* Image */}
+              <div className="relative aspect-[4/3] overflow-hidden bg-surface-container-low sm:aspect-[5/4] md:aspect-[4/3] lg:aspect-[5/4]">
                 <Image
                   src={item.image}
-                  alt={item.name}
+                  alt={`${item.name} repair service`}
                   fill
-                  sizes="(max-width: 767px) 136px, 180px"
-                  className="object-cover transition-transform duration-700 group-hover:scale-105"
+                  sizes="(max-width: 767px) 100vw, (max-width: 1023px) 50vw, 25vw"
+                  className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                 />
               </div>
-              <div className="flex items-center justify-between gap-1.5 px-2.5 py-2 md:px-3 md:py-2.5">
+
+              {/* Content */}
+              <div className="flex min-h-[78px] items-center justify-between gap-3 px-4 py-3.5 sm:min-h-[86px] sm:px-5 sm:py-4 md:min-h-[88px] lg:min-h-[92px]">
                 <div className="min-w-0">
-                  <h3 className="truncate font-headline text-[13px] font-bold leading-tight text-on-surface md:text-sm">
+                  <h3 className="truncate font-headline text-base font-bold leading-tight text-on-surface sm:text-lg md:text-base lg:text-lg">
                     {item.name}
                   </h3>
-                  <p className="mt-0.5 truncate text-[10px] text-on-surface-variant">
+
+                  <p className="mt-1 truncate text-[11px] leading-4 text-on-surface-variant sm:text-xs">
                     {item.prompt}
                   </p>
                 </div>
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-container text-primary transition-all group-hover:bg-primary group-hover:text-white">
-                  <span className="material-symbols-outlined text-sm">
+
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-container text-primary transition-all duration-300 group-hover:bg-primary group-hover:text-white sm:h-10 sm:w-10">
+                  <span className="material-symbols-outlined text-[17px] sm:text-[18px]">
                     arrow_forward
                   </span>
                 </span>
@@ -190,32 +269,68 @@ export default function ServicePickerSection() {
           ))}
         </div>
 
-        <div className="mt-4 flex items-center justify-between md:hidden">
-          <div
-            className="flex items-center gap-1.5"
-            role="tablist"
-            aria-label="Service carousel position"
-          >
-            {SERVICE_CARDS.map((item, index) => (
-              <button
-                key={item.id}
-                type="button"
-                role="tab"
-                aria-selected={activeIndex === index}
-                aria-label={`Show ${item.name}`}
-                onClick={() => {
-                  pauseBriefly();
-                  showCard(index);
-                }}
-                className={`h-1.5 rounded-full transition-all ${
-                  activeIndex === index ? "w-5 bg-primary" : "w-1.5 bg-outline"
-                }`}
-              />
-            ))}
+        {/* Mobile controls */}
+        <div className="mt-4 md:hidden">
+          <div className="flex items-center justify-between gap-3">
+            {/* Dots */}
+            <div
+              className="flex shrink-0 items-center gap-1"
+              role="tablist"
+              aria-label="Service carousel position"
+            >
+              {SERVICE_CARDS.map((item, index) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={activeIndex === index}
+                  aria-label={`Show ${item.name}`}
+                  onClick={() => {
+                    pauseBriefly();
+                    showCard(index);
+                  }}
+                  className="flex h-6 items-center justify-center rounded-full px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                >
+                  <span
+                    className={
+                      activeIndex === index
+                        ? "h-1.5 w-6 rounded-full bg-primary transition-all duration-300"
+                        : "h-1.5 w-1.5 rounded-full bg-outline/40 transition-all duration-300"
+                    }
+                  />
+                </button>
+              ))}
+            </div>
+
+            {/* Position */}
+            <span className="text-[9px] font-bold tabular-nums tracking-[0.12em] text-on-surface-variant/50">
+              {String(activeIndex + 1).padStart(2, "0")} /{" "}
+              {String(SERVICE_CARDS.length).padStart(2, "0")}
+            </span>
+
+            {/* Swipe hint */}
+            <div className="flex shrink-0 items-center gap-1 text-[9px] font-bold uppercase tracking-[0.12em] text-on-surface-variant/50">
+              <span>Swipe</span>
+
+              <span className="material-symbols-outlined text-[14px]">
+                swipe
+              </span>
+            </div>
           </div>
-          <span className="font-label text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
-            Swipe for more →
-          </span>
+
+          {/* Mobile CTA */}
+          <div className="mt-5 border-t border-outline/40 pt-5">
+            <Link
+              href="/services"
+              className="group flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-outline/60 bg-white px-4 text-[10px] font-black uppercase tracking-[0.14em] text-on-surface transition-all duration-200 hover:border-primary/40 hover:text-primary active:scale-[0.99]"
+            >
+              <span>View all repair services</span>
+
+              <span className="material-symbols-outlined text-[16px] transition-transform duration-200 group-hover:translate-x-0.5">
+                arrow_forward
+              </span>
+            </Link>
+          </div>
         </div>
       </div>
     </section>

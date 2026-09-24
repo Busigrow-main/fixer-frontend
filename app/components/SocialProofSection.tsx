@@ -110,7 +110,7 @@ export default function SocialProofSection() {
               {/* Clients card */}
               <div className="bg-primary rounded-xl md:rounded-2xl p-4 md:p-6 text-center cursor-default group hover:bg-on-surface transition-all duration-300 translate-y-0 active:scale-95">
                 <p className="text-2xl md:text-4xl font-headline font-bold text-on-primary mb-0.5">
-                  12k+
+                  150k+
                 </p>
                 <p className="font-label text-[8px] md:text-[10px] uppercase tracking-widest font-bold text-on-primary/80">
                   Local Repairs
