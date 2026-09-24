@@ -8,7 +8,7 @@ import { useBooking } from "@/app/context/BookingContext";
 const TRUST_ITEMS = [
   { icon: "verified_user", value: "60-Day", label: "Warranty", href: "/warranty" },
   { icon: "schedule", value: "30-Min", label: "Avg. arrival", href: "/services" },
-  { icon: "groups", value: "12k+", label: "Repairs", href: "/services" },
+  { icon: "groups", value: "150k+", label: "Repairs", href: "/services" },
 ] as const;
 
 export default function Hero() {
