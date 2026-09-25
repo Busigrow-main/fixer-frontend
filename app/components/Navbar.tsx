@@ -313,21 +313,64 @@ export default function Navbar() {
               </button>
             )}
 
-            {/* Profile */}
-            <button
-              onClick={() => router.push(user ? "/my-bookings" : "/login")}
-              className={`w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 group ${user ? "bg-primary text-white" : "bg-primary-container text-primary"}`}
-            >
-              {user ? (
-                <span className="text-[10px] font-black">
-                  {user.fullName?.charAt(0)}
-                </span>
-              ) : (
-                <span className="material-symbols-outlined icon-filled transition-colors text-[22px]">
-                  account_circle
-                </span>
-              )}
-            </button>
+{/* Account actions */}
+<div className="flex items-center gap-1">
+  {user && (
+    <button
+      type="button"
+      onClick={() => logout()}
+      className="
+        flex
+        h-10
+        w-10
+        items-center
+        justify-center
+        rounded-full
+        text-error/70
+        transition-colors
+        active:bg-error/10
+        active:text-error
+      "
+      aria-label="Logout"
+    >
+      <span className="material-symbols-outlined text-[21px]">
+        logout
+      </span>
+    </button>
+  )}
+
+  <button
+    type="button"
+    onClick={() => router.push(user ? "/my-bookings" : "/login")}
+    className={`
+      flex
+      h-10
+      w-10
+      items-center
+      justify-center
+      rounded-full
+      transition-all
+      duration-200
+      group
+      ${
+        user
+          ? "bg-primary text-white"
+          : "bg-primary-container text-primary"
+      }
+    `}
+    aria-label={user ? "Open account" : "Login"}
+  >
+    {user ? (
+      <span className="text-[10px] font-black">
+        {user.fullName?.charAt(0)}
+      </span>
+    ) : (
+      <span className="material-symbols-outlined icon-filled text-[22px]">
+        account_circle
+      </span>
+    )}
+  </button>
+</div>
           </div>
         </div>
 
