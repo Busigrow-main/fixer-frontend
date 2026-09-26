@@ -1,15 +1,28 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useAuth } from "@/app/context/AuthContext";
 import { openJobSheet } from "@/app/admin/utils/jobsheet";
 import ManageVisitsModal from "./ManageVisitsModal";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 
-const STATUSES = [
+const API =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/v1";
+
+const FILTERS = [
   "ALL",
   "NEEDS_ASSIGNMENT",
+  "PENDING",
+  "CONFIRMED",
+  "ASSIGNED",
+  "IN_PROGRESS",
+  "COMPLETED",
+  "RESCHEDULED",
+  "USER_CANCELLED",
+  "ADMIN_CANCELLED",
+];
+
+const STATUS_ACTIONS = [
   "PENDING",
   "CONFIRMED",
   "ASSIGNED",
@@ -19,99 +32,234 @@ const STATUSES = [
   "CANCELLED",
 ];
 
-const API =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/v1";
-
 export default function AdminBookingsPage() {
   const { token } = useAuth();
-  const searchParams = useSearchParams();
-  const initialStatus = searchParams.get("status") || "ALL";
 
   const [bookings, setBookings] = useState<any[]>([]);
   const [technicians, setTechnicians] = useState<any[]>([]);
+
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [status, setStatus] = useState(initialStatus);
+  const [status, setStatus] = useState("ALL");
+
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+
   const [noteModal, setNoteModal] = useState<string | null>(null);
   const [noteText, setNoteText] = useState("");
+
   const [visitModal, setVisitModal] = useState<string | null>(null);
+
+  const [cancellationModal, setCancellationModal] =
+    useState<string | null>(null);
+
+  const [cancellationReason, setCancellationReason] = useState("");
+  const [cancelling, setCancelling] = useState(false);
 
   const limit = 15;
   const totalPages = Math.ceil(total / limit);
 
-  const fetchBookings = () => {
+  const fetchBookings = async () => {
     if (!token) return;
 
     setLoading(true);
 
-    const params = new URLSearchParams({
-      page: String(page),
-      limit: String(limit),
-    });
+    try {
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: String(limit),
+      });
 
-    if (status !== "ALL") {
-      params.set("status", status);
+      if (status === "USER_CANCELLED") {
+        params.set("status", "CANCELLED");
+        params.set("cancelledBy", "CUSTOMER");
+      } else if (status === "ADMIN_CANCELLED") {
+        params.set("status", "CANCELLED");
+        params.set("cancelledBy", "ADMIN");
+      } else if (status !== "ALL") {
+        params.set("status", status);
+      }
+
+      const response = await fetch(
+        `${API}/admin/bookings?${params.toString()}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data?.message || "Failed to fetch bookings"
+        );
+      }
+
+      setBookings(Array.isArray(data.data) ? data.data : []);
+      setTotal(Number(data.total) || 0);
+    } catch (error) {
+      console.error("Failed to fetch bookings:", error);
+      setBookings([]);
+      setTotal(0);
+    } finally {
+      setLoading(false);
     }
-
-    fetch(`${API}/admin/bookings?${params}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((r) => r.json())
-      .then((res) => {
-        setBookings(res.data || []);
-        setTotal(res.total || 0);
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
   };
 
-  useEffect(() => {
-    fetchBookings();
+  const fetchTechnicians = async () => {
+    if (!token) return;
 
-    if (token && technicians.length === 0) {
-      fetch(`${API}/admin/technicians`, {
+    try {
+      const response = await fetch(`${API}/admin/technicians`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      })
-        .then((r) => r.json())
-        .then((res) => {
-          if (Array.isArray(res)) {
-            setTechnicians(res);
-          } else {
-            console.error("Expected array but got", res);
-          }
-        })
-        .catch(console.error);
+      });
+
+      const data = await response.json();
+
+      if (Array.isArray(data)) {
+        setTechnicians(data);
+      } else {
+        console.error("Expected technician array:", data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch technicians:", error);
     }
+  };
+
+  useEffect(() => {
+    if (!token) return;
+
+    fetchBookings();
   }, [token, page, status]);
+
+  useEffect(() => {
+    if (!token) return;
+
+    fetchTechnicians();
+  }, [token]);
+
+  const handleFilterChange = (newStatus: string) => {
+    setStatus(newStatus);
+    setPage(1);
+  };
 
   const handleStatusChange = async (
     id: string,
     newStatus: string
   ) => {
+    if (!token) return;
+
+    /*
+     * Cancellation needs a reason.
+     * Open the admin cancellation modal.
+     */
+    if (newStatus === "CANCELLED") {
+      setCancellationModal(id);
+      setCancellationReason("");
+      return;
+    }
+
     setUpdatingId(id);
 
     try {
-      await fetch(`${API}/admin/bookings/${id}/status`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          status: newStatus,
-        }),
-      });
+      const response = await fetch(
+        `${API}/admin/bookings/${id}/status`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            status: newStatus,
+          }),
+        }
+      );
 
-      fetchBookings();
-    } catch (err) {
-      console.error(err);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data?.message || "Failed to update booking"
+        );
+      }
+
+      await fetchBookings();
+    } catch (error) {
+      console.error("Failed to update booking:", error);
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to update booking"
+      );
     } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const handleAdminCancellation = async () => {
+    if (!token || !cancellationModal) return;
+
+    const reason = cancellationReason.trim();
+
+    if (!reason) {
+      alert("Please enter a cancellation reason.");
+      return;
+    }
+
+    if (reason.length > 500) {
+      alert(
+        "Cancellation reason cannot exceed 500 characters."
+      );
+      return;
+    }
+
+    setCancelling(true);
+    setUpdatingId(cancellationModal);
+
+    try {
+      const response = await fetch(
+        `${API}/admin/bookings/${cancellationModal}/status`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            status: "CANCELLED",
+            reason,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data?.message || "Failed to cancel booking"
+        );
+      }
+
+      setCancellationModal(null);
+      setCancellationReason("");
+
+      await fetchBookings();
+    } catch (error) {
+      console.error("Failed to cancel booking:", error);
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to cancel booking"
+      );
+    } finally {
+      setCancelling(false);
       setUpdatingId(null);
     }
   };
@@ -120,70 +268,150 @@ export default function AdminBookingsPage() {
     id: string,
     technicianId: string
   ) => {
+    if (!token) return;
+
     setUpdatingId(id);
 
     try {
-      await fetch(`${API}/admin/bookings/${id}/assign`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          technicianId,
-        }),
-      });
+      const response = await fetch(
+        `${API}/admin/bookings/${id}/assign`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            technicianId,
+          }),
+        }
+      );
 
-      fetchBookings();
-    } catch (err) {
-      console.error(err);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data?.message ||
+            "Failed to assign technician"
+        );
+      }
+
+      await fetchBookings();
+    } catch (error) {
+      console.error(
+        "Failed to assign technician:",
+        error
+      );
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to assign technician"
+      );
     } finally {
       setUpdatingId(null);
     }
   };
 
   const handleAddNote = async () => {
-    if (!noteModal || !noteText.trim()) return;
+    if (!token || !noteModal) return;
+
+    const note = noteText.trim();
+
+    if (!note) return;
 
     try {
-      await fetch(`${API}/admin/bookings/${noteModal}/notes`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          note: noteText,
-        }),
-      });
+      const response = await fetch(
+        `${API}/admin/bookings/${noteModal}/notes`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            note,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data?.message || "Failed to add note"
+        );
+      }
 
       setNoteModal(null);
       setNoteText("");
-      fetchBookings();
-    } catch (err) {
-      console.error(err);
+
+      await fetchBookings();
+    } catch (error) {
+      console.error("Failed to add note:", error);
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to add note"
+      );
     }
   };
 
-  const exportCsv = () => {
+  const exportCsv = async () => {
     if (!token) return;
 
-    fetch(`${API}/admin/bookings/export`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((r) => r.blob())
-      .then((blob) => {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
+    try {
+      const response = await fetch(
+        `${API}/admin/bookings/export`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-        a.href = url;
-        a.download = "bookings-export.csv";
-        a.click();
+      if (!response.ok) {
+        throw new Error("Failed to export bookings");
+      }
 
-        URL.revokeObjectURL(url);
-      });
+      const blob = await response.blob();
+
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+
+      anchor.href = url;
+      anchor.download = "bookings-export.csv";
+
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Failed to export bookings:", error);
+      alert("Failed to export bookings.");
+    }
+  };
+
+  const getFilterLabel = (value: string) => {
+    switch (value) {
+      case "NEEDS_ASSIGNMENT":
+        return "Needs Assignment";
+
+      case "USER_CANCELLED":
+        return "User Cancelled";
+
+      case "ADMIN_CANCELLED":
+        return "Admin Cancelled";
+
+      default:
+        return value.replace(/_/g, " ");
+    }
+  };
+
+  const getStatusLabel = (value: string) => {
+    return value?.replace(/_/g, " ") || "—";
   };
 
   return (
@@ -220,6 +448,7 @@ export default function AdminBookingsPage() {
         </div>
 
         <button
+          type="button"
           className="admin-btn admin-btn-secondary admin-btn-sm"
           onClick={exportCsv}
         >
@@ -242,42 +471,42 @@ export default function AdminBookingsPage() {
           flexWrap: "wrap",
         }}
       >
-        {STATUSES.map((s) => (
+        {FILTERS.map((filter) => (
           <button
-            key={s}
+            key={filter}
+            type="button"
             className={`admin-btn admin-btn-sm ${
-              status === s
+              status === filter
                 ? "admin-btn-primary"
                 : "admin-btn-secondary"
             }`}
-            onClick={() => {
-              setStatus(s);
-              setPage(1);
-            }}
+            onClick={() => handleFilterChange(filter)}
             style={
-              s === "NEEDS_ASSIGNMENT" && status !== s
+              filter === "NEEDS_ASSIGNMENT" &&
+              status !== filter
                 ? {
-                    borderColor: "var(--admin-warning)",
+                    borderColor:
+                      "var(--admin-warning)",
                     color: "var(--admin-warning)",
                   }
                 : undefined
             }
           >
-            {s === "NEEDS_ASSIGNMENT"
-              ? "Needs Assignment"
-              : s.replace("_", " ")}
+            {getFilterLabel(filter)}
           </button>
         ))}
       </div>
 
-      {status === "NEEDS_ASSIGNMENT" ? (
+      {/* Needs Assignment Notice */}
+      {status === "NEEDS_ASSIGNMENT" && (
         <div
           className="admin-card"
           style={{
             marginBottom: 16,
             padding: "12px 16px",
             borderColor: "var(--admin-warning)",
-            background: "var(--admin-warning-soft)",
+            background:
+              "var(--admin-warning-soft)",
             display: "flex",
             alignItems: "center",
             gap: 10,
@@ -298,11 +527,11 @@ export default function AdminBookingsPage() {
               margin: 0,
             }}
           >
-            These jobs stayed unclaimed for 10+ minutes. Assign a
-            technician below.
+            These jobs stayed unclaimed for 10+
+            minutes. Assign a technician below.
           </p>
         </div>
-      ) : null}
+      )}
 
       {/* Table */}
       <div className="admin-table-wrap">
@@ -344,15 +573,16 @@ export default function AdminBookingsPage() {
                   style={{
                     textAlign: "center",
                     padding: 40,
-                    color: "var(--admin-text-muted)",
+                    color:
+                      "var(--admin-text-muted)",
                   }}
                 >
                   No bookings found
                 </td>
               </tr>
             ) : (
-              bookings.map((b) => (
-                <tr key={b._id}>
+              bookings.map((booking) => (
+                <tr key={booking._id}>
                   {/* Booking ID */}
                   <td
                     style={{
@@ -360,18 +590,21 @@ export default function AdminBookingsPage() {
                       fontSize: 11,
                     }}
                   >
-                    {b._id?.slice(-8)}
+                    {booking._id?.slice(-8)}
                   </td>
 
                   {/* Customer */}
                   <td>
-                    {b.userId?.fullName ||
-                      b.userId?.phone ||
+                    {booking.userId?.fullName ||
+                      booking.userId?.phone ||
                       "—"}
                   </td>
 
                   {/* Service */}
-                  <td>{b.serviceId?.name || "—"}</td>
+                  <td>
+                    {booking.serviceId?.name ||
+                      "—"}
+                  </td>
 
                   {/* Technician */}
                   <td>
@@ -381,33 +614,41 @@ export default function AdminBookingsPage() {
                         height: 28,
                         fontSize: 11,
                         width: 110,
-                        padding: "0 20px 0 8px",
+                        padding:
+                          "0 20px 0 8px",
                       }}
                       value={
-                        b.technicianId?._id ||
-                        b.technicianId ||
+                        booking.technicianId?._id ||
+                        booking.technicianId ||
                         ""
                       }
-                      onChange={(e) =>
+                      onChange={(event) =>
                         handleAssignTechnician(
-                          b._id,
-                          e.target.value
+                          booking._id,
+                          event.target.value
                         )
                       }
-                      disabled={updatingId === b._id}
+                      disabled={
+                        updatingId ===
+                          booking._id ||
+                        booking.status ===
+                          "CANCELLED"
+                      }
                     >
                       <option value="">
                         Unassigned
                       </option>
 
-                      {technicians.map((t) => (
-                        <option
-                          key={t._id}
-                          value={t._id}
-                        >
-                          {t.name}
-                        </option>
-                      ))}
+                      {technicians.map(
+                        (technician) => (
+                          <option
+                            key={technician._id}
+                            value={technician._id}
+                          >
+                            {technician.name}
+                          </option>
+                        )
+                      )}
                     </select>
                   </td>
 
@@ -416,21 +657,21 @@ export default function AdminBookingsPage() {
                     <div
                       style={{
                         display: "flex",
-                        flexDirection: "column",
-                        gap: 6,
-                        minWidth:
-                          b.status === "CANCELLED"
-                            ? 190
-                            : undefined,
+                        flexDirection:
+                          "column",
+                        gap: 4,
                       }}
                     >
                       <span
-                        className={`admin-badge admin-badge-${b.status?.toLowerCase()}`}
+                        className={`admin-badge admin-badge-${booking.status?.toLowerCase()}`}
                       >
-                        {b.status?.replace("_", " ")}
+                        {getStatusLabel(
+                          booking.status
+                        )}
                       </span>
 
-                      {b.dispatchStatus === "NEEDS_ADMIN" ? (
+                      {booking.dispatchStatus ===
+                        "NEEDS_ADMIN" && (
                         <span
                           className="admin-badge"
                           style={{
@@ -443,22 +684,57 @@ export default function AdminBookingsPage() {
                         >
                           Needs admin
                         </span>
-                      ) : null}
+                      )}
 
                       {/* Cancellation details */}
-                      {b.status === "CANCELLED" &&
-                      b.cancellationReason ? (
+                      {booking.status ===
+                        "CANCELLED" && (
                         <div
                           style={{
-                            marginTop: 2,
-                            padding: "8px 10px",
+                            marginTop: 6,
+                            padding:
+                              "8px 10px",
                             borderRadius: 6,
                             background:
                               "rgba(239, 68, 68, 0.06)",
                             border:
                               "1px solid rgba(239, 68, 68, 0.15)",
+                            minWidth: 180,
+                            maxWidth: 280,
                           }}
                         >
+                          <div
+                            style={{
+                              fontSize: 10,
+                              fontWeight: 700,
+                              color:
+                                "var(--admin-text-dim)",
+                              marginBottom: 5,
+                              textTransform:
+                                "uppercase",
+                              letterSpacing:
+                                "0.04em",
+                            }}
+                          >
+                            Cancelled by
+                          </div>
+
+                          <div
+                            style={{
+                              fontSize: 12,
+                              fontWeight: 700,
+                              marginBottom: 7,
+                            }}
+                          >
+                            {booking.cancelledBy ===
+                            "ADMIN"
+                              ? "Admin"
+                              : booking.cancelledBy ===
+                                  "CUSTOMER"
+                                ? "User"
+                                : "Unknown"}
+                          </div>
+
                           <div
                             style={{
                               fontSize: 10,
@@ -485,10 +761,11 @@ export default function AdminBookingsPage() {
                                 "break-word",
                             }}
                           >
-                            {b.cancellationReason}
+                            {booking.cancellationReason ||
+                              "No reason provided"}
                           </div>
 
-                          {b.cancelledAt ? (
+                          {booking.cancelledAt && (
                             <div
                               style={{
                                 marginTop: 5,
@@ -499,21 +776,25 @@ export default function AdminBookingsPage() {
                             >
                               Cancelled:{" "}
                               {new Date(
-                                b.cancelledAt
-                              ).toLocaleString()}
+                                booking.cancelledAt
+                              ).toLocaleString(
+                                "en-IN"
+                              )}
                             </div>
-                          ) : null}
+                          )}
                         </div>
-                      ) : null}
+                      )}
                     </div>
                   </td>
 
                   {/* Date */}
                   <td>
-                    {b.createdAt
+                    {booking.createdAt
                       ? new Date(
-                          b.createdAt
-                        ).toLocaleDateString()
+                          booking.createdAt
+                        ).toLocaleDateString(
+                          "en-IN"
+                        )
                       : "—"}
                   </td>
 
@@ -524,69 +805,87 @@ export default function AdminBookingsPage() {
                         display: "flex",
                         gap: 6,
                         alignItems: "center",
+                        flexWrap: "wrap",
                       }}
                     >
                       {/* Details */}
                       <Link
-                        href={`/admin/bookings/${b._id}`}
+                        href={`/admin/bookings/${booking._id}`}
                         className="admin-btn admin-btn-secondary admin-btn-sm"
                         style={{
-                          padding: "6px 10px",
+                          padding:
+                            "6px 10px",
                         }}
                         title="Details"
                       >
                         <span
                           className="material-symbols-outlined"
-                          style={{ fontSize: 16 }}
+                          style={{
+                            fontSize: 16,
+                          }}
                         >
                           visibility
                         </span>
                       </Link>
 
-                      {/* Status change */}
+                      {/* Status */}
                       <select
                         className="admin-input admin-select"
                         style={{
                           height: 30,
                           fontSize: 11,
-                          width: 115,
-                          padding: "0 22px 0 8px",
+                          width: 125,
+                          padding:
+                            "0 22px 0 8px",
                         }}
-                        value={b.status}
-                        onChange={(e) =>
+                        value={booking.status}
+                        onChange={(event) =>
                           handleStatusChange(
-                            b._id,
-                            e.target.value
+                            booking._id,
+                            event.target.value
                           )
                         }
                         disabled={
-                          updatingId === b._id
+                          updatingId ===
+                            booking._id ||
+                          booking.status ===
+                            "CANCELLED"
                         }
                       >
-                        {STATUSES.filter(
-                          (s) => s !== "ALL"
-                        ).map((s) => (
-                          <option
-                            key={s}
-                            value={s}
-                          >
-                            {s.replace("_", " ")}
-                          </option>
-                        ))}
+                        {STATUS_ACTIONS.map(
+                          (action) => (
+                            <option
+                              key={action}
+                              value={action}
+                            >
+                              {getStatusLabel(
+                                action
+                              )}
+                            </option>
+                          )
+                        )}
                       </select>
 
                       {/* Add Note */}
                       <button
+                        type="button"
                         className="admin-btn admin-btn-ghost admin-btn-sm"
-                        style={{ padding: "6px" }}
-                        onClick={() =>
-                          setNoteModal(b._id)
-                        }
+                        style={{
+                          padding: 6,
+                        }}
+                        onClick={() => {
+                          setNoteModal(
+                            booking._id
+                          );
+                          setNoteText("");
+                        }}
                         title="Add Admin Note"
                       >
                         <span
                           className="material-symbols-outlined"
-                          style={{ fontSize: 16 }}
+                          style={{
+                            fontSize: 16,
+                          }}
                         >
                           sticky_note_2
                         </span>
@@ -594,51 +893,85 @@ export default function AdminBookingsPage() {
 
                       {/* Manage Visits */}
                       <button
+                        type="button"
                         className="admin-btn admin-btn-ghost admin-btn-sm"
-                        style={{ padding: "6px" }}
+                        style={{
+                          padding: 6,
+                        }}
                         onClick={() =>
-                          setVisitModal(b._id)
+                          setVisitModal(
+                            booking._id
+                          )
                         }
                         title="Manage Visits & Parts"
+                        disabled={
+                          booking.status ===
+                          "CANCELLED"
+                        }
                       >
                         <span
                           className="material-symbols-outlined"
-                          style={{ fontSize: 16 }}
+                          style={{
+                            fontSize: 16,
+                          }}
                         >
                           build
                         </span>
                       </button>
 
-                      {/* Print Job Sheet */}
+                      {/* Job Sheet */}
                       <button
+                        type="button"
                         className="admin-btn admin-btn-primary admin-btn-sm"
                         style={{
-                          padding: "6px 10px",
+                          padding:
+                            "6px 10px",
                         }}
                         title="Print Job Sheet"
                         onClick={async () => {
                           try {
-                            const res = await fetch(
-                              `${API}/admin/bookings/${b._id}`,
-                              {
-                                headers: {
-                                  Authorization: `Bearer ${token}`,
-                                },
-                              }
-                            );
+                            const response =
+                              await fetch(
+                                `${API}/admin/bookings/${booking._id}`,
+                                {
+                                  headers: {
+                                    Authorization: `Bearer ${token}`,
+                                  },
+                                }
+                              );
 
                             const data =
-                              await res.json();
+                              await response.json();
+
+                            if (
+                              !response.ok
+                            ) {
+                              throw new Error(
+                                data?.message ||
+                                  "Failed to load booking"
+                              );
+                            }
 
                             openJobSheet(data);
-                          } catch (err) {
-                            console.error(err);
+                          } catch (error) {
+                            console.error(
+                              "Failed to print job sheet:",
+                              error
+                            );
+
+                            alert(
+                              error instanceof Error
+                                ? error.message
+                                : "Failed to print job sheet"
+                            );
                           }
                         }}
                       >
                         <span
                           className="material-symbols-outlined"
-                          style={{ fontSize: 16 }}
+                          style={{
+                            fontSize: 16,
+                          }}
                         >
                           print
                         </span>
@@ -660,6 +993,7 @@ export default function AdminBookingsPage() {
 
             <div className="admin-pagination-btns">
               <button
+                type="button"
                 className="admin-pagination-btn"
                 disabled={page <= 1}
                 onClick={() =>
@@ -676,24 +1010,26 @@ export default function AdminBookingsPage() {
                     5
                   ),
                 },
-                (_, i) => i + 1
-              ).map((p) => (
+                (_, index) => index + 1
+              ).map((pageNumber) => (
                 <button
-                  key={p}
+                  key={pageNumber}
+                  type="button"
                   className={`admin-pagination-btn ${
-                    page === p
+                    page === pageNumber
                       ? "active"
                       : ""
                   }`}
                   onClick={() =>
-                    setPage(p)
+                    setPage(pageNumber)
                   }
                 >
-                  {p}
+                  {pageNumber}
                 </button>
               ))}
 
               <button
+                type="button"
                 className="admin-pagination-btn"
                 disabled={
                   page >= totalPages
@@ -713,24 +1049,27 @@ export default function AdminBookingsPage() {
       {noteModal && (
         <div
           className="admin-modal-overlay"
-          onClick={() =>
-            setNoteModal(null)
-          }
+          onClick={() => {
+            setNoteModal(null);
+            setNoteText("");
+          }}
         >
           <div
             className="admin-modal"
-            onClick={(e) =>
-              e.stopPropagation()
+            onClick={(event) =>
+              event.stopPropagation()
             }
           >
             <div className="admin-modal-header">
               <h2>Add Admin Note</h2>
 
               <button
+                type="button"
                 className="admin-btn admin-btn-ghost admin-btn-sm"
-                onClick={() =>
-                  setNoteModal(null)
-                }
+                onClick={() => {
+                  setNoteModal(null);
+                  setNoteText("");
+                }}
               >
                 <span className="material-symbols-outlined">
                   close
@@ -743,27 +1082,159 @@ export default function AdminBookingsPage() {
                 className="admin-input admin-textarea"
                 placeholder="Enter your note..."
                 value={noteText}
-                onChange={(e) =>
-                  setNoteText(e.target.value)
+                onChange={(event) =>
+                  setNoteText(
+                    event.target.value
+                  )
                 }
               />
             </div>
 
             <div className="admin-modal-footer">
               <button
+                type="button"
                 className="admin-btn admin-btn-secondary"
-                onClick={() =>
-                  setNoteModal(null)
-                }
+                onClick={() => {
+                  setNoteModal(null);
+                  setNoteText("");
+                }}
               >
                 Cancel
               </button>
 
               <button
+                type="button"
                 className="admin-btn admin-btn-primary"
+                disabled={!noteText.trim()}
                 onClick={handleAddNote}
               >
                 Save Note
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Admin Cancellation Modal */}
+      {cancellationModal && (
+        <div
+          className="admin-modal-overlay"
+          onClick={() => {
+            if (!cancelling) {
+              setCancellationModal(null);
+              setCancellationReason("");
+            }
+          }}
+        >
+          <div
+            className="admin-modal"
+            onClick={(event) =>
+              event.stopPropagation()
+            }
+          >
+            <div className="admin-modal-header">
+              <h2>Cancel Booking</h2>
+
+              <button
+                type="button"
+                className="admin-btn admin-btn-ghost admin-btn-sm"
+                disabled={cancelling}
+                onClick={() => {
+                  setCancellationModal(null);
+                  setCancellationReason("");
+                }}
+              >
+                <span className="material-symbols-outlined">
+                  close
+                </span>
+              </button>
+            </div>
+
+            <div
+              className="admin-modal-body"
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 12,
+              }}
+            >
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: 13,
+                  color:
+                    "var(--admin-text-dim)",
+                  lineHeight: 1.5,
+                }}
+              >
+                You are cancelling this booking
+                as an admin. Please provide the
+                cancellation reason.
+              </p>
+
+              <div>
+                <label className="admin-label">
+                  Cancellation Reason
+                </label>
+
+                <textarea
+                  className="admin-input admin-textarea"
+                  placeholder="Enter cancellation reason..."
+                  maxLength={500}
+                  value={cancellationReason}
+                  disabled={cancelling}
+                  onChange={(event) =>
+                    setCancellationReason(
+                      event.target.value
+                    )
+                  }
+                  style={{
+                    minHeight: 110,
+                    resize: "vertical",
+                  }}
+                />
+
+                <div
+                  style={{
+                    marginTop: 5,
+                    textAlign: "right",
+                    fontSize: 11,
+                    color:
+                      "var(--admin-text-muted)",
+                  }}
+                >
+                  {cancellationReason.length}/500
+                </div>
+              </div>
+            </div>
+
+            <div className="admin-modal-footer">
+              <button
+                type="button"
+                className="admin-btn admin-btn-secondary"
+                disabled={cancelling}
+                onClick={() => {
+                  setCancellationModal(null);
+                  setCancellationReason("");
+                }}
+              >
+                Keep Booking
+              </button>
+
+              <button
+                type="button"
+                className="admin-btn admin-btn-primary"
+                disabled={
+                  cancelling ||
+                  !cancellationReason.trim()
+                }
+                onClick={
+                  handleAdminCancellation
+                }
+              >
+                {cancelling
+                  ? "Cancelling..."
+                  : "Cancel Booking"}
               </button>
             </div>
           </div>
