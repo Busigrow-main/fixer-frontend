@@ -45,6 +45,13 @@ function MyBookingsContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const [cancelTarget, setCancelTarget] = useState<{
+    type: "booking" | "order";
+    id: string;
+  } | null>(null);
+  const [cancellationReason, setCancellationReason] = useState("");
+  const [cancelling, setCancelling] = useState(false);
+
   useEffect(() => {
     if(!showSuccess) return;
 
@@ -140,6 +147,119 @@ function MyBookingsContent() {
       }
     } catch {
       alert("Network error.");
+    }
+  };
+
+  const handleCancelBooking = async (
+    bookingId: string,
+    reason: string,
+  ) => {
+    if (!token) return;
+
+    try {
+      const res = await fetch(
+        `${API_URL}/user/bookings/${bookingId}/cancel`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ reason }),
+        }
+      );
+
+      if (res.ok) {
+        alert("Booking cancelled successfully.");
+        fetchAllHistory();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        const message = Array.isArray(data.message)
+          ? data.message.join(" ")
+          : data.message;
+        alert(message || "Could not cancel booking.");
+      }
+    } catch {
+      alert("Network error.");
+    }
+  };
+
+  const handleCancelOrder = async (
+    orderId: string,
+    reason: string,
+  ) => {
+    if (!token) return;
+
+    try {
+      const res = await fetch(
+        `${API_URL}/user/part-orders/${orderId}/cancel`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ reason }),
+        }
+      );
+
+      if (res.ok) {
+        alert("Order cancelled successfully.");
+        fetchAllHistory();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        const message = Array.isArray(data.message)
+          ? data.message.join(" ")
+          : data.message;
+        alert(message || "Could not cancel order.");
+      }
+    } catch {
+      alert("Network error.");
+    }
+  };
+
+  const openCancellationModal = (
+    type: "booking" | "order",
+    id: string,
+  ) => {
+    setCancelTarget({ type, id });
+    setCancellationReason("");
+  };
+
+  const closeCancellationModal = () => {
+    if (cancelling) return;
+    setCancelTarget(null);
+    setCancellationReason("");
+  };
+
+  const submitCancellation = async () => {
+    const reason = cancellationReason.trim();
+
+    if (!cancelTarget) return;
+
+    if (!reason) {
+      alert("Please enter a cancellation reason.");
+      return;
+    }
+
+    if (reason.length > 500) {
+      alert("Cancellation reason cannot exceed 500 characters.");
+      return;
+    }
+
+    setCancelling(true);
+
+    try {
+      if (cancelTarget.type === "booking") {
+        await handleCancelBooking(cancelTarget.id, reason);
+      } else {
+        await handleCancelOrder(cancelTarget.id, reason);
+      }
+
+      setCancelTarget(null);
+      setCancellationReason("");
+    } finally {
+      setCancelling(false);
     }
   };
 
@@ -360,12 +480,17 @@ function MyBookingsContent() {
                     booking={booking}
                     getWarrantyStatus={getWarrantyStatus}
                     onClaimWarranty={handleClaimWarranty}
+                    onCancelBooking={(id) => openCancellationModal("booking", id)}
                   />
                 ))}
 
-              {activeTab === "parts" &&
-                partOrders.map((order) => (
-                  <PartOrderCard key={order._id} order={order} />
+                {activeTab === "parts" &&
+                  partOrders.map((order) => (
+                    <PartOrderCard
+                      key={order._id}
+                      order={order}
+                      onCancelOrder={(id) => openCancellationModal("order", id)}
+                    />
                 ))}
 
               {activeTab === "appliances" &&
@@ -376,6 +501,117 @@ function MyBookingsContent() {
           )}
         </section>
       </main>
+
+      {cancelTarget && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 px-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="cancellation-dialog-title"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) {
+              closeCancellationModal();
+            }
+          }}
+        >
+          <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl border border-outline overflow-hidden">
+            <div className="p-6 md:p-7 border-b border-outline">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className="w-11 h-11 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center mb-4">
+                    <span className="material-symbols-outlined text-2xl">
+                      cancel
+                    </span>
+                  </div>
+                  <h2
+                    id="cancellation-dialog-title"
+                    className="font-headline text-2xl font-bold text-on-surface"
+                  >
+                    Cancel {cancelTarget.type === "booking" ? "Booking" : "Order"}?
+                  </h2>
+                  <p className="mt-2 text-sm leading-relaxed text-on-surface-variant">
+                    Please tell us why you want to cancel. This information
+                    will be saved with your {cancelTarget.type === "booking" ? "booking" : "order"}.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={closeCancellationModal}
+                  disabled={cancelling}
+                  className="w-9 h-9 rounded-xl flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors disabled:opacity-50"
+                  aria-label="Close cancellation dialog"
+                >
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 md:p-7">
+              <label
+                htmlFor="cancellation-reason"
+                className="block text-[10px] uppercase tracking-[0.2em] font-black text-on-surface-variant mb-3"
+              >
+                Cancellation Reason
+              </label>
+
+              <textarea
+                id="cancellation-reason"
+                value={cancellationReason}
+                onChange={(e) => setCancellationReason(e.target.value)}
+                maxLength={500}
+                rows={5}
+                autoFocus
+                placeholder="Tell us why you want to cancel..."
+                disabled={cancelling}
+                className="w-full resize-none rounded-2xl border border-outline bg-surface-container-lowest px-4 py-3 text-sm text-on-surface placeholder:text-on-surface-variant/60 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/10 disabled:opacity-60"
+              />
+
+              <div className="mt-2 flex items-center justify-between gap-3">
+                <p className="text-xs text-on-surface-variant">
+                  A short explanation is enough.
+                </p>
+                <span className="text-[10px] font-bold text-on-surface-variant">
+                  {cancellationReason.length}/500
+                </span>
+              </div>
+
+              <div className="mt-6 grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={closeCancellationModal}
+                  disabled={cancelling}
+                  className="h-11 rounded-xl border border-outline bg-white text-on-surface text-[10px] font-black uppercase tracking-widest hover:bg-surface-container-low transition-colors disabled:opacity-50"
+                >
+                  Keep {cancelTarget.type === "booking" ? "Booking" : "Order"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={submitCancellation}
+                  disabled={cancelling || !cancellationReason.trim()}
+                  className="h-11 rounded-xl bg-red-600 text-white text-[10px] font-black uppercase tracking-widest inline-flex items-center justify-center gap-2 hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {cancelling ? (
+                    <>
+                      <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                      Cancelling...
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-lg">
+                        cancel
+                      </span>
+                      Confirm Cancellation
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Footer />
     </>
   );
@@ -385,10 +621,12 @@ function RepairBookingCard({
   booking,
   getWarrantyStatus,
   onClaimWarranty,
+  onCancelBooking,
 }: {
   booking: any;
   getWarrantyStatus: (b: any) => { label: string; isActive: boolean } | null;
   onClaimWarranty: (id: string) => void;
+  onCancelBooking: (id: string) => void;
 }) {
   const warranty = getWarrantyStatus(booking);
   const technician = booking.technician || (
@@ -653,6 +891,23 @@ function RepairBookingCard({
             </button>
           )}
 
+          {[
+            "PENDING",
+            "CONFIRMED",
+            "ASSIGNED",
+            "EN_ROUTE",
+            "RESCHEDULED",
+          ].includes(booking.status) && (
+            <button
+              type="button"
+              onClick={() => onCancelBooking(booking._id)}
+              className="w-full h-11 rounded-xl bg-red-50 text-red-700 text-[10px] font-black uppercase tracking-widest flex          items-center justify-center gap-2 hover:bg-red-100 transition-colors border border-red-200"
+            >
+              <span className="material-symbols-outlined text-lg">cancel</span>
+              Cancel Booking
+            </button>
+          )}
+
           {(booking.isBilled ||
             booking.jobClosed ||
             booking.paymentStatus === "PAID_CASH" ||
@@ -672,16 +927,34 @@ function RepairBookingCard({
   );
 }
 
-function PartOrderCard({ order }: { order: any }) {
+function PartOrderCard({ order, onCancelOrder }: { order: any, onCancelOrder: (id: string) => void; }) {
   return (
     <article className="rounded-3xl border border-outline bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow">
       <OrderCardHeader order={order} label={`Order #${order._id.slice(-8).toUpperCase()}`} />
       <div className="p-6 md:p-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <ContactBlock order={order} title="Shipping To" icon="local_shipping" />
-          <ItemsBlock order={order} showInvoice />
-        </div>
-      </div>
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <ContactBlock
+      order={order}
+      title="Shipping To"
+      icon="local_shipping"
+    />
+
+    <ItemsBlock order={order} showInvoice />
+  </div>
+
+  {["PENDING", "PROCESSING"].includes(order.status) && (
+    <div className="mt-8 pt-6 border-t border-outline flex justify-end">
+      <button
+        type="button"
+        onClick={() => onCancelOrder(order._id)}
+        className="h-11 px-5 rounded-xl bg-red-50 text-red-700 text-[10px] font-black uppercase tracking-widest inline-flex items-center justify-center gap-2 hover:bg-red-100 transition-colors border border-red-200"
+      >
+        <span className="material-symbols-outlined text-lg">cancel</span>
+        Cancel Order
+      </button>
+    </div>
+  )}
+</div>
     </article>
   );
 }
@@ -803,9 +1076,21 @@ function OrderCardHeader({
       </div>
       <div className="flex items-center gap-2">
         <span
-          className={`h-2.5 w-2.5 rounded-full ${order.status === "PENDING" ? "bg-amber-500" : "bg-green-500"}`}
+          className={`h-2.5 w-2.5 rounded-full ${
+            order.status === "CANCELLED"
+              ? "bg-red-500"
+              : order.status === "PENDING"
+                ? "bg-amber-500"
+                : "bg-green-500"
+          }`}
         />
-        <span className="text-[10px] font-black uppercase tracking-widest text-on-surface">
+        <span
+          className={`text-[10px] font-black uppercase tracking-widest ${
+            order.status === "CANCELLED"
+              ? "text-red-600"
+              : "text-on-surface"
+          }`}
+        >
           {order.status}
         </span>
       </div>
