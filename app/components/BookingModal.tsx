@@ -58,23 +58,24 @@ export default function BookingModal() {
   const modalClassName = [
     "relative",
     "w-[calc(100%-24px)]",
-    "sm:w-full",
-    "max-w-xl",
+    "max-w-[560px]",
+    "max-h-[calc(100svh-32px)]",
     "bg-white",
-    "rounded-[2rem]",
-    "sm:rounded-[2.5rem]",
-    "shadow-2xl",
-    "shadow-black/20",
+    "rounded-[1.5rem]",
+    "sm:rounded-[1.75rem]",
+    "border",
+    "border-black/[0.06]",
+    "shadow-[0_24px_80px_rgba(0,0,0,0.22)]",
     "overflow-hidden",
     "transition-all",
     "duration-300",
+    "ease-out",
+    "flex",
+    "flex-col",
     "transform",
-    "mb-3",
-    "sm:mb-0",
-    "pb-safe",
     isOpen
-      ? "translate-y-0 sm:scale-100 opacity-100"
-      : "translate-y-full sm:translate-y-8 sm:scale-95 opacity-0",
+      ? "translate-y-0 scale-100 opacity-100"
+      : "translate-y-4 scale-[0.98] opacity-0",
   ].join(" ");
 
   const overlayClassName = [
@@ -82,9 +83,10 @@ export default function BookingModal() {
     "inset-0",
     "z-[100]",
     "flex",
-    "items-end",
-    "sm:items-center",
+    "items-center",
     "justify-center",
+    "p-3",
+    "sm:p-6",
     "transition-all",
     "duration-300",
     isOpen
@@ -95,8 +97,8 @@ export default function BookingModal() {
   const backdropClassName = [
     "absolute",
     "inset-0",
-    "bg-zinc-900/60",
-    "backdrop-blur-sm",
+    "bg-zinc-950/55",
+    "backdrop-blur-[5px]",
     "transition-opacity",
     "duration-300",
     isOpen ? "opacity-100" : "opacity-0",
@@ -108,64 +110,80 @@ export default function BookingModal() {
       <div
         className={backdropClassName}
         onClick={closeBooking}
+        aria-hidden="true"
       />
 
       {/* Modal */}
-      <div className={modalClassName}>
-        {/* Mobile drag handle */}
-        <div className="flex justify-center pt-4 sm:hidden">
-          <div className="w-10 h-1.5 bg-surface-container-highest rounded-full" />
-        </div>
-
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Book your repair service"
+        className={modalClassName}
+      >
         {/* Header */}
-        <div className="relative px-6 sm:px-8 pt-6 sm:pt-10 pb-2 text-center">
-          {/* Close */}
-          <button
-            type="button"
-            onClick={closeBooking}
-            aria-label="Close booking form"
-            className="absolute top-4 sm:top-6 right-4 sm:right-6 w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container active:bg-surface-container transition-colors"
-          >
-            <span className="material-symbols-outlined text-on-surface-variant">
-              close
-            </span>
-          </button>
+        <div className="relative shrink-0 border-b border-black/[0.06] bg-white">
+          <div className="px-5 sm:px-7 pt-5 sm:pt-6 pb-4 sm:pb-5">
+            {/* Top row */}
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                {/* Priority badge */}
+                <div className="inline-flex items-center gap-1.5 bg-primary/10 text-primary px-2.5 py-1 rounded-full mb-2.5">
+                  <span className="material-symbols-outlined text-[14px] icon-filled">
+                    verified
+                  </span>
 
-          {/* Priority badge */}
-          <div className="inline-flex items-center gap-2 bg-primary-container text-primary px-3 py-1 rounded-full mb-4">
-            <span className="material-symbols-outlined text-sm icon-filled">
-              verified
-            </span>
+                  <span className="text-[9px] font-black uppercase tracking-[0.12em]">
+                    Priority Dispatch
+                  </span>
+                </div>
 
-            <span className="text-[10px] font-black uppercase tracking-widest">
-              Priority Dispatch
-            </span>
+                {/* Title */}
+                <h2 className="font-headline text-[1.55rem] sm:text-2xl leading-tight text-on-surface tracking-tight">
+                  Book your{" "}
+                  <span className="italic text-primary">Master</span> Repair
+                </h2>
+
+                {/* Subtitle */}
+                <p className="text-on-surface-variant text-[11px] sm:text-xs mt-1.5 leading-relaxed max-w-[390px] opacity-80">
+                  Professional dispatch to your neighborhood.
+                </p>
+              </div>
+
+              {/* Close */}
+              <button
+                type="button"
+                onClick={closeBooking}
+                aria-label="Close booking form"
+                className="shrink-0 w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full border border-black/[0.06] bg-zinc-50 text-on-surface-variant hover:bg-zinc-100 hover:text-on-surface active:scale-95 transition-all"
+              >
+                <span className="material-symbols-outlined text-[20px]">
+                  close
+                </span>
+              </button>
+            </div>
           </div>
-
-          {/* Title */}
-          <h2 className="font-headline text-2xl sm:text-4xl text-on-surface tracking-tight">
-            Book your{" "}
-            <span className="italic text-primary">Master</span> Repair
-          </h2>
-
-          {/* Subtitle */}
-          <p className="text-on-surface-variant text-xs sm:text-sm mt-3 max-w-sm mx-auto opacity-80">
-            Professional dispatch to your neighborhood.
-          </p>
         </div>
 
-        {/* Form */}
-        <div className="px-3 sm:px-8 pb-10 pt-4 max-h-[75vh] lg:max-h-[70vh] overflow-y-auto custom-scrollbar">
-          <BookingForm
-            initialServiceSlug={selectedService}
-            onSuccess={closeBooking}
-          />
+        {/* Form content */}
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain custom-scrollbar">
+          <div className="px-4 sm:px-7 pt-4 sm:pt-5 pb-5 sm:pb-7">
+            <BookingForm
+              initialServiceSlug={selectedService}
+              onSuccess={closeBooking}
+            />
+          </div>
         </div>
       </div>
 
       <style jsx>{`
+        .custom-scrollbar {
+          scrollbar-width: thin;
+          scrollbar-color: #d4d4d4 transparent;
+          -webkit-overflow-scrolling: touch;
+        }
+
         .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
+          width: 5px;
         }
 
         .custom-scrollbar::-webkit-scrollbar-track {
@@ -173,18 +191,37 @@ export default function BookingModal() {
         }
 
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #e0e0e0;
-          border-radius: 10px;
+          background: #d4d4d4;
+          border-radius: 999px;
         }
 
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #bdbdbd;
+          background: #a3a3a3;
         }
 
         @media (max-width: 639px) {
           .custom-scrollbar {
+            scrollbar-width: none;
+          }
+
+          .custom-scrollbar::-webkit-scrollbar {
+            display: none;
+          }
+        }
+
+        @media (max-height: 700px) and (max-width: 639px) {
+          .custom-scrollbar {
             scrollbar-width: thin;
-            scrollbar-color: #e0e0e0 transparent;
+          }
+
+          .custom-scrollbar::-webkit-scrollbar {
+            display: block;
+            width: 4px;
+          }
+
+          .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #d4d4d4;
+            border-radius: 999px;
           }
         }
       `}</style>
