@@ -164,6 +164,54 @@ export function AdminOrdersList({
                     <span className={`admin-badge admin-badge-${o.status?.toLowerCase()}`}>
                       {o.status?.replace("_", " ")}
                     </span>
+                    {o.status === "CANCELLED" && (
+                      <div
+                        style={{
+                          marginTop: 6,
+                          padding: "8px 10px",
+                          borderRadius: 6,
+                          background: "rgba(239, 68, 68, 0.06)",
+                          border: "1px solid rgba(239, 68, 68, 0.15)",
+                          minWidth: 180,
+                          maxWidth: 280,
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: 10,
+                            fontWeight: 700,
+                            color: "var(--admin-text-dim)",
+                            marginBottom: 3,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.04em",
+                          }}
+                        >
+                          Cancellation Reason
+                        </div>
+                        <div
+                          style={{
+                            fontSize: 11,
+                            lineHeight: 1.4,
+                            color: "var(--admin-text)",
+                            wordBreak: "break-word",
+                          }}
+                        >
+                          {o.cancellationReason || "No reason provided"}
+                        </div>
+                        {o.cancelledAt ? (
+                          <div
+                            style={{
+                              marginTop: 5,
+                              fontSize: 10,
+                              color: "var(--admin-text-muted)",
+                            }}
+                          >
+                            Cancelled:{" "}
+                            {new Date(o.cancelledAt).toLocaleString("en-IN")}
+                          </div>
+                        ) : null}
+                      </div>
+                    )}
                   </td>
                   <td>{o.createdAt ? new Date(o.createdAt).toLocaleDateString() : "—"}</td>
                   <td>

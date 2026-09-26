@@ -538,6 +538,107 @@ export default function BookingDetailPage() {
             </div>
           </div>
 
+          {/* Cancellation Details */}
+          {booking.status === "CANCELLED" && (
+            <div
+              className="admin-card"
+              style={{
+                border: "1px solid rgba(220, 38, 38, 0.25)",
+                background: "rgba(220, 38, 38, 0.04)",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  marginBottom: 16,
+                }}
+              >
+                <span
+                  className="material-symbols-outlined"
+                  style={{
+                    color: "#dc2626",
+                    fontSize: 20,
+                  }}
+                >
+                  cancel
+                </span>
+
+                <h3
+                  style={{
+                    fontSize: 14,
+                    textTransform: "uppercase",
+                    letterSpacing: 1,
+                    color: "#dc2626",
+                    margin: 0,
+                  }}
+                >
+                  Cancellation Details
+                </h3>
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 14,
+                  fontSize: 13,
+                }}
+              >
+                <div>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: 0.6,
+                      color: "var(--admin-text-muted)",
+                      marginBottom: 6,
+                    }}
+                  >
+                    Cancellation Reason
+                  </div>
+
+                  <div
+                    style={{
+                      padding: "10px 12px",
+                      borderRadius: 8,
+                      background: "var(--admin-surface-2)",
+                      border: "1px solid var(--admin-border)",
+                      lineHeight: 1.5,
+                      color: "var(--admin-text)",
+                      wordBreak: "break-word",
+                    }}
+                  >
+                    {booking.cancellationReason || "No reason provided"}
+                  </div>
+                </div>
+
+                <div>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: 0.6,
+                      color: "var(--admin-text-muted)",
+                      marginBottom: 4,
+                    }}
+                  >
+                    Cancelled At
+                  </div>
+
+                  <div style={{ color: "var(--admin-text-dim)" }}>
+                    {booking.cancelledAt
+                      ? new Date(booking.cancelledAt).toLocaleString()
+                      : "—"}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
             {/* Job Sheet Editor */}
             <div className="admin-card">
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>

@@ -222,9 +222,11 @@ export default function BookingForm({
 
   useEffect(() => {
     if (error) {
-      errorRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
+      requestAnimationFrame(() => {
+        errorRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
       });
     }
   }, [error]);
@@ -286,7 +288,9 @@ export default function BookingForm({
       className={`space-y-6 ${className}`}
     >
       {error && (
-        <div className="p-4 rounded-2xl bg-error/10 border border-error/20 flex items-center gap-3 text-error text-sm font-bold">
+        <div 
+          ref={errorRef}
+          className="p-4 rounded-2xl bg-error/10 border border-error/20 flex items-center gap-3 text-error text-sm font-bold">
           <span className="material-symbols-outlined text-lg">
             error
           </span>

@@ -273,6 +273,89 @@ export function AdminOrderDetail({
         </section>
       </div>
 
+      {order.status === "CANCELLED" && (
+        <section
+          className="admin-card"
+          style={{
+            padding: 20,
+            marginBottom: 24,
+            border: "1px solid rgba(220, 38, 38, 0.25)",
+            background: "rgba(220, 38, 38, 0.04)",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              marginBottom: 16,
+            }}
+          >
+            <span
+              className="material-symbols-outlined"
+              style={{ color: "#dc2626", fontSize: 20 }}
+            >
+              cancel
+            </span>
+            <h3
+              style={{
+                margin: 0,
+                fontSize: 16,
+                fontWeight: 700,
+                color: "#dc2626",
+              }}
+            >
+              Cancellation Details
+            </h3>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 14,
+              fontSize: 13,
+            }}
+          >
+            <div>
+              <div
+                className="admin-label"
+                style={{ marginBottom: 6 }}
+              >
+                Cancellation Reason
+              </div>
+              <div
+                style={{
+                  padding: "10px 12px",
+                  borderRadius: 8,
+                  background: "var(--admin-surface-2)",
+                  border: "1px solid var(--admin-border)",
+                  lineHeight: 1.5,
+                  color: "var(--admin-text)",
+                  wordBreak: "break-word",
+                }}
+              >
+                {order.cancellationReason || "No reason provided"}
+              </div>
+            </div>
+
+            <div>
+              <div
+                className="admin-label"
+                style={{ marginBottom: 4 }}
+              >
+                Cancelled At
+              </div>
+              <div style={{ color: "var(--admin-text-dim)" }}>
+                {order.cancelledAt
+                  ? new Date(order.cancelledAt).toLocaleString("en-IN")
+                  : "—"}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       <section className="admin-card" style={{ padding: 20 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>Bill / Invoice</h3>
