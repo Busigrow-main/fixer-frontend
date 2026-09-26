@@ -41,7 +41,7 @@ export default function BookingForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState("");
-  const errorRef = useRef<HTMLFormElement>(null);
+  const errorRef = useRef<HTMLDivElement>(null);
 
   // Fetch services on mount
   useEffect(() => {
@@ -283,7 +283,6 @@ export default function BookingForm({
 
   return (
     <form
-      ref={errorRef}
       onSubmit={handleSubmit}
       className={`space-y-6 ${className}`}
     >
