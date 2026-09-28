@@ -59,7 +59,8 @@ export default function BookingModal() {
     "relative",
     "w-[calc(100%-24px)]",
     "max-w-[560px]",
-    "max-h-[calc(100svh-32px)]",
+    "max-h-[calc(100dvh-32px)]",
+    "sm:max-h-[calc(100svh-48px)]",
     "bg-white",
     "rounded-[1.5rem]",
     "sm:rounded-[1.75rem]",
@@ -72,6 +73,7 @@ export default function BookingModal() {
     "ease-out",
     "flex",
     "flex-col",
+    "min-h-0",
     "transform",
     isOpen
       ? "translate-y-0 scale-100 opacity-100"
@@ -89,9 +91,7 @@ export default function BookingModal() {
     "sm:p-6",
     "transition-all",
     "duration-300",
-    isOpen
-      ? "opacity-100"
-      : "opacity-0 pointer-events-none",
+    isOpen ? "opacity-100" : "opacity-0 pointer-events-none",
   ].join(" ");
 
   const backdropClassName = [
@@ -106,50 +106,40 @@ export default function BookingModal() {
 
   return (
     <div className={overlayClassName}>
-      {/* Backdrop */}
       <div
         className={backdropClassName}
         onClick={closeBooking}
         aria-hidden="true"
       />
 
-      {/* Modal */}
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Book your repair service"
         className={modalClassName}
       >
-        {/* Header */}
         <div className="relative shrink-0 border-b border-black/[0.06] bg-white">
           <div className="px-5 sm:px-7 pt-5 sm:pt-6 pb-4 sm:pb-5">
-            {/* Top row */}
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
-                {/* Priority badge */}
                 <div className="inline-flex items-center gap-1.5 bg-primary/10 text-primary px-2.5 py-1 rounded-full mb-2.5">
                   <span className="material-symbols-outlined text-[14px] icon-filled">
                     verified
                   </span>
-
                   <span className="text-[9px] font-black uppercase tracking-[0.12em]">
                     Priority Dispatch
                   </span>
                 </div>
 
-                {/* Title */}
                 <h2 className="font-headline text-[1.55rem] sm:text-2xl leading-tight text-on-surface tracking-tight">
-                  Book your{" "}
-                  <span className="italic text-primary">Master</span> Repair
+                  Book your <span className="italic text-primary">Master</span> Repair
                 </h2>
 
-                {/* Subtitle */}
                 <p className="text-on-surface-variant text-[11px] sm:text-xs mt-1.5 leading-relaxed max-w-[390px] opacity-80">
                   Professional dispatch to your neighborhood.
                 </p>
               </div>
 
-              {/* Close */}
               <button
                 type="button"
                 onClick={closeBooking}
@@ -164,7 +154,6 @@ export default function BookingModal() {
           </div>
         </div>
 
-        {/* Form content */}
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain custom-scrollbar">
           <div className="px-4 sm:px-7 pt-4 sm:pt-5 pb-5 sm:pb-7">
             <BookingForm
