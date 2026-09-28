@@ -49,16 +49,28 @@ export default function DifferenceSection() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
+  /**
+   * Scroll only the horizontal card carousel.
+   *
+   * We intentionally do NOT use scrollIntoView()
+   * because it can move the entire landing page vertically.
+   */
   const scrollToCard = (index: number) => {
     const container = carouselRef.current;
     const card = cardRefs.current[index];
 
     if (!container || !card) return;
 
-    card.scrollIntoView({
+    const cardLeft = card.offsetLeft;
+    const cardWidth = card.offsetWidth;
+    const containerWidth = container.clientWidth;
+
+    const targetLeft =
+      cardLeft - (containerWidth - cardWidth) / 2;
+
+    container.scrollTo({
+      left: Math.max(0, targetLeft),
       behavior: "smooth",
-      block: "nearest",
-      inline: "center",
     });
 
     setActiveIndex(index);
@@ -90,16 +102,33 @@ export default function DifferenceSection() {
     }, 1800);
   };
 
+  /**
+   * Auto-slide is ONLY enabled on small/mobile screens.
+   *
+   * Desktop/tablet:
+   * - No auto-slide
+   * - No automatic horizontal movement
+   * - Cards remain a normal 3-column grid
+   */
   useEffect(() => {
     if (isPaused) return;
+
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+
+    if (!mediaQuery.matches) return;
 
     const interval = setInterval(() => {
       goToNextCard();
     }, AUTO_SLIDE_DELAY);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+    };
   }, [activeIndex, isPaused]);
 
+  /**
+   * Detect the card currently centered after manual swiping.
+   */
   useEffect(() => {
     const container = carouselRef.current;
 
@@ -125,7 +154,9 @@ export default function DifferenceSection() {
           const cardCenter =
             card.offsetLeft + card.offsetWidth / 2;
 
-          const distance = Math.abs(cardCenter - containerCenter);
+          const distance = Math.abs(
+            cardCenter - containerCenter,
+          );
 
           if (distance < closestDistance) {
             closestDistance = distance;
@@ -150,6 +181,9 @@ export default function DifferenceSection() {
     };
   }, []);
 
+  /**
+   * Cleanup resume timer.
+   */
   useEffect(() => {
     return () => {
       if (resumeTimerRef.current) {
@@ -187,7 +221,9 @@ export default function DifferenceSection() {
               <h2 className="font-headline text-[2rem] font-medium leading-[1.02] tracking-[-0.045em] text-on-surface sm:text-4xl md:text-5xl lg:text-[3.75rem]">
                 More than a repair.
                 <br />
-                <span className="italic text-primary">Peace of mind.</span>
+                <span className="italic text-primary">
+                  Peace of mind.
+                </span>
               </h2>
             </div>
 
@@ -227,7 +263,7 @@ export default function DifferenceSection() {
                 ref={(element) => {
                   cardRefs.current[index] = element;
                 }}
-                className="group block w-[calc(100vw-48px)] max-w-[360px] shrink-0 snap-center md:w-auto md:max-w-none"
+                className="group block w-[calc(100vw-32px)] shrink-0 snap-center sm:w-[calc(100vw-48px)] md:w-auto md:max-w-none"
               >
                 <article className="relative flex min-h-[300px] flex-col overflow-hidden rounded-[1.5rem] border border-[#EAE3D6] bg-[#FFFDF8] p-5 shadow-[0_12px_35px_rgba(75,60,40,0.07)] transition-all duration-500 active:scale-[0.99] sm:min-h-[320px] sm:p-6 md:min-h-[390px] md:rounded-[1.75rem] md:p-7 lg:min-h-[410px] lg:p-8 md:hover:-translate-y-1.5 md:hover:shadow-[0_20px_45px_rgba(75,60,40,0.10)]">
                   {/* Background number */}
@@ -329,7 +365,9 @@ export default function DifferenceSection() {
                 key={point.title}
                 type="button"
                 aria-label={`Go to ${point.title}`}
-                aria-current={activeIndex === index ? "true" : undefined}
+                aria-current={
+                  activeIndex === index ? "true" : undefined
+                }
                 onClick={() => {
                   pauseCarousel();
                   scrollToCard(index);
