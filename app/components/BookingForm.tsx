@@ -42,7 +42,7 @@ export default function BookingForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState("");
-  const errorRef = useRef<HTMLFormElement>(null);
+  const errorRef = useRef<HTMLDivElement>(null);
 
   // Today's local date, used to prevent selecting a past visit date.
   const today = new Date();
@@ -348,7 +348,6 @@ export default function BookingForm({
 
   return (
     <form
-      ref={errorRef}
       onSubmit={handleSubmit}
       className={`booking-form space-y-3.5 ${className}`}
     >
