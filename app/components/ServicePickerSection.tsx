@@ -101,7 +101,7 @@ export default function ServicePickerSection() {
               {/* Most Booked Badge */}
               {item.mostBooked && (
                 <span className="absolute left-1.5 top-1.5 z-20 rounded-full bg-primary px-1.5 py-1 text-[5px] font-black uppercase tracking-[0.08em] text-white shadow-md sm:left-3 sm:top-3 sm:px-2.5 sm:text-[8px]">
-                  🔥 Most Booked
+                  Most Booked
                 </span>
               )}
 
@@ -117,7 +117,8 @@ export default function ServicePickerSection() {
               </div>
 
               {/* Card Content */}
-              <div className="flex min-h-[68px] items-center justify-between gap-1 px-2 py-2 sm:min-h-[84px] sm:gap-3 sm:px-4 sm:py-4 md:min-h-[88px] lg:min-h-[92px]">
+              <div className="flex min-h-[68px] flex-col gap-1 px-2 py-2 sm:min-h-[84px] sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4 sm:py-4 md:min-h-[88px] lg:min-h-[92px]">
+
                 <div className="min-w-0">
                   <h3 className="truncate text-[10px] font-bold leading-tight text-on-surface sm:text-base md:text-base lg:text-lg">
                     {item.name}
@@ -129,11 +130,13 @@ export default function ServicePickerSection() {
                 </div>
 
                 {/* Arrow */}
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-container text-primary sm:h-9 sm:w-9">
-                  <span className="material-symbols-outlined text-[13px] sm:text-[18px]">
-                    arrow_forward
+                <div className="flex justify-start sm:mt-0 sm:justify-end">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-container text-primary sm:h-9 sm:w-9">
+                    <span className="material-symbols-outlined text-[11px] sm:text-[18px]">
+                      arrow_forward
+                    </span>
                   </span>
-                </span>
+                </div>
               </div>
             </Link>
           ))}
