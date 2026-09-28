@@ -903,7 +903,7 @@ export default function BookingForm({
         }
 
         .booking-brand .material-symbols-outlined {
-          color: var(--primary, #ff6b35);
+          color: var(--primary, #C8102E);
           font-size: 14px;
         }
 
@@ -937,7 +937,7 @@ export default function BookingForm({
         }
 
         .booking-hero-icon .material-symbols-outlined {
-          color: var(--primary, #ff6b35);
+          color: var(--primary, #C8102E);
           font-size: 27px;
         }
 
@@ -956,7 +956,7 @@ export default function BookingForm({
         }
 
         .booking-hero-line span:first-child {
-          background: var(--primary, #ff6b35);
+          background: var(--primary, #C8102E);
         }
 
         .booking-content {
@@ -1010,7 +1010,7 @@ export default function BookingForm({
         .booking-kicker {
           display: block;
           margin-bottom: 1px;
-          color: var(--primary, #ff6b35);
+          color: var(--primary, #C8102E);
           font-size: 8px;
           font-weight: 900;
           line-height: 1;
@@ -1075,9 +1075,9 @@ export default function BookingForm({
         }
 
         .booking-input:focus {
-          border-color: var(--primary, #ff6b35);
+          border-color: var(--primary, #C8102E);
           background: #ffffff;
-          box-shadow: 0 0 0 4px rgba(255, 107, 53, 0.09);
+          box-shadow: 0 0 0 4px rgba(200, 16, 46, 0.09);
         }
 
         .booking-input:disabled {
@@ -1105,13 +1105,13 @@ export default function BookingForm({
         }
 
         .booking-locked {
-          border-color: rgba(255, 107, 53, 0.2);
-          background: rgba(255, 107, 53, 0.045);
+          border-color: rgba(200, 16, 46, 0.2);
+          background: rgba(200, 16, 46, 0.045);
           cursor: not-allowed;
         }
 
         .booking-locked + .booking-select-icon {
-          color: var(--primary, #ff6b35);
+          color: var(--primary, #C8102E);
         }
 
         .booking-disabled {
@@ -1123,7 +1123,7 @@ export default function BookingForm({
           align-items: center;
           gap: 5px;
           margin-top: 8px;
-          color: var(--primary, #ff6b35);
+          color: var(--primary, #C8102E);
           font-size: 8px;
           font-weight: 800;
         }
@@ -1138,12 +1138,12 @@ export default function BookingForm({
           justify-content: space-between;
           gap: 14px;
           padding: 13px 22px;
-          border-bottom: 1px solid rgba(255, 107, 53, 0.1);
+          border-bottom: 1px solid rgba(200, 16, 46, 0.1);
           background:
             linear-gradient(
               90deg,
-              rgba(255, 107, 53, 0.045),
-              rgba(255, 107, 53, 0.018)
+              rgba(200, 16, 46, 0.045),
+              rgba(200, 16, 46, 0.018)
             );
         }
 
@@ -1162,8 +1162,8 @@ export default function BookingForm({
           justify-content: center;
           flex-shrink: 0;
           border-radius: 11px;
-          background: rgba(255, 107, 53, 0.1);
-          color: var(--primary, #ff6b35);
+          background: rgba(200, 16, 46, 0.1);
+          color: var(--primary, #C8102E);
         }
 
         .booking-price-icon .material-symbols-outlined {
@@ -1254,7 +1254,7 @@ export default function BookingForm({
           overflow: hidden;
           border: 0;
           border-radius: 15px;
-          background: var(--primary, #ff6b35);
+          background: var(--primary, #C8102E);
           color: var(--on-primary, #ffffff);
           font-size: 11px;
           font-weight: 900;
@@ -1432,6 +1432,7 @@ export default function BookingForm({
           .booking-input {
             height: 50px;
             border-radius: 14px;
+            font-size: 16px;
           }
 
           .booking-textarea {
