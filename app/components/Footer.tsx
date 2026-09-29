@@ -112,13 +112,6 @@ export default function Footer() {
                 aria-label="Instagram"
                 className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-500 hover:bg-primary hover:text-white transition-all duration-200"
               >
-                <a
-                  href="https://www.instagram.com/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Instagram"
-                  className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-500 hover:bg-primary hover:text-white transition-all duration-200"
-                >
                   <svg
                     viewBox="0 0 24 24"
                     className="w-[18px] h-[18px] md:w-5 md:h-5 fill-current"
@@ -126,7 +119,6 @@ export default function Footer() {
                   >
                     <path d="M7.8 2h8.4A5.8 5.8 0 0 1 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8A5.8 5.8 0 0 1 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2Zm0 2A3.8 3.8 0 0 0 4 7.8v8.4A3.8 3.8 0 0 0 7.8 20h8.4a3.8 3.8 0 0 0 3.8-3.8V7.8A3.8 3.8 0 0 0 16.2 4H7.8Zm8.65 1.5a1.25 1.25 0 1 1 0 2.5 1.25 1.25 0 0 1 0-2.5ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z" />
                   </svg>
-                </a>
               </a>
 
               {/* Gmail */}
