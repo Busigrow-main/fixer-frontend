@@ -1,526 +1,1043 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import Navbar from "@/app/components/Navbar";
-import Footer from "@/app/components/Footer";
-import { ApplianceTypeSidebar, ApplianceTabRail } from "./ApplianceNavigation";
-import { BrandGrid } from "./BrandGrid";
-import { ApplianceCategoryGrid } from "./ApplianceCategoryGrid";
-import { PartCategoryGrid } from "./PartCategoryGrid";
-import { PartCard, FilterChips } from "./PartComponents";
-import PopularPartsSection from "./PopularPartsSection";
-import IndiaMartHero from "@/app/components/IndiaMartHero";
-import SearchBar from "@/app/components/SearchBar";
-import { Package, Info, ChevronRight, Filter, TrendingUp } from "lucide-react";
 import Link from "next/link";
-import { cn } from "@/app/lib/utils";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  ArrowRight,
+  CheckCircle2,
+  ChevronRight,
+  HelpCircle,
+  PackageSearch,
+  Search,
+  ShieldCheck,
+  SlidersHorizontal,
+  Sparkles,
+  Wrench,
+  X,
+} from "lucide-react";
+
+import ShopHeader from "@/app/components/shop/ShopHeader";
+import ShopProductCard from "@/app/components/shop/ShopProductCard";
+
 import {
   fetchCategoryTree,
-  fetchTypeTree,
   fetchPartsByCategory,
   searchParts,
 } from "@/app/lib/spareParts";
-import {
-  BulkBusinessInquiry,
-  ServicePromiseGrid,
-  UniversalPartsTeaser,
-} from "./PromotionalSections";
+
+type SparePartsClientProps = {
+  initialCategories: any[];
+  initialPopularParts: any[];
+  apiUrl: string;
+};
+
+type TrustItemProps = {
+  icon: React.ReactNode;
+  title: string;
+};
+
+type SectionHeadingProps = {
+  eyebrow: string;
+  title: string;
+  action?: {
+    href: string;
+    label: string;
+  };
+};
+
+type FilterButtonProps = {
+  active: boolean;
+  onClick: () => void;
+  title: string;
+  description: string;
+};
 
 export default function SparePartsClient({
   initialCategories,
+  initialPopularParts,
   apiUrl,
-}: {
-  initialCategories: any[];
-  apiUrl: string;
-}) {
+}: SparePartsClientProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const params = useSearchParams();
 
-  // --- 4-State Navigation State ---
-  const [activeType, setActiveType] = useState<string | null>(
-    searchParams.get("type"),
-  );
-  const [activeCat, setActiveCat] = useState<string | null>(
-    searchParams.get("cat"),
-  );
-  const [activeBrand, setActiveBrand] = useState<string | null>(
-    searchParams.get("brand"),
+  const [categories, setCategories] = useState<any[]>(
+    initialCategories || [],
   );
 
-  // --- Other UI State ---
-  const [searchInput, setSearchInput] = useState<string>(
-    searchParams.get("q") || "",
-  );
-  const [isUniversal, setIsUniversal] = useState<boolean>(
-    searchParams.get("universal") === "true",
-  );
-  const [loading, setLoading] = useState(false);
-
-  // --- Data State ---
-  const [categoryTree, setCategoryTree] = useState<any[]>(initialCategories);
-  const [currentTypeData, setCurrentTypeData] = useState<any | null>(null);
+  const [query, setQuery] = useState(params.get("q") || "");
   const [parts, setParts] = useState<any[]>([]);
   const [meta, setMeta] = useState<any>({ total: 0 });
 
-  // Sync URL params to state
-  useEffect(() => {
-    const type = searchParams.get("type");
-    const cat = searchParams.get("cat");
-    const brand = searchParams.get("brand");
-    const q = searchParams.get("q") || "";
-    const uni = searchParams.get("universal") === "true";
+  const [loading, setLoading] = useState(false);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
-    setActiveType(type);
-    setActiveCat(cat);
-    setActiveBrand(brand);
-    setIsUniversal(uni);
-    if (q !== searchInput) setSearchInput(q);
-  }, [searchParams]);
+  const activeType = params.get("type");
+  const activeCat = params.get("cat");
+  const activeBrand = params.get("brand");
+  const activeSort = params.get("sort") || "newest";
 
-  // Fetch Category Tree (Appliance Types) on mount
-  useEffect(() => {
-    const loadTree = async () => {
-      const tree = await fetchCategoryTree(apiUrl);
-      if (tree && tree.length > 0) setCategoryTree(tree);
-    };
-    loadTree();
-  }, [apiUrl]);
+  const universalOnly = params.get("isUniversal") === "true";
 
-  // Fetch specific type data (Part Categories) when type changes
-  useEffect(() => {
-    if (activeType) {
-      const loadTypeData = async () => {
-        const data = await fetchTypeTree(apiUrl, activeType);
-        setCurrentTypeData(data);
-      };
-      loadTypeData();
-    } else {
-      setCurrentTypeData(null);
-    }
-  }, [activeType, apiUrl]);
-
-  // Fetch Parts based on active state
-  useEffect(() => {
-    const loadParts = async () => {
-      const q = searchParams.get("q");
-      if (q) {
-        setLoading(true);
-        const result = await searchParts(
-          apiUrl,
-          Object.fromEntries(searchParams.entries()),
-        );
-        setParts(result.data || []);
-        setMeta(result.metadata || { total: 0 });
-        setLoading(false);
-        return;
-      }
-
-      if (activeType && activeCat) {
-        setLoading(true);
-        const result = await fetchPartsByCategory(
-          apiUrl,
-          activeType,
-          activeCat,
-          {
-            brand: activeBrand || undefined,
-            universal: isUniversal || undefined,
-          },
-        );
-        setParts(result.data || []);
-        setMeta(result.metadata || { total: 0 });
-        setLoading(false);
-      } else {
-        setParts([]);
-      }
-    };
-    loadParts();
-  }, [activeType, activeCat, activeBrand, isUniversal, searchParams, apiUrl]);
-
-  // --- Suggestions handled by <SearchBar> component ---
-
-  // --- Navigation Handlers ---
-  const updateParams = (updates: Record<string, string | null | boolean>) => {
-    const params = new URLSearchParams(searchParams.toString());
-    Object.entries(updates).forEach(([key, value]) => {
-      if (value === null || value === false) {
-        params.delete(key);
-      } else {
-        params.set(key, String(value));
-      }
-    });
-    router.push(`/spare-parts?${params.toString()}`, { scroll: false });
-  };
-
-  const handleTypeSelect = (slug: string) => {
-    updateParams({
-      type: slug,
-      cat: null,
-      brand: null,
-      q: null,
-      universal: null,
-    });
-  };
-
-  const handleSubSelect = (typeSlug: string, catSlug: string) => {
-    updateParams({
-      type: typeSlug,
-      cat: catSlug,
-      brand: null,
-      q: null,
-      universal: null,
-    });
-  };
-
-  const handleCatSelect = (slug: string) => {
-    updateParams({ cat: slug, brand: null, q: null });
-  };
-
-  const handleBrandSelect = (slug: string | null) => {
-    updateParams({ brand: slug, universal: null });
-  };
-
-  const handleSearch = (q: string) => {
-    if (q.trim()) {
-      updateParams({ q: q.trim() });
-    } else {
-      updateParams({ q: null });
-    }
-  };
-
-  const selectSuggestion = (suggestion: any) => {
-    setSearchInput(suggestion.title);
-    if (suggestion.type === "part") {
-      router.push(`/spare-parts/${suggestion.sku || suggestion.slug}`);
-    } else if (suggestion.type === "category") {
-      updateParams({
-        type: suggestion.appliance,
-        cat: suggestion.slug,
-        q: null,
-      });
-    } else if (suggestion.type === "brand") {
-      updateParams({ brand: suggestion.slug, q: suggestion.title });
-    }
-  };
-
-  // --- Render Helpers ---
-  const activeTypeInfo = categoryTree.find(
-    (t) => t.applianceTypeSlug === activeType,
+  const isBrowsing = Boolean(
+    query || activeType || activeCat || activeBrand,
   );
 
-  return (
-    <div className="flex flex-col min-h-screen bg-white">
-      <Navbar />
+  const activeTypeData = useMemo(
+    () =>
+      categories.find(
+        (item: any) => item.applianceTypeSlug === activeType,
+      ),
+    [categories, activeType],
+  );
 
-      <main className="flex-1 flex flex-col md:flex-row pt-4 md:pt-20">
-        {/* Sidebar Navigation */}
-        {activeType && (
-          <ApplianceTypeSidebar
-            items={categoryTree}
-            activeSlug={activeType}
-            onSelect={handleTypeSelect}
+  /*
+   * Keep the category tree fresh.
+   * Initial server-rendered categories are still used immediately,
+   * so the page does not start blank while this request runs.
+   */
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchCategoryTree(apiUrl)
+      .then((data) => {
+        if (!cancelled && Array.isArray(data) && data.length) {
+          setCategories(data);
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to load spare-parts categories:", error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [apiUrl]);
+
+  /*
+   * Fetch results whenever URL-driven search/filter state changes.
+   * The URL remains the source of truth for browsing state.
+   */
+  useEffect(() => {
+    if (!isBrowsing) {
+      setParts([]);
+      setMeta({ total: 0 });
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadParts = async () => {
+      setLoading(true);
+
+      try {
+        const searchQuery = Object.fromEntries(
+          params.entries(),
+        ) as Record<string, string>;
+
+        delete searchQuery.type;
+        delete searchQuery.cat;
+        delete searchQuery.focus;
+
+        if (activeType) {
+          searchQuery.applianceType = activeType;
+        }
+
+        if (universalOnly) {
+          searchQuery.isUniversal = "true";
+        }
+
+        const resultPromise =
+          activeType && activeCat
+            ? fetchPartsByCategory(apiUrl, activeType, activeCat, {
+                brand: activeBrand || undefined,
+                universal: universalOnly,
+                limit: 24,
+              })
+            : searchParts(apiUrl, {
+                ...searchQuery,
+              });
+
+        const result = await resultPromise;
+
+        if (cancelled) return;
+
+        setParts(Array.isArray(result?.data) ? result.data : []);
+
+        setMeta(
+          result?.metadata || {
+            total: 0,
+          },
+        );
+      } catch (error) {
+        if (!cancelled) {
+          console.error("Failed to load spare parts:", error);
+          setParts([]);
+          setMeta({ total: 0 });
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadParts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    apiUrl,
+    isBrowsing,
+    params,
+    activeType,
+    activeCat,
+    activeBrand,
+    universalOnly,
+  ]);
+
+  /*
+   * Closing the mobile filter sheet after navigation keeps
+   * the mobile experience predictable.
+   */
+  useEffect(() => {
+    setMobileFiltersOpen(false);
+  }, [params]);
+
+  /*
+   * Search keeps existing URL state instead of destroying filters.
+   */
+  const search = (value: string) => {
+    setQuery(value);
+
+    const next = new URLSearchParams(params.toString());
+    const trimmed = value.trim();
+
+    if (trimmed) {
+      next.set("q", trimmed);
+    } else {
+      next.delete("q");
+    }
+
+    next.delete("page");
+
+    router.push(
+      `/spare-parts${next.toString() ? `?${next.toString()}` : ""}`,
+      {
+        scroll: false,
+      },
+    );
+  };
+
+  /*
+   * Appliance/category navigation.
+   */
+  const browse = (type: string, cat?: string) => {
+    const next = new URLSearchParams();
+
+    next.set("type", type);
+
+    if (cat) {
+      next.set("cat", cat);
+    }
+
+    router.push(`/spare-parts?${next.toString()}`);
+  };
+
+  /*
+   * Generic filter updater.
+   */
+  const updateFilter = (key: string, value?: string) => {
+    const next = new URLSearchParams(params.toString());
+
+    if (value) {
+      next.set(key, value);
+    } else {
+      next.delete(key);
+    }
+
+    next.delete("page");
+
+    router.push(`/spare-parts?${next.toString()}`, {
+      scroll: false,
+    });
+  };
+
+  /*
+   * Clear filters while intentionally preserving the search query.
+   */
+  const clearFilters = () => {
+    const next = new URLSearchParams();
+
+    if (query.trim()) {
+      next.set("q", query.trim());
+    }
+
+    router.push(
+      `/spare-parts${next.toString() ? `?${next.toString()}` : ""}`,
+      {
+        scroll: false,
+      },
+    );
+  };
+
+  const categoryName = activeCat
+    ? activeTypeData?.partCategories?.find(
+        (category: any) => category.slug === activeCat,
+      )?.name || activeCat
+    : null;
+
+  const activeFilterCount = [
+    activeType,
+    activeCat,
+    activeBrand,
+    universalOnly ? "universal" : null,
+  ].filter(Boolean).length;
+
+  return (
+    <div className="min-h-screen bg-[#f7f7f8] text-slate-950">
+      <ShopHeader
+        value={query}
+        onSearch={search}
+        autoFocusSearch={params.get("focus") === "search"}
+      />
+
+      <main className="mx-auto w-full max-w-[1440px] px-4 pb-24 pt-4 sm:px-6 sm:pb-12 sm:pt-6 lg:px-8">
+        {!isBrowsing ? (
+          <ShopHome
+            categories={categories}
+            popularParts={initialPopularParts}
+            onBrowse={browse}
+          />
+        ) : (
+          <PartsResults
+            query={query}
+            activeTypeData={activeTypeData}
+            categoryName={categoryName}
+            activeCat={activeCat}
+            activeSort={activeSort}
+            universalOnly={universalOnly}
+            activeFilterCount={activeFilterCount}
+            parts={parts}
+            meta={meta}
+            loading={loading}
+            mobileFiltersOpen={mobileFiltersOpen}
+            setMobileFiltersOpen={setMobileFiltersOpen}
+            updateFilter={updateFilter}
+            clearFilters={clearFilters}
+            browse={browse}
           />
         )}
-
-        {/* Content Area */}
-        <div className="flex-1 flex flex-col min-w-0">
-          {/* LANDING STATE */}
-          {!activeType && !searchInput && (
-            <div className="flex-1 pb-mobile-nav">
-              {/* IndiaMartHero already has its own integrated search bar */}
-              <IndiaMartHero />
-
-              {/* Popular Parts */}
-              <div className="px-4 md:px-12 pt-12">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
-                    <TrendingUp className="w-6 h-6 text-primary" />
-                  </div>
-                  <h2 className="text-2xl md:text-3xl font-black text-zinc-900">
-                    Commonly Bought Spares
-                  </h2>
-                </div>
-                <PopularPartsSection apiUrl={apiUrl} onPartSelect={() => {}} />
-              </div>
-
-              {/* Browse Complete Appliances Section */}
-              <div className="px-4 md:px-12 py-16 bg-gradient-to-r from-[#C8102E] to-[#A00826] rounded-3xl mx-4 md:mx-12 mb-12 overflow-hidden">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                  {/* Left: Icon & Text */}
-                  <div className="text-white">
-                    <div className="flex items-center gap-3 mb-4">
-                      <span className="material-symbols-outlined text-4xl">
-                        shopping_bag
-                      </span>
-                      <h3 className="text-2xl md:text-3xl font-black">
-                        Buy Complete Appliances
-                      </h3>
-                    </div>
-                    <p className="text-white/90 mb-6 text-base md:text-lg">
-                      Shop full AC units, refrigerators, and washing machines
-                      directly. Get professional installation and extended
-                      warranty with every purchase.
-                    </p>
-                    <Link
-                      href="/spare-parts/appliances"
-                      className="inline-flex items-center gap-2 bg-white text-[#C8102E] font-bold px-6 py-3 rounded-lg hover:bg-gray-100 transition-colors"
-                    >
-                      Browse Appliances
-                      <span className="material-symbols-outlined">
-                        arrow_forward
-                      </span>
-                    </Link>
-                  </div>
-
-                  {/* Right: Feature Icons */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-4 text-white text-center">
-                      <span className="material-symbols-outlined text-3xl block mb-2">
-                        verified_user
-                      </span>
-                      <p className="text-sm font-semibold">
-                        Expert Installation
-                      </p>
-                    </div>
-                    <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-4 text-white text-center">
-                      <span className="material-symbols-outlined text-3xl block mb-2">
-                        shield
-                      </span>
-                      <p className="text-sm font-semibold">60-Day Warranty</p>
-                    </div>
-                    <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-4 text-white text-center">
-                      <span className="material-symbols-outlined text-3xl block mb-2">
-                        local_shipping
-                      </span>
-                      <p className="text-sm font-semibold">Fast Delivery</p>
-                    </div>
-                    <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-4 text-white text-center">
-                      <span className="material-symbols-outlined text-3xl block mb-2">
-                        support_agent
-                      </span>
-                      <p className="text-sm font-semibold">24/7 Support</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Browse Catalog */}
-              <div className="px-4 md:px-12 py-16 bg-zinc-50 mt-12">
-                <ApplianceCategoryGrid
-                  categories={categoryTree.map((item) => ({
-                    slug: item.applianceTypeSlug,
-                    name: item.applianceTypeName,
-                    icon: item.applianceTypeIcon,
-                    partCount: item.totalPartsCount,
-                    subCategories: item.partCategories || [],
-                  }))}
-                  onSelect={handleTypeSelect}
-                  onSubSelect={handleSubSelect}
-                />
-              </div>
-
-              {/* Service Promise Grid */}
-              <div className="px-4 md:px-12 py-20">
-                <ServicePromiseGrid />
-              </div>
-
-              {/* Universal Parts Highlight */}
-              <div className="px-4 md:px-12 py-10">
-                <UniversalPartsTeaser />
-              </div>
-
-              {/* Bulk & Partner Sections */}
-              <div className="px-4 md:px-12 py-20">
-                <BulkBusinessInquiry />
-              </div>
-
-              {/* Expert CTA */}
-              <div className="px-4 md:px-12 py-20 text-center space-y-4 bg-zinc-50 rounded-[3rem] mx-4 md:mx-12 mb-20 border border-zinc-100 shadow-sm">
-                <h3 className="text-3xl font-black text-zinc-900">
-                  Still can't find what you're looking for?
-                </h3>
-                <p className="text-zinc-500 max-w-xl mx-auto font-medium text-lg">
-                  Our experts in Patna are specialized in identifying
-                  hard-to-find components. Share your appliance model details
-                  and we'll source it for you.
-                </p>
-                <div className="flex items-center justify-center gap-4 pt-6">
-                <a
-                  href="tel:+917004771388"
-                  className="h-14 px-10 bg-primary                text-white rounded-2xl flex               items-center justify-center               font-black text-sm uppercase              tracking-widest hover:scale-105               shadow-xl shadow-primary/20             transition-all"
-                >
-                  Consult an Expert
-                </a>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Type/Category/Search State */}
-          {(activeType || searchInput) && (
-            <div className="flex-1 flex flex-col">
-              {/* Sticky Header */}
-              <div className="sticky top-14 md:top-20 z-30 bg-white border-b border-zinc-100 p-4 md:px-12 flex flex-col gap-4">
-                {/* Breadcrumbs */}
-                <div className="flex items-center gap-2 text-[10px] font-black uppercase text-zinc-400 tracking-widest">
-                  <button
-                    onClick={() =>
-                      updateParams({
-                        type: null,
-                        cat: null,
-                        brand: null,
-                        q: null,
-                      })
-                    }
-                  >
-                    Home
-                  </button>
-                  {activeType && (
-                    <>
-                      <ChevronRight className="w-3 h-3" />
-                      <button
-                        onClick={() =>
-                          updateParams({ cat: null, brand: null, q: null })
-                        }
-                      >
-                        {activeTypeInfo?.applianceTypeName}
-                      </button>
-                    </>
-                  )}
-                  {activeCat && (
-                    <>
-                      <ChevronRight className="w-3 h-3" />
-                      <span className="text-zinc-900">{activeCat}</span>
-                    </>
-                  )}
-                </div>
-
-                {/* Search Bar — powered by Elasticsearch */}
-                <SearchBar
-                  variant="compact"
-                  placeholder="Search parts by name, part number…"
-                  defaultValue={searchInput}
-                  className="max-w-2xl"
-                  apiUrl={apiUrl}
-                  onSearch={handleSearch}
-                  onSelect={selectSuggestion}
-                />
-              </div>
-
-              {/* View Content */}
-              <div className="flex-1 p-4 md:p-12 overflow-y-auto">
-                {/* State 2: Part Categories for a Type */}
-                {activeType &&
-                  !activeCat &&
-                  !searchInput &&
-                  currentTypeData && (
-                    <PartCategoryGrid
-                      categories={currentTypeData.partCategories}
-                      applianceName={currentTypeData.applianceTypeName}
-                      onSelect={handleCatSelect}
-                    />
-                  )}
-
-                {/* State 3 & 4: Parts Listing (Search or Category) */}
-                {(activeCat || searchInput) && (
-                  <div className="space-y-8">
-                    {/* Header */}
-                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                      <div>
-                        <h1 className="text-3xl font-black text-zinc-900">
-                          {searchInput
-                            ? `Results for "${searchInput}"`
-                            : `${activeCat} Spares`}
-                        </h1>
-                        <p className="text-sm font-bold text-zinc-500 mt-1 uppercase tracking-widest">
-                          {meta.total} Parts found in{" "}
-                          {activeTypeInfo?.applianceTypeName ||
-                            "All Categories"}
-                        </p>
-                      </div>
-
-                      {/* Filters */}
-                      {!searchInput && currentTypeData && activeCat && (
-                        <div className="flex items-center gap-2">
-                          <FilterChips
-                            label="Brand"
-                            items={
-                              currentTypeData.partCategories
-                                .find((c: any) => c.slug === activeCat)
-                                ?.brands.map((b: any) => ({
-                                  label: b.brandName,
-                                  value: b.brandSlug,
-                                })) || []
-                            }
-                            activeValue={activeBrand}
-                            onSelect={handleBrandSelect}
-                          />
-                          <button
-                            onClick={() =>
-                              updateParams({ universal: !isUniversal })
-                            }
-                            className={cn(
-                              "px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all",
-                              isUniversal
-                                ? "bg-primary text-white"
-                                : "bg-zinc-100 text-zinc-400 hover:bg-zinc-200",
-                            )}
-                          >
-                            Universal
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Grid */}
-                    {loading ? (
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {[1, 2, 3, 4, 5, 6].map((i) => (
-                          <div
-                            key={i}
-                            className="h-64 bg-zinc-100 rounded-3xl animate-pulse"
-                          />
-                        ))}
-                      </div>
-                    ) : parts.length > 0 ? (
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {parts.map((part) => (
-                          <PartCard key={part.sku} part={part} />
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="py-20 text-center flex flex-col items-center">
-                        <Package className="w-16 h-16 text-zinc-200 mb-4" />
-                        <h3 className="text-lg font-black text-zinc-900">
-                          No parts found
-                        </h3>
-                        <p className="text-zinc-500 text-sm">
-                          Try broadening your search or choosing a different
-                          brand.
-                        </p>
-                        <button
-                          onClick={() =>
-                            updateParams({
-                              brand: null,
-                              universal: null,
-                              q: null,
-                            })
-                          }
-                          className="mt-6 text-primary font-black uppercase text-xs tracking-widest hover:underline"
-                        >
-                          Clear all filters
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
       </main>
+    </div>
+  );
+}
 
-      <Footer />
+/* ============================================================
+   SHOP HOME
+============================================================ */
+
+function ShopHome({
+  categories,
+  popularParts,
+  onBrowse,
+}: {
+  categories: any[];
+  popularParts: any[];
+  onBrowse: (type: string, cat?: string) => void;
+}) {
+  return (
+    <div className="space-y-8 sm:space-y-10">
+      {/* Hero / primary intent */}
+      <section className="relative overflow-hidden rounded-[28px] bg-[#15171b] px-5 py-7 text-white shadow-[0_18px_50px_rgba(15,23,42,0.12)] sm:rounded-[34px] sm:px-10 sm:py-11 lg:px-14 lg:py-14">
+        <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
+
+        <div className="pointer-events-none absolute -bottom-28 left-1/3 h-56 w-56 rounded-full bg-primary/10 blur-3xl" />
+
+        <div className="relative max-w-3xl">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.07] px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/75">
+            <Sparkles className="h-3.5 w-3.5 text-red-300" />
+            Fixxer Shop
+          </div>
+
+          <h1 className="mt-4 text-[clamp(2rem,7vw,4.5rem)] font-black leading-[0.98] tracking-[-0.045em]">
+            Find the right part.
+            <span className="block text-white/55">
+              Without the guesswork.
+            </span>
+          </h1>
+
+          <p className="mt-4 max-w-2xl text-sm leading-6 text-white/65 sm:text-base">
+            Know the part? Search it. Not sure? Ask Fixxer and our team can help
+            identify what you need.
+          </p>
+
+          <div className="mt-7 grid gap-3 sm:grid-cols-2">
+            <Link
+              href="/spare-parts?focus=search"
+              className="group flex min-h-[92px] items-center justify-between rounded-2xl bg-primary px-5 py-4 shadow-lg shadow-black/10 transition-transform active:scale-[0.99] sm:min-h-[108px]"
+            >
+              <span>
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15">
+                  <Search className="h-5 w-5" />
+                </span>
+
+                <strong className="mt-3 block text-base font-black sm:text-lg">
+                  I know the part
+                </strong>
+
+                <span className="mt-0.5 block text-xs text-white/75">
+                  Search by name, brand or model.
+                </span>
+              </span>
+
+              <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+            </Link>
+
+            <Link
+              href="/spare-parts/help"
+              className="group flex min-h-[92px] items-center justify-between rounded-2xl border border-white/10 bg-white/[0.07] px-5 py-4 backdrop-blur transition-colors hover:bg-white/10 active:scale-[0.99] sm:min-h-[108px]"
+            >
+              <span>
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10">
+                  <HelpCircle className="h-5 w-5 text-white" />
+                </span>
+
+                <strong className="mt-3 block text-base font-black sm:text-lg">
+                  I need help
+                </strong>
+
+                <span className="mt-0.5 block text-xs text-white/55">
+                  Tell us what is wrong.
+                </span>
+              </span>
+
+              <ArrowRight className="h-5 w-5 text-white/70 transition-transform group-hover:translate-x-1" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Trust signals */}
+      <section className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
+        <TrustItem
+          icon={<ShieldCheck className="h-4.5 w-4.5" />}
+          title="Verified parts"
+        />
+
+        <TrustItem
+          icon={<Wrench className="h-4.5 w-4.5" />}
+          title="Technician support"
+        />
+
+        <TrustItem
+          icon={<PackageSearch className="h-4.5 w-4.5" />}
+          title="Request before payment"
+        />
+
+        <TrustItem
+          icon={<CheckCircle2 className="h-4.5 w-4.5" />}
+          title="Clear order status"
+        />
+      </section>
+
+      {/* Appliance categories */}
+      <section>
+        <SectionHeading
+          eyebrow="Start here"
+          title="What appliance is it for?"
+          action={{
+            href: "/spare-parts?focus=search",
+            label: "Search parts",
+          }}
+        />
+
+        {categories.length ? (
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            {categories.map((category: any) => (
+              <button
+                key={category.applianceTypeSlug}
+                type="button"
+                onClick={() => onBrowse(category.applianceTypeSlug)}
+                className="group min-h-[132px] rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-[0_2px_8px_rgba(15,23,42,0.03)] transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[0_12px_30px_rgba(15,23,42,0.08)] active:scale-[0.99]"
+              >
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/8 text-primary transition-colors group-hover:bg-primary group-hover:text-white">
+                  <Wrench className="h-5 w-5" />
+                </span>
+
+                <span className="mt-5 block line-clamp-2 text-sm font-black leading-5 text-slate-900">
+                  {category.applianceTypeName}
+                </span>
+
+                <span className="mt-1 block text-[11px] font-medium text-slate-500">
+                  {category.totalPartsCount ||
+                    category.partCount ||
+                    0}{" "}
+                  parts
+                </span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
+            Appliance categories are temporarily unavailable.
+          </div>
+        )}
+      </section>
+
+      {/* Popular parts */}
+      {popularParts.length > 0 ? (
+        <section>
+          <SectionHeading
+            eyebrow="Popular now"
+            title="Frequently requested parts"
+            action={{
+              href: "/spare-parts?sort=popular",
+              label: "View all",
+            }}
+          />
+
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {popularParts.map((part) => (
+              <ShopProductCard key={part.sku} part={part} />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {/* Appliance bridge */}
+      <section className="overflow-hidden rounded-[26px] border border-slate-200 bg-white shadow-[0_4px_20px_rgba(15,23,42,0.04)]">
+        <div className="grid lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="p-5 sm:p-8">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">
+              Need a complete appliance?
+            </p>
+
+            <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
+              Shop appliances with Fixxer support.
+            </h2>
+
+            <p className="mt-3 max-w-xl text-sm leading-6 text-slate-500">
+              Browse available models, compare important specifications and send
+              an enquiry when you are ready.
+            </p>
+
+            <Link
+              href="/spare-parts/appliances"
+              className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 text-sm font-black text-white transition hover:bg-primary active:scale-[0.99]"
+            >
+              Browse appliances
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          <div className="hidden min-h-[230px] bg-gradient-to-br from-primary/10 via-primary/5 to-slate-100 lg:block" />
+        </div>
+      </section>
+    </div>
+  );
+}
+
+/* ============================================================
+   RESULTS
+============================================================ */
+
+function PartsResults({
+  query,
+  activeTypeData,
+  categoryName,
+  activeCat,
+  activeSort,
+  universalOnly,
+  activeFilterCount,
+  parts,
+  meta,
+  loading,
+  mobileFiltersOpen,
+  setMobileFiltersOpen,
+  updateFilter,
+  clearFilters,
+  browse,
+}: {
+  query: string;
+  activeTypeData: any;
+  categoryName: string | null;
+  activeCat: string | null;
+  activeSort: string;
+  universalOnly: boolean;
+  activeFilterCount: number;
+  parts: any[];
+  meta: any;
+  loading: boolean;
+  mobileFiltersOpen: boolean;
+  setMobileFiltersOpen: (value: boolean) => void;
+  updateFilter: (key: string, value?: string) => void;
+  clearFilters: () => void;
+  browse: (type: string, cat?: string) => void;
+}) {
+  return (
+    <div>
+      {/* Breadcrumb */}
+      <div className="mb-4 flex items-center gap-1.5 overflow-x-auto whitespace-nowrap text-xs text-slate-500">
+        <Link
+          href="/spare-parts"
+          className="font-semibold hover:text-primary"
+        >
+          Spare parts
+        </Link>
+
+        <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-300" />
+
+        <span className="font-semibold text-slate-800">
+          {activeTypeData?.applianceTypeName || "Search"}
+        </span>
+
+        {categoryName ? (
+          <>
+            <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-300" />
+
+            <span className="font-semibold text-slate-800">
+              {categoryName}
+            </span>
+          </>
+        ) : null}
+      </div>
+
+      {/* Results header */}
+      <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-[0_3px_15px_rgba(15,23,42,0.035)] sm:p-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-primary/8 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-primary">
+                Spare parts
+              </span>
+
+              {universalOnly ? (
+                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-black text-slate-600">
+                  Universal
+                </span>
+              ) : null}
+            </div>
+
+            <h1 className="mt-2 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
+              {query
+                ? `Results for “${query}”`
+                : categoryName ||
+                  activeTypeData?.applianceTypeName ||
+                  "Spare parts"}
+            </h1>
+
+            <p className="mt-1 text-sm text-slate-500">
+              {loading
+                ? "Finding matching parts…"
+                : `${meta.total || 0} parts found`}
+            </p>
+          </div>
+
+          <div className="flex w-full gap-2 lg:w-auto">
+            <button
+              type="button"
+              onClick={() => setMobileFiltersOpen(true)}
+              className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-black text-slate-800 shadow-sm lg:hidden"
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+
+              Filters
+
+              {activeFilterCount ? (
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] text-white">
+                  {activeFilterCount}
+                </span>
+              ) : null}
+            </button>
+
+            <select
+              aria-label="Sort spare parts"
+              value={activeSort}
+              onChange={(event) =>
+                updateFilter(
+                  "sort",
+                  event.target.value === "newest"
+                    ? undefined
+                    : event.target.value,
+                )
+              }
+              className="min-h-11 flex-1 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 lg:w-48 lg:flex-none"
+            >
+              <option value="newest">Newest</option>
+              <option value="popular">Popular</option>
+              <option value="price_asc">Price: low to high</option>
+              <option value="price_desc">Price: high to low</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Mobile category rail */}
+        {activeTypeData &&
+        !activeCat &&
+        !query &&
+        activeTypeData.partCategories?.length ? (
+          <div className="-mx-1 mt-5 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex w-max gap-2">
+              {activeTypeData.partCategories.map((cat: any) => (
+                <button
+                  key={cat.slug}
+                  type="button"
+                  onClick={() =>
+                    browse(activeTypeData.applianceTypeSlug, cat.slug)
+                  }
+                  className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2.5 text-xs font-bold text-slate-700 transition hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+                >
+                  {cat.name}
+
+                  <span className="ml-1 text-slate-400">
+                    {cat.partCount || 0}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </section>
+
+      {/* Desktop category rail */}
+      <div className="mt-4 hidden items-center justify-between gap-3 lg:flex">
+        <div className="flex min-w-0 items-center gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {activeTypeData?.partCategories
+            ?.slice(0, 8)
+            .map((cat: any) => (
+              <button
+                key={cat.slug}
+                type="button"
+                onClick={() =>
+                  browse(activeTypeData.applianceTypeSlug, cat.slug)
+                }
+                className={`whitespace-nowrap rounded-full border px-3 py-2 text-xs font-bold transition ${
+                  activeCat === cat.slug
+                    ? "border-primary bg-primary/5 text-primary"
+                    : "border-slate-200 bg-white text-slate-600 hover:border-primary/30 hover:text-primary"
+                }`}
+              >
+                {cat.name}
+              </button>
+            ))}
+        </div>
+
+        <button
+          type="button"
+          onClick={() =>
+            updateFilter(
+              "isUniversal",
+              universalOnly ? undefined : "true",
+            )
+          }
+          className={`inline-flex shrink-0 items-center gap-2 rounded-xl border px-3.5 py-2.5 text-xs font-bold transition ${
+            universalOnly
+              ? "border-primary bg-primary/5 text-primary"
+              : "border-slate-200 bg-white text-slate-700 hover:border-primary/30"
+          }`}
+        >
+          <CheckCircle2 className="h-4 w-4" />
+          Universal parts
+        </button>
+      </div>
+
+      {/* Active filters */}
+      {activeFilterCount || query ? (
+        <div className="mt-4 flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {query ? (
+            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-slate-900 px-3 py-1.5 text-[11px] font-bold text-white">
+              “{query}”
+            </span>
+          ) : null}
+
+          {categoryName ? (
+            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary/8 px-3 py-1.5 text-[11px] font-bold text-primary">
+              {categoryName}
+            </span>
+          ) : null}
+
+          {universalOnly ? (
+            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary/8 px-3 py-1.5 text-[11px] font-bold text-primary">
+              Universal only
+            </span>
+          ) : null}
+
+          <button
+            type="button"
+            onClick={clearFilters}
+            className="inline-flex shrink-0 items-center gap-1 px-2 py-1.5 text-[11px] font-bold text-slate-500 hover:text-primary"
+          >
+            <X className="h-3.5 w-3.5" />
+            Clear
+          </button>
+        </div>
+      ) : null}
+
+      {/* Product results */}
+      <section className="mt-5">
+        {loading ? (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {Array.from({ length: 8 }).map((_, index) => (
+              <ProductSkeleton key={index} />
+            ))}
+          </div>
+        ) : parts.length ? (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
+            {parts.map((part) => (
+              <ShopProductCard
+                key={part._id || part.sku}
+                part={part}
+              />
+            ))}
+          </div>
+        ) : (
+          <EmptyResults />
+        )}
+      </section>
+
+      {/* Mobile filter sheet */}
+      {mobileFiltersOpen ? (
+        <div
+          className="fixed inset-0 z-[80] lg:hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Spare part filters"
+        >
+          <button
+            type="button"
+            aria-label="Close filters"
+            className="absolute inset-0 bg-slate-950/45 backdrop-blur-[2px]"
+            onClick={() => setMobileFiltersOpen(false)}
+          />
+
+          <div className="absolute inset-x-0 bottom-0 max-h-[82svh] overflow-y-auto rounded-t-[28px] bg-white p-5 pb-[calc(20px+env(safe-area-inset-bottom))] shadow-[0_-20px_60px_rgba(15,23,42,0.2)]">
+            <div className="mx-auto mb-5 h-1.5 w-10 rounded-full bg-slate-200" />
+
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-black text-slate-950">
+                  Filter parts
+                </h2>
+
+                <p className="mt-0.5 text-xs text-slate-500">
+                  Narrow the results without losing your search.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setMobileFiltersOpen(false)}
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600"
+                aria-label="Close filters"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="mt-6 space-y-3">
+              <FilterButton
+                active={universalOnly}
+                onClick={() =>
+                  updateFilter(
+                    "isUniversal",
+                    universalOnly ? undefined : "true",
+                  )
+                }
+                title="Universal parts"
+                description="Parts designed to work across compatible models"
+              />
+            </div>
+
+            {activeTypeData?.partCategories?.length ? (
+              <div className="mt-7">
+                <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">
+                  Categories
+                </p>
+
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  {activeTypeData.partCategories.map((cat: any) => (
+                    <button
+                      key={cat.slug}
+                      type="button"
+                      onClick={() => {
+                        browse(
+                          activeTypeData.applianceTypeSlug,
+                          cat.slug,
+                        );
+
+                        setMobileFiltersOpen(false);
+                      }}
+                      className={`min-h-11 rounded-xl border px-3 text-left text-xs font-bold ${
+                        activeCat === cat.slug
+                          ? "border-primary bg-primary/5 text-primary"
+                          : "border-slate-200 bg-white text-slate-700"
+                      }`}
+                    >
+                      {cat.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={() => {
+                clearFilters();
+                setMobileFiltersOpen(false);
+              }}
+              className="mt-7 min-h-11 w-full rounded-xl border border-slate-200 bg-white text-sm font-black text-slate-700"
+            >
+              Clear filters
+            </button>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/* ============================================================
+   SHARED UI
+============================================================ */
+
+function SectionHeading({
+  eyebrow,
+  title,
+  action,
+}: SectionHeadingProps) {
+  return (
+    <div className="flex items-end justify-between gap-4">
+      <div>
+        <p className="text-[10px] font-black uppercase tracking-[0.17em] text-primary">
+          {eyebrow}
+        </p>
+
+        <h2 className="mt-1 text-xl font-black tracking-tight text-slate-950 sm:text-2xl">
+          {title}
+        </h2>
+      </div>
+
+      {action ? (
+        <Link
+          href={action.href}
+          className="hidden shrink-0 items-center gap-1 text-xs font-black text-primary sm:inline-flex"
+        >
+          {action.label}
+
+          <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+      ) : null}
+    </div>
+  );
+}
+
+function TrustItem({ icon, title }: TrustItemProps) {
+  return (
+    <div className="flex min-h-[66px] items-center gap-2.5 rounded-2xl border border-slate-200 bg-white px-3.5 py-3 shadow-[0_2px_8px_rgba(15,23,42,0.025)] sm:px-4">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/8 text-primary">
+        {icon}
+      </span>
+
+      <span className="text-[11px] font-extrabold leading-4 text-slate-700 sm:text-xs">
+        {title}
+      </span>
+    </div>
+  );
+}
+
+function FilterButton({
+  active,
+  onClick,
+  title,
+  description,
+}: FilterButtonProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex w-full items-center gap-3 rounded-2xl border p-4 text-left transition ${
+        active
+          ? "border-primary bg-primary/5"
+          : "border-slate-200 bg-white"
+      }`}
+    >
+      <span
+        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+          active
+            ? "bg-primary text-white"
+            : "bg-slate-100 text-slate-500"
+        }`}
+      >
+        <CheckCircle2 className="h-5 w-5" />
+      </span>
+
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-black text-slate-900">
+          {title}
+        </span>
+
+        <span className="mt-0.5 block text-xs leading-5 text-slate-500">
+          {description}
+        </span>
+      </span>
+
+      <span
+        className={`h-5 w-5 rounded-full border-2 ${
+          active
+            ? "border-primary bg-primary"
+            : "border-slate-300"
+        }`}
+      />
+    </button>
+  );
+}
+
+function ProductSkeleton() {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+      <div className="aspect-square animate-pulse bg-slate-100" />
+
+      <div className="space-y-2 p-3.5">
+        <div className="h-2.5 w-1/3 animate-pulse rounded bg-slate-100" />
+
+        <div className="h-4 w-4/5 animate-pulse rounded bg-slate-100" />
+
+        <div className="h-4 w-1/2 animate-pulse rounded bg-slate-100" />
+
+        <div className="mt-3 h-9 w-full animate-pulse rounded-xl bg-slate-100" />
+      </div>
+    </div>
+  );
+}
+
+function EmptyResults() {
+  return (
+    <div className="rounded-[24px] border border-dashed border-slate-300 bg-white px-5 py-14 text-center shadow-[0_2px_10px_rgba(15,23,42,0.025)] sm:py-20">
+      <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
+        <PackageSearch className="h-7 w-7" />
+      </span>
+
+      <h2 className="mt-5 text-lg font-black text-slate-950">
+        We couldn't find that part
+      </h2>
+
+      <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
+        Try another search, browse by appliance, or ask the Fixxer team to help
+        identify the right part.
+      </p>
+
+      <Link
+        href="/spare-parts/help"
+        className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-black text-white shadow-sm transition hover:brightness-95 active:scale-[0.99]"
+      >
+        I need help
+
+        <ArrowRight className="h-4 w-4" />
+      </Link>
     </div>
   );
 }

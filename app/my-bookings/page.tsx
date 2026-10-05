@@ -18,10 +18,32 @@ import {
   statusToneClasses,
 } from "@/app/lib/customer-booking";
 
-type TabType = "repairs" | "parts" | "appliances";
+type TabType = "repairs" | "parts" | "help" | "appliances";
 
-function isApplianceOrder(order: { orderType?: string }) {
-  return order.orderType === "appliance";
+type PartOrderHistoryItem = {
+  _id: string;
+  orderType?: "part" | "appliance" | string;
+  applianceItem?: unknown;
+  items?: unknown[];
+  [key: string]: unknown;
+};
+
+function isPartOrder(order: PartOrderHistoryItem) {
+  return order.orderType?.toLowerCase() === "part";
+}
+
+function isApplianceOrder(order: PartOrderHistoryItem) {
+  return order.orderType?.toLowerCase() === "appliance";
+}
+
+function normalizePartOrdersResponse(payload: unknown): PartOrderHistoryItem[] {
+  if (Array.isArray(payload)) return payload as PartOrderHistoryItem[];
+  if (payload && typeof payload === "object") {
+    const response = payload as { data?: unknown; orders?: unknown };
+    if (Array.isArray(response.data)) return response.data as PartOrderHistoryItem[];
+    if (Array.isArray(response.orders)) return response.orders as PartOrderHistoryItem[];
+  }
+  throw new Error("Unexpected /user/part-orders response shape.");
 }
 
 export default function MyBookingsPage() {
@@ -39,7 +61,8 @@ function MyBookingsContent() {
   const tabParam = searchParams.get("tab");
   
   const [activeTab, setActiveTab] = useState<TabType>("repairs");
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<PartOrderHistoryItem[]>([]);
+  const [helpRequests, setHelpRequests] = useState<any[]>([]);
   const [bookings, setBookings] = useState<any[]>([]);
   const [appliances, setAppliances] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,7 +86,7 @@ function MyBookingsContent() {
   }, [showSuccess]);
 
   const partOrders = useMemo(
-    () => orders.filter((o) => !isApplianceOrder(o)),
+    () => orders.filter(isPartOrder),
     [orders],
   );
   const applianceOrders = useMemo(
@@ -86,6 +109,8 @@ function MyBookingsContent() {
       setActiveTab("appliances");
     } else if (tabParam === "parts") {
       setActiveTab("parts");
+    } else if (tabParam === "help") {
+      setActiveTab("help");
     } else if (tabParam === "repairs") {
       setActiveTab("repairs");
     }
@@ -94,7 +119,7 @@ function MyBookingsContent() {
   const fetchAllHistory = async () => {
     setLoading(true);
     try {
-      const [ordersRes, bookingsRes, appliancesRes] = await Promise.all([
+      const [ordersRes, bookingsRes, appliancesRes, helpRes] = await Promise.all([
         fetch(`${API_URL}/user/part-orders`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
@@ -104,18 +129,47 @@ function MyBookingsContent() {
         fetch(`${API_URL}/user/appliances`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
+        fetch(`${API_URL}/user/part-help`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
       ]);
 
-      if (ordersRes.ok) setOrders(await ordersRes.json());
+      if (ordersRes.ok) {
+        const payload = await ordersRes.json();
+        setOrders(normalizePartOrdersResponse(payload));
+      } else {
+        setError("Could not load spare part orders.");
+      }
       if (bookingsRes.ok) setBookings(await bookingsRes.json());
       if (appliancesRes.ok) {
         const data = await appliancesRes.json();
         setAppliances(Array.isArray(data) ? data : []);
       }
+      if (helpRes.ok) {
+        const data = await helpRes.json();
+        setHelpRequests(Array.isArray(data) ? data : []);
+      }
     } catch {
       setError("Network error. Could not load history.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const updateHelpRequest = async (id: string, action: "accept" | "decline") => {
+    if (!token) return;
+    try {
+      const response = await fetch(`${API_URL}/user/part-help/${id}/${action}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(result.message || "Could not update this request.");
+      }
+      await fetchAllHistory();
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Could not update this request.");
     }
   };
 
@@ -289,7 +343,9 @@ function MyBookingsContent() {
       ? bookings.length
       : activeTab === "appliances"
         ? applianceOrders.length
-        : partOrders.length;
+      : activeTab === "help"
+        ? helpRequests.length
+      : partOrders.length;
 
   const emptyCopy = {
     repairs: {
@@ -305,6 +361,13 @@ function MyBookingsContent() {
       body: "Your spare part enquiries will appear here once you place them.",
       href: "/spare-parts",
       cta: "Browse Spare Parts",
+    },
+    help: {
+      icon: "support_agent",
+      title: "No part-help requests found",
+      body: "Not sure which part you need? Ask a Fixer expert to identify it for you.",
+      href: "/spare-parts/help",
+      cta: "Ask an Expert",
     },
     appliances: {
       icon: "ac_unit",
@@ -341,10 +404,10 @@ function MyBookingsContent() {
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
             <div>
               <h1 className="font-headline text-4xl md:text-6xl text-on-surface">
-                My Bookings
+                My Activity
               </h1>
               <p className="mt-3 text-sm md:text-base text-on-surface-variant max-w-xl leading-relaxed">
-                Track repair visits, spare part orders
+                Track repair visits, spare part orders, part-help requests
                 {hasApplianceBookings ? ", and appliance enquiries" : ""} in one place.
               </p>
             </div>
@@ -367,6 +430,21 @@ function MyBookingsContent() {
                   {bookings.length > 0 && (
                     <span className="w-5 h-5 rounded-full bg-primary/10 text-[10px] flex items-center justify-center">
                       {bookings.length}
+                    </span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === "help"}
+                  onClick={() => setActiveTab("help")}
+                  className={`shrink-0 whitespace-nowrap px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 inline-flex items-center gap-2 ${activeTab === "help" ? "bg-white text-primary shadow-sm" : "text-on-surface-variant hover:text-on-surface"}`}
+                >
+                  <span className="material-symbols-outlined text-lg">support_agent</span>
+                  Part Help
+                  {helpRequests.length > 0 && (
+                    <span className="w-5 h-5 rounded-full bg-primary/10 text-[10px] flex items-center justify-center">
+                      {helpRequests.length}
                     </span>
                   )}
                 </button>
@@ -491,6 +569,61 @@ function MyBookingsContent() {
                       order={order}
                       onCancelOrder={(id) => openCancellationModal("order", id)}
                     />
+                ))}
+                {activeTab === "help" &&
+                helpRequests.map((request) => (
+                  <article
+                    key={request._id}
+                    className="rounded-3xl border border-outline bg-white p-5 shadow-sm md:p-6"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">
+                          Part identification request
+                        </p>
+                        <h2 className="mt-2 text-lg font-black text-on-surface">
+                          {request.applianceType}
+                          {request.applianceBrand ? ` · ${request.applianceBrand}` : ""}
+                        </h2>
+                        <p className="mt-1 text-sm text-on-surface-variant">
+                          {request.partDescription}
+                        </p>
+                      </div>
+                      <span className="rounded-full bg-surface-container-low px-3 py-1 text-xs font-black text-on-surface-variant">
+                        {request.status}
+                      </span>
+                    </div>
+                    {request.adminResponse && (
+                      <div className="mt-5 rounded-2xl bg-primary/[0.05] p-4">
+                        <p className="text-xs font-black uppercase tracking-wider text-primary">Fixer&apos;s response</p>
+                        <p className="mt-2 text-sm text-on-surface">{request.adminResponse}</p>
+                        {request.quotedPrice != null && (
+                          <p className="mt-2 text-xl font-black text-on-surface">
+                            {formatInr(request.quotedPrice)}
+                            {request.isAvailable ? " · Available" : " · Currently unavailable"}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    {request.status === "QUOTED" && (
+                      <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                        <button
+                          type="button"
+                          onClick={() => updateHelpRequest(request._id, "accept")}
+                          className="min-h-11 rounded-xl bg-primary px-5 text-sm font-black text-white"
+                        >
+                          Accept quote
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => updateHelpRequest(request._id, "decline")}
+                          className="min-h-11 rounded-xl border border-outline px-5 text-sm font-black text-on-surface-variant"
+                        >
+                          Decline
+                        </button>
+                      </div>
+                    )}
+                  </article>
                 ))}
 
               {activeTab === "appliances" &&

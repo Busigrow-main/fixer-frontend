@@ -34,6 +34,11 @@ const NAV_ITEMS = [
     label: "Spare Part Orders",
   },
   {
+    href: "/admin/part-help",
+    icon: "support_agent",
+    label: "Part Help Requests",
+  },
+  {
     href: "/admin/appliance-orders",
     icon: "ac_unit",
     label: "Appliance Orders",

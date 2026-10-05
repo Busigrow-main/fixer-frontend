@@ -1,97 +1,226 @@
-"use client";
+import { notFound } from "next/navigation";
 
-import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import type { ACProduct } from "@/app/components/appliances/types";
-import { ACDetailMobile } from "@/app/components/appliances/ac-detail/ACDetailMobile";
 import { ACDetailDesktop } from "@/app/components/appliances/ac-detail/ACDetailDesktop";
-import { ACDetailStickyBar } from "@/app/components/appliances/ac-detail/ACDetailStickyBar";
+import { ACDetailMobile } from "@/app/components/appliances/ac-detail/ACDetailMobile";
+import ACDetailStickyBar from "@/app/components/appliances/ac-detail/ACDetailStickyBar";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/v1";
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL ||
+  process.env.NEXT_PUBLIC_BACKEND_URL ||
+  "http://localhost:5000/api";
 
-export default function ACDetailPage() {
-  const params = useParams();
-  const slug = params.slug as string;
+interface PageProps {
+  params: Promise<{
+    slug: string;
+  }>;
+}
 
-  const [product, setProduct] = useState<ACProduct | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export interface ACProduct {
+  id: string;
+  _id?: string;
+  slug: string;
+  name: string;
+  brand: string;
+  modelNumber: string;
+  price: number;
+  originalPrice?: number;
+  capacityTon: number;
+  starRating: number;
+  acType: string;
+  isInverter: boolean;
+  shortDescription?: string;
+  description?: string;
+  images: string[];
+  inStock: boolean;
+  installationIncluded: boolean;
+  warrantyYears: number;
+  specifications?: Record<string, string | number>;
+}
 
-  useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        setLoading(true);
-        const res = await fetch(`${API}/appliances/ac/${slug}`);
-        if (!res.ok) throw new Error(`Server error ${res.status}`);
-        const data = await res.json();
-        if (data.status !== "success" || !data.product) throw new Error("Product not found");
-        setProduct(data.product);
-        setError(null);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
-        setProduct(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProduct();
-  }, [slug]);
+function normalizeProduct(raw: any): ACProduct {
+  const images =
+    raw?.images ??
+    raw?.imageUrls ??
+    raw?.image_urls ??
+    [];
 
-  if (loading) {
-    return (
-      <main className="min-h-screen bg-[#F1F2F4] md:bg-[#F8F8F9]">
-        {/* Mobile skeleton */}
-        <div className="md:hidden">
-          <div className="aspect-[4/3] bg-gray-200 animate-pulse" />
-          <div className="bg-white p-4 space-y-3">
-            <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
-            <div className="h-5 w-full bg-gray-200 rounded animate-pulse" />
-            <div className="h-8 w-32 bg-gray-200 rounded animate-pulse" />
-          </div>
-        </div>
-        {/* Desktop skeleton */}
-        <div className="hidden md:block py-8 max-w-6xl mx-auto px-4">
-          <div className="h-5 w-64 bg-gray-200 rounded animate-pulse mb-8" />
-          <div className="grid grid-cols-2 gap-10">
-            <div className="bg-gray-200 rounded-2xl h-[440px] animate-pulse" />
-            <div className="space-y-5">
-              {[80, 48, 64, 48, 140].map((h, i) => (
-                <div key={i} className="bg-gray-200 rounded animate-pulse" style={{ height: h }} />
-              ))}
-            </div>
-          </div>
-        </div>
-      </main>
+  const normalizedImages = Array.isArray(images)
+    ? images.filter(
+        (image: unknown): image is string =>
+          typeof image === "string" && image.length > 0,
+      )
+    : [];
+
+  return {
+    id: String(raw?.id ?? raw?._id ?? ""),
+    _id: raw?._id,
+    slug: String(raw?.slug ?? ""),
+    name: String(raw?.name ?? "Air Conditioner"),
+    brand: String(raw?.brand ?? ""),
+    modelNumber: String(
+      raw?.modelNumber ??
+        raw?.model ??
+        raw?.modelNo ??
+        "",
+    ),
+    price: Number(raw?.price ?? 0),
+    originalPrice:
+      raw?.originalPrice != null
+        ? Number(raw.originalPrice)
+        : raw?.mrp != null
+          ? Number(raw.mrp)
+          : undefined,
+    capacityTon: Number(
+      raw?.capacityTon ??
+        raw?.capacity ??
+        0,
+    ),
+    starRating: Number(
+      raw?.starRating ??
+        raw?.stars ??
+        raw?.star ??
+        0,
+    ),
+    acType: String(
+      raw?.acType ??
+        raw?.type ??
+        "Split AC",
+    ),
+    isInverter: Boolean(
+      raw?.isInverter ??
+        raw?.inverter ??
+        false,
+    ),
+    shortDescription:
+      raw?.shortDescription ??
+      raw?.short_description ??
+      undefined,
+    description:
+      raw?.description ??
+      undefined,
+    images: normalizedImages,
+    inStock: Boolean(
+      raw?.inStock ??
+        raw?.isInStock ??
+        false,
+    ),
+    installationIncluded: Boolean(
+      raw?.installationIncluded ??
+        raw?.installation_included ??
+        false,
+    ),
+    warrantyYears: Number(
+      raw?.warrantyYears ??
+        raw?.warranty ??
+        0,
+    ),
+    specifications:
+      raw?.specifications ??
+      raw?.specs ??
+      undefined,
+  };
+}
+
+async function getProduct(
+  slug: string,
+): Promise<ACProduct | null> {
+  try {
+    const response = await fetch(
+      `${API_BASE}/appliances/ac/${encodeURIComponent(
+        slug,
+      )}`,
+      {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+        },
+        cache: "no-store",
+      },
     );
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const payload = await response.json();
+
+    const rawProduct =
+      payload?.product ??
+      payload?.data ??
+      payload;
+
+    if (!rawProduct) {
+      return null;
+    }
+
+    return normalizeProduct(rawProduct);
+  } catch {
+    return null;
   }
+}
 
-  if (error || !product) {
-    return (
-      <main className="min-h-screen bg-[#F8F8F9] flex items-center justify-center px-4">
-        <div className="text-center py-16">
-          <span className="material-symbols-outlined text-6xl text-[#C8102E] block mb-4">error_outline</span>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Product Not Found</h1>
-          <p className="text-gray-500 mb-8 text-sm">{error ?? "The product you're looking for doesn't exist."}</p>
-          <Link
-            href="/spare-parts/appliances/ac"
-            className="inline-flex items-center gap-2 bg-[#C8102E] hover:bg-[#A00826] text-white font-semibold py-3 px-8 rounded-xl transition-colors"
-          >
-            <span className="material-symbols-outlined text-lg">arrow_back</span>
-            Back to AC Products
-          </Link>
-        </div>
-      </main>
-    );
+export default async function ACDetailPage({
+  params,
+}: PageProps) {
+  const { slug } = await params;
+
+  const product = await getProduct(slug);
+
+  if (!product) {
+    notFound();
   }
 
   return (
-    <>
-      <main className="min-h-screen bg-[#F1F2F4] md:bg-[#F8F8F9]">
+    <main className="min-h-screen bg-[#f8fafc]">
+      {/* Breadcrumb */}
+      <div className="mx-auto hidden w-full max-w-7xl px-6 pt-5 md:block lg:px-8">
+        <nav
+          aria-label="Breadcrumb"
+          className="flex items-center gap-2 text-[10px] font-semibold text-slate-400"
+        >
+          <a
+            href="/spare-parts"
+            className="transition-colors hover:text-primary"
+          >
+            Spare Parts
+          </a>
+
+          <span>/</span>
+
+          <a
+            href="/spare-parts/appliances"
+            className="transition-colors hover:text-primary"
+          >
+            Appliances
+          </a>
+
+          <span>/</span>
+
+          <a
+            href="/spare-parts/appliances/ac"
+            className="transition-colors hover:text-primary"
+          >
+            Air Conditioners
+          </a>
+
+          <span>/</span>
+
+          <span className="max-w-[260px] truncate text-slate-600">
+            {product.name}
+          </span>
+        </nav>
+      </div>
+
+      <ACDetailDesktop product={product} />
+
+      <div className="md:hidden">
         <ACDetailMobile product={product} />
-        <ACDetailDesktop product={product} />
-      </main>
-      <ACDetailStickyBar product={product} />
-    </>
+
+        {/* Space for the fixed mobile enquiry bar */}
+        <div className="h-24" />
+
+        <ACDetailStickyBar product={product} />
+      </div>
+    </main>
   );
 }
