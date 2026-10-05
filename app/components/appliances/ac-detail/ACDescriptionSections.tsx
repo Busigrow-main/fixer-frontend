@@ -1,239 +1,237 @@
 "use client";
 
-import Image from "next/image";
-import type { ACDescriptionSection } from "../types";
-import { sanitizeProductHtml } from "./sanitizeProductHtml";
+import {
+  CheckCircle2,
+  Info,
+  ShieldCheck,
+  Sparkles,
+  Wrench,
+} from "lucide-react";
 
 interface ACDescriptionSectionsProps {
-  sections: ACDescriptionSection[];
+  description?: string;
+  features?: string[];
+  installationIncluded?: boolean;
+  compressorWarrantyYears?: number | string;
+  productWarrantyYears?: number | string;
   compact?: boolean;
 }
 
-function sortSections(sections: ACDescriptionSection[]): ACDescriptionSection[] {
-  return [...sections].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-}
+export default function ACDescriptionSections({
+  description,
+  features = [],
+  installationIncluded,
+  compressorWarrantyYears,
+  productWarrantyYears,
+  compact = false,
+}: ACDescriptionSectionsProps) {
+  const cleanFeatures = features.filter(
+    (feature): feature is string =>
+      typeof feature === "string" &&
+      feature.trim().length > 0,
+  );
 
-export function hasHeroSection(sections?: ACDescriptionSection[]): boolean {
-  return Boolean(sections?.some((s) => s.type === "hero"));
-}
+  const hasWarranty =
+    compressorWarrantyYears ||
+    productWarrantyYears;
 
-export function ACDescriptionSections({ sections, compact = false }: ACDescriptionSectionsProps) {
-  const sorted = sortSections(sections);
-  if (sorted.length === 0) return null;
+  const hasServiceInfo =
+    installationIncluded || hasWarranty;
+
+  if (
+    !description &&
+    cleanFeatures.length === 0 &&
+    !hasServiceInfo
+  ) {
+    return null;
+  }
 
   return (
-    <div className={compact ? "space-y-5" : "space-y-0"}>
-      {sorted.map((section, index) => (
-        <SectionBlock key={`${section.type}-${index}`} section={section} index={index} compact={compact} />
-      ))}
+    <section className="w-full">
+      {/* Description */}
+      {description && (
+        <div>
+          <SectionHeading
+            icon={
+              <Info className="h-4 w-4" />
+            }
+            eyebrow="About this product"
+            title="Product overview"
+          />
+
+          <div
+            className={`mt-4 rounded-2xl border border-zinc-200 bg-white ${
+              compact ? "p-4" : "p-5 sm:p-6"
+            }`}
+          >
+            <p className="whitespace-pre-line text-sm leading-7 text-zinc-600">
+              {description}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Features */}
+      {cleanFeatures.length > 0 && (
+        <div
+          className={
+            description ? "mt-7" : ""
+          }
+        >
+          <SectionHeading
+            icon={
+              <Sparkles className="h-4 w-4" />
+            }
+            eyebrow="Key highlights"
+            title="Why this AC"
+          />
+
+          <div
+            className={`mt-4 grid gap-2.5 ${
+              compact
+                ? "grid-cols-1"
+                : "sm:grid-cols-2"
+            }`}
+          >
+            {cleanFeatures.map(
+              (feature, index) => (
+                <div
+                  key={`${feature}-${index}`}
+                  className="flex items-start gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3.5"
+                >
+                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                  </span>
+
+                  <p className="text-sm font-semibold leading-5 text-zinc-700">
+                    {feature}
+                  </p>
+                </div>
+              ),
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Installation & warranty */}
+      {hasServiceInfo && (
+        <div
+          className={`${
+            description ||
+            cleanFeatures.length > 0
+              ? "mt-7"
+              : ""
+          }`}
+        >
+          <SectionHeading
+            icon={
+              <ShieldCheck className="h-4 w-4" />
+            }
+            eyebrow="After-sales support"
+            title="Installation & warranty"
+          />
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {installationIncluded && (
+              <ServiceCard
+                icon={
+                  <Wrench className="h-5 w-5" />
+                }
+                title="Installation included"
+                description="Installation support is included with this product."
+              />
+            )}
+
+            {productWarrantyYears && (
+              <ServiceCard
+                icon={
+                  <ShieldCheck className="h-5 w-5" />
+                }
+                title={`${productWarrantyYears}-year product warranty`}
+                description="Warranty information is based on the product catalog."
+              />
+            )}
+
+            {compressorWarrantyYears && (
+              <ServiceCard
+                icon={
+                  <ShieldCheck className="h-5 w-5" />
+                }
+                title={`${compressorWarrantyYears}-year compressor warranty`}
+                description="Compressor warranty information is shown in the product details."
+              />
+            )}
+          </div>
+        </div>
+      )}
+
+      <div className="mt-5 flex gap-2.5 rounded-xl border border-amber-200/70 bg-amber-50/60 px-3.5 py-3">
+        <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+
+        <p className="text-[11px] leading-5 text-amber-800/80">
+          Product specifications, installation and
+          warranty details are based on the information
+          available in the Fixxer catalog. Our team can
+          confirm model-specific details before your
+          request is finalized.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+function SectionHeading({
+  icon,
+  eyebrow,
+  title,
+}: {
+  icon: React.ReactNode;
+  eyebrow: string;
+  title: string;
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/[0.06] text-primary">
+        {icon}
+      </span>
+
+      <div>
+        <p className="text-[9px] font-black uppercase tracking-[0.18em] text-primary">
+          {eyebrow}
+        </p>
+
+        <h2 className="mt-1 text-xl font-black tracking-tight text-zinc-950 sm:text-2xl">
+          {title}
+        </h2>
+      </div>
     </div>
   );
 }
 
-function SectionBlock({
-  section,
-  index,
-  compact,
+function ServiceCard({
+  icon,
+  title,
+  description,
 }: {
-  section: ACDescriptionSection;
-  index: number;
-  compact: boolean;
+  icon: React.ReactNode;
+  title: string;
+  description: string;
 }) {
-  switch (section.type) {
-    case "hero":
-      return <HeroSection section={section} compact={compact} />;
-    case "image_text":
-      return <ImageTextSection section={section} index={index} compact={compact} />;
-    case "image_full":
-      return <ImageFullSection section={section} compact={compact} />;
-    case "feature_grid":
-      return <FeatureGridSection section={section} compact={compact} />;
-    case "banner":
-      return <BannerSection section={section} compact={compact} />;
-    case "html":
-      return <HtmlSection section={section} compact={compact} />;
-    default:
-      return null;
-  }
-}
-
-function HeroSection({ section, compact }: { section: ACDescriptionSection; compact: boolean }) {
   return (
-    <section
-      className={
-        compact
-          ? "rounded-xl overflow-hidden bg-gradient-to-br from-[#1A1A1C] via-[#252528] to-[#1A1A1C] text-white p-4"
-          : "bg-gradient-to-r from-[#1A1A1C] to-[#2d2d30] text-white px-6 md:px-10 py-8 md:py-10"
-      }
-    >
-      {section.title && (
-        <h2
-          className={
-            compact
-              ? "text-lg font-black leading-snug mb-2"
-              : "text-xl md:text-3xl font-black leading-snug mb-3"
-          }
-        >
-          {section.title}
-        </h2>
-      )}
-      {section.subtitle && (
-        <p className="text-gray-300 text-xs md:text-sm leading-relaxed max-w-2xl">{section.subtitle}</p>
-      )}
-    </section>
-  );
-}
+    <div className="flex gap-3 rounded-2xl border border-zinc-200 bg-white p-4">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/[0.06] text-primary">
+        {icon}
+      </span>
 
-function ImageTextSection({
-  section,
-  index,
-  compact,
-}: {
-  section: ACDescriptionSection;
-  index: number;
-  compact: boolean;
-}) {
-  const imageRight = index % 2 === 1;
-  const pad = compact ? "px-0" : "px-4 md:px-8";
-
-  return (
-    <section className={`ac-desc-image-text ${pad} ${compact ? "py-0" : "py-6 md:py-8"}`}>
-      <div
-        className={`flex flex-col gap-4 md:gap-8 md:items-center ${
-          imageRight ? "md:flex-row-reverse" : "md:flex-row"
-        }`}
-      >
-        {section.imageUrl && (
-          <div className="relative w-full md:w-1/2 aspect-[4/3] rounded-xl overflow-hidden bg-gray-100">
-            <ProductImage src={section.imageUrl} alt={section.imageAlt ?? section.title ?? "Product"} fill />
-          </div>
-        )}
-        <div className="flex-1 min-w-0">
-          {section.title && (
-            <h3 className="text-base md:text-xl font-black text-gray-900 mb-2">{section.title}</h3>
-          )}
-          {section.subtitle && (
-            <p className="text-sm md:text-base text-gray-600 leading-relaxed">{section.subtitle}</p>
-          )}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function ImageFullSection({ section, compact }: { section: ACDescriptionSection; compact: boolean }) {
-  if (!section.imageUrl) return null;
-  const pad = compact ? "" : "px-0";
-
-  return (
-    <figure className={`ac-desc-image-full ${pad} ${compact ? "" : "w-full"}`}>
-      <div className="relative w-full aspect-[16/9] md:aspect-[21/9] bg-gray-100">
-        <ProductImage
-          src={section.imageUrl}
-          alt={section.imageAlt ?? section.title ?? "Product feature"}
-          fill
-          sizes="100vw"
-          priority={false}
-        />
-      </div>
-      {(section.title || section.subtitle) && (
-        <figcaption className={`${compact ? "px-0 pt-2" : "px-4 md:px-8 pt-3"} text-center`}>
-          {section.title && <p className="text-sm font-bold text-gray-900">{section.title}</p>}
-          {section.subtitle && <p className="text-xs text-gray-500 mt-0.5">{section.subtitle}</p>}
-        </figcaption>
-      )}
-    </figure>
-  );
-}
-
-function FeatureGridSection({ section, compact }: { section: ACDescriptionSection; compact: boolean }) {
-  const features = section.features ?? [];
-  if (features.length === 0) return null;
-  const pad = compact ? "px-0" : "px-4 md:px-8";
-
-  return (
-    <section className={`ac-desc-feature-grid ${pad} ${compact ? "py-0" : "py-6 md:py-8"}`}>
-      {section.title && (
-        <h3 className="text-sm md:text-base font-black text-gray-900 uppercase tracking-wide mb-3 md:mb-4">
-          {section.title}
+      <div className="min-w-0">
+        <h3 className="text-sm font-black text-zinc-900">
+          {title}
         </h3>
-      )}
-      {section.subtitle && <p className="text-xs text-gray-500 mb-3">{section.subtitle}</p>}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-        {features.map((f, i) => (
-          <div
-            key={i}
-            className="relative overflow-hidden rounded-xl border border-gray-100 bg-gradient-to-br from-white to-gray-50 p-4 md:p-5"
-          >
-            <div className="w-11 h-11 rounded-xl bg-[#FDE7E9] flex items-center justify-center mb-3">
-              <span className="material-symbols-outlined text-[#C8102E] text-2xl">{f.icon}</span>
-            </div>
-            <p className="font-bold text-gray-900 text-sm md:text-base leading-snug mb-1">{f.title}</p>
-            <p className="text-xs md:text-sm text-gray-500 leading-relaxed">{f.description}</p>
-          </div>
-        ))}
+
+        <p className="mt-1 text-xs leading-5 text-zinc-500">
+          {description}
+        </p>
       </div>
-    </section>
-  );
-}
-
-function BannerSection({ section, compact }: { section: ACDescriptionSection; compact: boolean }) {
-  return (
-    <section
-      className={`ac-desc-banner bg-[#C8102E] text-white text-center ${
-        compact ? "rounded-xl px-4 py-4 mx-0" : "px-6 md:px-10 py-6 md:py-8"
-      }`}
-    >
-      {section.title && <p className="text-sm md:text-lg font-black">{section.title}</p>}
-      {section.subtitle && (
-        <p className="text-xs md:text-sm text-white/90 mt-1 max-w-xl mx-auto">{section.subtitle}</p>
-      )}
-    </section>
-  );
-}
-
-function HtmlSection({ section, compact }: { section: ACDescriptionSection; compact: boolean }) {
-  const html = section.html ? sanitizeProductHtml(section.html) : "";
-  if (!html) return null;
-  const pad = compact ? "px-0" : "px-4 md:px-8";
-
-  return (
-    <section className={`ac-desc-html ${pad} ${compact ? "py-0" : "py-4 md:py-6"}`}>
-      {section.title && (
-        <h3 className="text-sm md:text-base font-black text-gray-900 uppercase tracking-wide mb-3">
-          {section.title}
-        </h3>
-      )}
-      <div
-        className="ac-product-description bg-white rounded-xl border border-gray-100 p-4 md:p-6"
-        dangerouslySetInnerHTML={{ __html: html }}
-      />
-    </section>
-  );
-}
-
-function ProductImage({
-  src,
-  alt,
-  fill = true,
-  sizes = "(max-width: 768px) 100vw, 50vw",
-  priority = false,
-}: {
-  src: string;
-  alt: string;
-  fill?: boolean;
-  sizes?: string;
-  priority?: boolean;
-}) {
-  return (
-    <Image
-      src={src}
-      alt={alt}
-      fill={fill}
-      sizes={sizes}
-      priority={priority}
-      unoptimized
-      className="object-cover"
-    />
+    </div>
   );
 }

@@ -1,151 +1,190 @@
 "use client";
 
-import React from 'react';
-import Image from 'next/image';
-import { cn } from '@/app/lib/utils';
-import { AC_SERVICE_IMAGE } from '@/app/lib/services';
-import { ChevronRight } from 'lucide-react';
+import Link from "next/link";
+import {
+  AirVent,
+  ArrowRight,
+  ChevronRight,
+  Microwave,
+  Refrigerator,
+  WashingMachine,
+} from "lucide-react";
 
-// High-quality Unsplash images keyed by appliance slug/icon
-const APPLIANCE_IMAGES: Record<string, string> = {
-  // by slug
-  'refrigerator':     'https://images.unsplash.com/photo-1584568694244-14fbdf83bd30?q=80&w=800&auto=format&fit=crop',
-  'washing-machine':  'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?q=80&w=800&auto=format&fit=crop',
-  'microwave':        'https://images.unsplash.com/photo-1574269909862-7e1d70bb8078?q=80&w=800&auto=format&fit=crop',
-  ac: AC_SERVICE_IMAGE,
-  "air-conditioner": AC_SERVICE_IMAGE,
-  'television':       'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?q=80&w=800&auto=format&fit=crop',
-  'tv':               'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?q=80&w=800&auto=format&fit=crop',
-  'water-purifier':   'https://images.unsplash.com/photo-1622372738946-62e02505f2b1?q=80&w=800&auto=format&fit=crop',
-  'geyser':           'https://images.unsplash.com/photo-1584622781564-1d987f7333c1?q=80&w=800&auto=format&fit=crop',
-  'water-heater':     'https://images.unsplash.com/photo-1584622781564-1d987f7333c1?q=80&w=800&auto=format&fit=crop',
-  'dishwasher':       'https://images.unsplash.com/photo-1585771724684-38269d6639fd?q=80&w=800&auto=format&fit=crop',
-  'chimney':          'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?q=80&w=800&auto=format&fit=crop',
-  'fan':              'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?q=80&w=800&auto=format&fit=crop',
-  'cooler':           'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?q=80&w=800&auto=format&fit=crop',
-  // fallback
-  'default':          'https://images.unsplash.com/photo-1581092160562-40aa08e78837?q=80&w=800&auto=format&fit=crop',
+type ApplianceCategory = {
+  slug: string;
+  name: string;
+  description: string;
+  available: boolean;
+  icon: React.ElementType;
 };
 
-function getApplianceImage(slug: string, iconHint?: string): string {
+const applianceCategories: ApplianceCategory[] = [
+  {
+    slug: "air-conditioner",
+    name: "Air Conditioners",
+    description: "Split, inverter & window AC parts",
+    available: true,
+    icon: AirVent,
+  },
+  {
+    slug: "refrigerator",
+    name: "Refrigerators",
+    description: "Cooling, compressor & control parts",
+    available: false,
+    icon: Refrigerator,
+  },
+  {
+    slug: "washing-machine",
+    name: "Washing Machines",
+    description: "Motor, pump, belt & control parts",
+    available: false,
+    icon: WashingMachine,
+  },
+  {
+    slug: "microwave-oven",
+    name: "Microwave & OTG",
+    description: "Heating, control & electrical parts",
+    available: false,
+    icon: Microwave,
+  },
+];
+
+type ApplianceCategoryGridProps = {
+  compact?: boolean;
+};
+
+export default function ApplianceCategoryGrid({
+  compact = false,
+}: ApplianceCategoryGridProps) {
   return (
-    APPLIANCE_IMAGES[slug.toLowerCase()] ||
-    APPLIANCE_IMAGES[iconHint?.toLowerCase() || ''] ||
-    APPLIANCE_IMAGES['default']
-  );
-}
+    <section
+      aria-labelledby="appliance-category-heading"
+      className="w-full"
+    >
+      <div className="mb-5 flex items-end justify-between gap-4 sm:mb-6">
+        <div className="min-w-0">
+          <div className="mb-1.5 flex items-center gap-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
 
-interface SubCategory {
-  slug: string;
-  name: string;
-}
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary">
+              Shop appliances
+            </p>
+          </div>
 
-interface ApplianceCatalogItem {
-  slug: string;
-  name: string;
-  icon: string;
-  partCount: number;
-  subCategories: SubCategory[];
-}
+          <h2
+            id="appliance-category-heading"
+            className="text-xl font-black tracking-[-0.025em] text-slate-950 sm:text-2xl"
+          >
+            Choose an appliance
+          </h2>
 
-interface ApplianceCategoryGridProps {
-  categories: ApplianceCatalogItem[];
-  onSelect: (slug: string) => void;
-  onSubSelect: (typeSlug: string, catSlug: string) => void;
-}
+          <p className="mt-1 max-w-xl text-xs leading-5 text-slate-500 sm:text-sm">
+            Browse appliances and find compatible products and parts.
+          </p>
+        </div>
 
-export const ApplianceCategoryGrid: React.FC<ApplianceCategoryGridProps> = ({
-  categories,
-  onSelect,
-  onSubSelect
-}) => {
-  return (
-    <div className="space-y-10">
-      <div className="flex flex-col gap-3">
-        <h2 className="text-3xl md:text-4xl font-black text-zinc-900">
-          Browse by Appliance
-        </h2>
-        <p className="text-base text-zinc-600 max-w-2xl font-medium">
-          Find genuine parts for all major home appliances. Select a category or browse specific sub-categories below.
-        </p>
+        {!compact ? (
+          <Link
+            href="/spare-parts/appliances"
+            className="hidden shrink-0 items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-black text-primary transition-colors hover:bg-primary/[0.06] sm:inline-flex"
+          >
+            View shop
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        ) : null}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {categories.map((appliance) => {
-          const imgSrc = getApplianceImage(appliance.slug, appliance.icon);
-          return (
-            <div
-              key={appliance.slug}
-              className="flex flex-row bg-white border border-zinc-200 rounded-3xl overflow-hidden hover:shadow-2xl hover:border-primary/20 transition-all duration-500 group"
-            >
-              {/* Left: Appliance Photo */}
-              <button
-                onClick={() => onSelect(appliance.slug)}
-                className="relative w-[130px] md:w-[150px] shrink-0 overflow-hidden bg-zinc-100 group-hover:brightness-95 transition-all"
-                aria-label={`Browse ${appliance.name} parts`}
+      <div
+        className={
+          compact
+            ? "flex gap-3 overflow-x-auto pb-2 scrollbar-none"
+            : "grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4"
+        }
+      >
+        {applianceCategories.map((category) => {
+          const Icon = category.icon;
+
+          if (!category.available) {
+            return (
+              <div
+                key={category.slug}
+                className={
+                  compact
+                    ? "min-w-[220px] shrink-0 rounded-[20px] border border-slate-200 bg-slate-50 p-4 opacity-70"
+                    : "rounded-[22px] border border-slate-200 bg-slate-50 p-5 opacity-70"
+                }
               >
-                <Image
-                  src={imgSrc}
-                  alt={appliance.name}
-                  fill
-                  sizes="150px"
-                  className="object-cover group-hover:scale-110 transition-transform duration-700"
-                />
-                {/* Dark gradient overlay at bottom */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-                {/* Part count badge */}
-                <div className="absolute bottom-2 left-0 right-0 flex justify-center">
-                  <span className="text-[9px] font-black text-white/90 uppercase tracking-widest bg-black/30 backdrop-blur-sm px-2 py-0.5 rounded-full">
-                    {appliance.partCount} Parts
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-slate-400 shadow-sm">
+                    <Icon className="h-5 w-5" />
+                  </div>
+
+                  <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[9px] font-black uppercase tracking-wide text-slate-400">
+                    Coming soon
                   </span>
                 </div>
-              </button>
 
-              {/* Right: Info & Subcategories */}
-              <div className="flex-1 p-5 flex flex-col justify-between min-w-0">
-                <div>
-                  <button
-                    onClick={() => onSelect(appliance.slug)}
-                    className="text-lg font-black text-zinc-900 group-hover:text-primary transition-colors text-left leading-tight"
-                  >
-                    {appliance.name}
-                  </button>
+                <h3 className="mt-4 text-sm font-black text-slate-700">
+                  {category.name}
+                </h3>
 
-                  <div className="mt-3 flex flex-col gap-1.5">
-                    {appliance.subCategories.slice(0, 4).map((sub) => (
-                      <button
-                        key={sub.slug}
-                        onClick={() => onSubSelect(appliance.slug, sub.slug)}
-                        className="text-sm font-semibold text-zinc-500 hover:text-primary flex items-center gap-2 group/sub text-left truncate"
-                      >
-                        <ChevronRight className="w-3 h-3 text-zinc-300 group-hover/sub:text-primary transition-colors shrink-0" />
-                        <span className="truncate">{sub.name}</span>
-                      </button>
-                    ))}
-                    {appliance.subCategories.length > 4 && (
-                      <button
-                        onClick={() => onSelect(appliance.slug)}
-                        className="text-[10px] font-black uppercase text-primary mt-1 hover:underline tracking-widest text-left"
-                      >
-                        + {appliance.subCategories.length - 4} More Categories
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                <div className="mt-4 flex items-center justify-end border-t border-zinc-50 pt-3">
-                  <button
-                    onClick={() => onSelect(appliance.slug)}
-                    className="w-8 h-8 rounded-full bg-zinc-100 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
+                <p className="mt-1 text-[11px] leading-5 text-slate-400">
+                  {category.description}
+                </p>
               </div>
-            </div>
+            );
+          }
+
+          return (
+            <Link
+              key={category.slug}
+              href="/spare-parts/appliances/ac"
+              className={
+                compact
+                  ? "group min-w-[220px] shrink-0 rounded-[20px] border border-slate-200 bg-white p-4 transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_12px_30px_rgba(15,23,42,0.08)]"
+                  : "group relative overflow-hidden rounded-[22px] border border-slate-200 bg-white p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_14px_35px_rgba(15,23,42,0.09)]"
+              }
+            >
+              <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-primary/[0.045] transition-transform duration-500 group-hover:scale-125" />
+
+              <div className="relative flex items-start justify-between gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/[0.08] text-primary">
+                  <Icon className="h-5 w-5" />
+                </div>
+
+                <span className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-300 transition-colors group-hover:border-primary/20 group-hover:text-primary">
+                  <ChevronRight className="h-4 w-4" />
+                </span>
+              </div>
+
+              <div className="relative mt-5">
+                <h3 className="text-sm font-black text-slate-950 sm:text-base">
+                  {category.name}
+                </h3>
+
+                <p className="mt-1.5 text-[11px] leading-5 text-slate-500">
+                  {category.description}
+                </p>
+
+                <span className="mt-4 inline-flex items-center gap-1.5 text-[10px] font-black text-primary">
+                  Browse ACs
+                  <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
+                </span>
+              </div>
+            </Link>
           );
         })}
       </div>
-    </div>
+
+      <div className="mt-4 sm:hidden">
+        <Link
+          href="/spare-parts/appliances"
+          className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white text-xs font-black text-slate-800 transition-colors hover:border-primary/20 hover:text-primary"
+        >
+          Open appliance shop
+          <ArrowRight className="h-4 w-4 text-primary" />
+        </Link>
+      </div>
+    </section>
   );
-};
+}

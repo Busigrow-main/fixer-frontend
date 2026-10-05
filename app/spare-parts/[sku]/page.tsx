@@ -1,288 +1,463 @@
-import React from "react";
-import Image from "next/image";
 import Link from "next/link";
-import Navbar from "@/app/components/Navbar";
-import Footer from "@/app/components/Footer";
-import { formatPrice, cn } from "@/app/lib/utils";
+import { notFound } from "next/navigation";
 import {
-  ChevronLeft,
-  ShoppingCart,
-  ShieldCheck,
-  Hammer,
-  Info,
+  ArrowLeft,
+  ArrowRight,
   CheckCircle2,
-  Phone,
-  MessageCircle,
-  Mail,
-  Refrigerator,
-  WashingMachine,
-  Box
+  ChevronRight,
+  Package,
+  ShieldCheck,
+  Wrench,
 } from "lucide-react";
 
-export default async function PartDetailPage(props: {
-  params: Promise<{ sku: string }>;
-}) {
-  const resolvedParams = await props.params;
-  const sku = resolvedParams.sku;
-  const apiUrl =
-    process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/v1";
+const API =
+  process.env.NEXT_PUBLIC_API_URL ||
+  "http://localhost:5000/api";
 
-  let part: any = null;
+interface PageProps {
+  params: Promise<{
+    sku: string;
+  }>;
+}
 
+interface SparePart {
+  _id?: string;
+  id?: string;
+  sku: string;
+  slug?: string;
+  name: string;
+  description?: string;
+  imageUrls?: string[];
+  applianceTypeSlug?: string;
+  applianceTypeName?: string;
+  isUniversal?: boolean;
+  isFeatured?: boolean;
+  brandSlug?: string;
+  brandName?: string;
+  brand?: string;
+  partCategory?: string;
+  partNumber?: string;
+  price?: number;
+  mrp?: number;
+  stock?: number;
+  isInStock?: boolean;
+  warrantyMonths?: number;
+}
+
+async function getPart(
+  sku: string,
+): Promise<SparePart | null> {
   try {
-    const res = await fetch(`${apiUrl}/spare-parts/${sku}`, {
-      cache: "no-store",
-    });
-    if (res.ok) {
-      part = await res.json();
+    const response = await fetch(
+      `${API}/spare-parts/${encodeURIComponent(sku)}`,
+      {
+        headers: {
+          Accept: "application/json",
+        },
+        cache: "no-store",
+      },
+    );
+
+    if (!response.ok) {
+      return null;
     }
-  } catch (err) {
-    console.error(err);
+
+    const payload = await response.json();
+
+    const raw =
+      payload?.part ??
+      payload?.product ??
+      payload?.data ??
+      payload;
+
+    if (!raw) {
+      return null;
+    }
+
+    return {
+      ...raw,
+      sku: String(raw.sku ?? sku),
+    };
+  } catch {
+    return null;
   }
+}
+
+export default async function SparePartDetailPage({
+  params,
+}: PageProps) {
+  const { sku } = await params;
+
+  const part = await getPart(sku);
 
   if (!part) {
-    return (
-      <>
-        <Navbar />
-        <div className="pt-4 md:pt-24 pb-20 text-center">
-          <h1 className="text-2xl font-black">Part not found</h1>
-          <Link
-            href="/spare-parts"
-            className="text-primary font-bold mt-4 inline-block"
-          >
-            Back to Catalog
-          </Link>
-        </div>
-        <Footer />
-      </>
-    );
+    notFound();
   }
 
-  const discount = part.mrp ? Math.round((1 - part.price / part.mrp) * 100) : 0;
+  const partId =
+    part._id ||
+    part.id ||
+    part.sku;
+
+  const enquiryHref = `/spare-parts/enquiry?part=${encodeURIComponent(
+    partId,
+  )}`;
+
+  const image =
+    part.imageUrls?.[0] ||
+    "/images/placeholder-part.png";
+
+  const hasPrice =
+    typeof part.price === "number" &&
+    part.price > 0;
+
+  const hasMrp =
+    typeof part.mrp === "number" &&
+    part.mrp > 0 &&
+    part.mrp > (part.price || 0);
+
+  const discount =
+    hasMrp && hasPrice
+      ? Math.round(
+          ((part.mrp! - part.price!) /
+            part.mrp!) *
+            100,
+        )
+      : 0;
+
+  const inStock =
+    part.isInStock !== false &&
+    (typeof part.stock !== "number" ||
+      part.stock > 0);
 
   return (
-    <div className="flex flex-col min-h-screen bg-white pb-mobile-cta md:pb-0">
-      <Navbar />
+    <main className="min-h-screen bg-slate-50 pb-16">
+      {/* Breadcrumb */}
+      <div className="mx-auto hidden w-full max-w-7xl px-6 pt-5 md:block lg:px-8">
+        <nav
+          aria-label="Breadcrumb"
+          className="flex items-center gap-2 text-[10px] font-semibold text-slate-400"
+        >
+          <Link
+            href="/spare-parts"
+            className="hover:text-primary"
+          >
+            Spare Parts
+          </Link>
 
-      <main className="flex-1 pt-4 md:pt-20 container mx-auto px-4 max-w-6xl">
+          <ChevronRight className="h-3 w-3" />
+
+          {part.applianceTypeName ? (
+            <>
+              <span>{part.applianceTypeName}</span>
+              <ChevronRight className="h-3 w-3" />
+            </>
+          ) : null}
+
+          <span className="max-w-[280px] truncate text-slate-600">
+            {part.name}
+          </span>
+        </nav>
+      </div>
+
+      {/* Mobile back */}
+      <div className="mx-auto w-full max-w-7xl px-3 pt-3 md:hidden">
         <Link
           href="/spare-parts"
-          className="inline-flex items-center gap-2 text-xs font-black uppercase text-zinc-400 hover:text-primary transition-colors mb-6"
+          className="inline-flex items-center gap-1.5 text-[10px] font-black text-slate-500"
         >
-          <ChevronLeft className="w-4 h-4" />
-          Back to Catalog
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Spare Parts
         </Link>
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-16">
-          {/* Left: Image Carousel */}
-          <div className="flex flex-col gap-4">
-            <div className="relative aspect-square w-full rounded-3xl overflow-hidden bg-zinc-50 border border-zinc-100 p-8">
-              <Image
-                src={
-                  part.imageUrls?.[0] ||
-                  "https://images.unsplash.com/photo-1581092160562-40aa08e78837"
-                }
+      <div className="mx-auto grid w-full max-w-7xl gap-5 px-3 pt-4 md:grid-cols-[minmax(0,1fr)_420px] md:px-6 md:pt-7 lg:grid-cols-[minmax(0,1fr)_460px] lg:px-8 lg:gap-8">
+        {/* Product media */}
+        <section>
+          <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+            <div className="relative aspect-square bg-slate-50 sm:aspect-[1.1]">
+              <img
+                src={image}
                 alt={part.name}
-                fill
-                className="object-contain"
+                className="h-full w-full object-contain p-8 transition-transform duration-500 hover:scale-[1.025] md:p-14"
               />
-              {part.isUniversal && (
-                <div className="absolute top-4 left-4 bg-zinc-900 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
-                  ✦ Universal Compatibility
-                </div>
-              )}
+
+              {discount > 0 ? (
+                <span className="absolute left-4 top-4 rounded-xl bg-primary px-3 py-2 text-[9px] font-black text-white">
+                  {discount}% OFF
+                </span>
+              ) : null}
+
+              {part.isUniversal ? (
+                <span className="absolute right-4 top-4 rounded-xl bg-white px-3 py-2 text-[9px] font-black text-slate-700 shadow-sm">
+                  Universal
+                </span>
+              ) : null}
             </div>
-            {/* Thumbnail preview if multiple images */}
-            {part.imageUrls?.length > 1 && (
-              <div className="flex gap-3 overflow-x-auto pb-2">
-                {part.imageUrls.map((url: string, i: number) => (
-                  <div
-                    key={i}
-                    className="relative w-20 h-20 rounded-xl overflow-hidden border border-zinc-200 flex-shrink-0 cursor-pointer hover:border-primary transition-colors"
-                  >
-                    <Image
-                      src={url}
-                      alt={`${part.name}-${i}`}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
 
-          {/* Right: Info */}
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2 mb-4">
-              <span
-                className={cn(
-                  "text-[10px] uppercase font-black px-3 py-1 rounded-full",
-                  part.partType?.type === "OEM"
-                    ? "bg-blue-100 text-blue-700"
-                    : "bg-teal-100 text-teal-700",
-                )}
-              >
-                {part.partType?.type || "Part"}
-              </span>
-              <span className="flex items-center gap-1 text-[10px] uppercase font-black px-3 py-1 rounded-full bg-zinc-100 text-zinc-600">
-                {part.applianceTypeSlug === "refrigerator" ? (
-                  <Refrigerator className="w-3 h-3" />
-                ) : part.applianceTypeSlug === "washing-machine" ? (
-                  <WashingMachine className="w-3 h-3" />
-                ) : (
-                  <Box className="w-3 h-3" />
-                )}
-                {part.applianceTypeSlug}
-              </span>
+          {/* Trust strip */}
+          <div className="mt-3 grid grid-cols-3 gap-2.5">
+            <TrustItem
+              icon={<Package />}
+              label="Availability"
+              value={
+                inStock
+                  ? "In stock"
+                  : "Check"
+              }
+            />
+
+            <TrustItem
+              icon={<ShieldCheck />}
+              label="Warranty"
+              value={
+                part.warrantyMonths
+                  ? `${part.warrantyMonths} months`
+                  : "Confirm"
+              }
+            />
+
+            <TrustItem
+              icon={<Wrench />}
+              label="Support"
+              value="Fixxer help"
+            />
+          </div>
+        </section>
+
+        {/* Product information */}
+        <section className="md:sticky md:top-24 md:self-start">
+          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+            {/* Identity */}
+            <div className="flex flex-wrap items-center gap-2">
+              {part.brandName || part.brand ? (
+                <span className="rounded-lg bg-primary/[0.07] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-primary">
+                  {part.brandName || part.brand}
+                </span>
+              ) : null}
+
+              {part.isFeatured ? (
+                <span className="rounded-lg bg-amber-50 px-2.5 py-1 text-[9px] font-black text-amber-700">
+                  Featured
+                </span>
+              ) : null}
             </div>
 
-            <h1 className="text-3xl md:text-5xl font-black text-zinc-900 leading-tight mb-2">
+            <h1 className="mt-3 text-xl font-black leading-7 tracking-[-0.03em] text-slate-950 md:text-2xl">
               {part.name}
             </h1>
-            <p className="text-sm font-black text-zinc-400 uppercase tracking-widest mb-6">
-              OEM PART #{part.partNumber || part.sku}
-            </p>
 
-            <div className="flex items-baseline gap-3 mb-8">
-              <span className="text-4xl font-black text-zinc-900">
-                {formatPrice(part.price)}
-              </span>
-              {discount > 0 && (
-                <>
-                  <span className="text-xl text-zinc-400 line-through">
-                    {formatPrice(part.mrp)}
+            {part.description ? (
+              <p className="mt-2 text-xs leading-5 text-slate-500">
+                {part.description}
+              </p>
+            ) : null}
+
+            {/* Part metadata */}
+            <div className="mt-4 grid grid-cols-2 gap-x-5 gap-y-2 border-y border-slate-100 py-4">
+              <InfoRow
+                label="SKU"
+                value={part.sku}
+              />
+
+              {part.partNumber ? (
+                <InfoRow
+                  label="Part number"
+                  value={part.partNumber}
+                />
+              ) : null}
+
+              {part.applianceTypeName ? (
+                <InfoRow
+                  label="Appliance"
+                  value={part.applianceTypeName}
+                />
+              ) : null}
+
+              {part.partCategory ? (
+                <InfoRow
+                  label="Category"
+                  value={part.partCategory}
+                />
+              ) : null}
+            </div>
+
+            {/* Compatibility */}
+            <div className="mt-4 rounded-2xl bg-slate-50 p-4">
+              <div className="flex items-start gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-primary shadow-sm">
+                  <CheckCircle2 className="h-4 w-4" />
+                </span>
+
+                <div>
+                  <p className="text-[10px] font-black text-slate-800">
+                    {part.isUniversal
+                      ? "Universal part"
+                      : "Compatibility should be confirmed"}
+                  </p>
+
+                  <p className="mt-1 text-[9px] leading-4 text-slate-500">
+                    {part.isUniversal
+                      ? "This part is marked as universal. Fixxer can still confirm fitment before processing your request."
+                      : "Share your appliance model or part details with Fixxer so compatibility can be verified before your request is processed."}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Price */}
+            <div className="mt-5">
+              {hasPrice ? (
+                <div className="flex flex-wrap items-end gap-2.5">
+                  <span className="text-3xl font-black tracking-tight text-slate-950">
+                    ₹
+                    {part.price!.toLocaleString(
+                      "en-IN",
+                    )}
                   </span>
-                  <span className="text-xl font-black text-primary">
-                    {discount}% OFF
+
+                  {hasMrp ? (
+                    <span className="mb-1 text-xs font-semibold text-slate-400 line-through">
+                      ₹
+                      {part.mrp!.toLocaleString(
+                        "en-IN",
+                      )}
+                    </span>
+                  ) : null}
+
+                  {discount > 0 ? (
+                    <span className="mb-1 rounded-md bg-primary/[0.07] px-2 py-1 text-[9px] font-black text-primary">
+                      Save {discount}%
+                    </span>
+                  ) : null}
+                </div>
+              ) : (
+                <p className="text-lg font-black text-slate-800">
+                  Price on request
+                </p>
+              )}
+
+              <p className="mt-1.5 text-[9px] leading-4 text-slate-400">
+                Final availability and pricing are confirmed
+                by Fixxer before the request is processed.
+              </p>
+            </div>
+
+            {/* Availability */}
+            <div className="mt-4 flex items-center gap-2">
+              {inStock ? (
+                <>
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+
+                  <span className="text-[10px] font-black text-emerald-700">
+                    Currently available
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Package className="h-4 w-4 text-slate-400" />
+
+                  <span className="text-[10px] font-black text-slate-600">
+                    Availability will be confirmed
                   </span>
                 </>
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mb-8">
-              <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-100">
-                <div className="flex items-center gap-2 text-zinc-400 mb-1">
-                  <ShieldCheck className="w-4 h-4" />
-                  <span className="text-[10px] font-black uppercase tracking-widest">
-                    Warranty
-                  </span>
-                </div>
-                <p className="text-sm font-black text-zinc-900">
-                  {part.warrantyMonths || 0} Months
-                </p>
+            {/* CTA */}
+            <Link
+              href={enquiryHref}
+              className="mt-5 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 text-xs font-black text-white shadow-lg shadow-primary/15 transition-all hover:bg-primary/90 hover:shadow-xl hover:shadow-primary/20 active:scale-[0.99]"
+            >
+              {inStock
+                ? "Request this part"
+                : "Request availability"}
+
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+
+            <p className="mt-2 text-center text-[9px] font-semibold text-slate-400">
+              No payment required · Compatibility can be checked
+            </p>
+          </div>
+
+          {/* Help card */}
+          <div className="mt-3 rounded-2xl bg-slate-950 p-5 text-white">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/10">
+                <Wrench className="h-4 w-4" />
               </div>
-              <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-100">
-                <div className="flex items-center gap-2 text-zinc-400 mb-1">
-                  <Hammer className="w-4 h-4" />
-                  <span className="text-[10px] font-black uppercase tracking-widest">
-                    Installation
-                  </span>
-                </div>
-                <p className="text-sm font-black text-zinc-900">
-                  {part.installationDifficulty?.type || "Standard"}
+
+              <div>
+                <h2 className="text-xs font-black">
+                  Not sure this is the right part?
+                </h2>
+
+                <p className="mt-1 text-[9px] leading-4 text-white/55">
+                  Send your appliance model or explain what
+                  you need. Fixxer can help confirm the correct
+                  part before you proceed.
                 </p>
+
+                <Link
+                  href="/spare-parts/help"
+                  className="mt-3 inline-flex items-center gap-1.5 text-[9px] font-black text-white transition-colors hover:text-primary"
+                >
+                  Get help identifying a part
+                  <ArrowRight className="h-3 w-3" />
+                </Link>
               </div>
-            </div>
-
-            <div className="space-y-6">
-              <section>
-                <h3 className="text-[11px] font-black uppercase text-zinc-400 tracking-[0.2em] mb-3">
-                  Compatible Models
-                </h3>
-                <div className="flex flex-col gap-2">
-                  {part.isUniversal ? (
-                    <div className="flex items-center gap-2 p-3 bg-teal-50 text-teal-700 rounded-xl">
-                      <CheckCircle2 className="w-4 h-4" />
-                      <p className="text-xs font-bold leading-tight">
-                        Universal fit for most {part.applianceTypeSlug} brands.
-                      </p>
-                    </div>
-                  ) : (
-                    part.compatibleModels?.map((m: any, i: number) => (
-                      <div
-                        key={i}
-                        className="flex items-center justify-between p-3 bg-zinc-50 rounded-xl border border-zinc-100"
-                      >
-                        <span className="text-xs font-black text-zinc-800">
-                          {m.displayName}
-                        </span>
-                        <span className="text-[10px] font-black text-zinc-400 uppercase">
-                          {m.modelNumber}
-                        </span>
-                      </div>
-                    ))
-                  )}
-                  {!part.isUniversal &&
-                    (!part.compatibleModels ||
-                      part.compatibleModels.length === 0) && (
-                      <div className="flex items-center gap-2 p-3 bg-zinc-50 text-zinc-500 rounded-xl italic">
-                        <Info className="w-4 h-4" />
-                        <p className="text-xs">
-                          Compatible with all {part.brandSlug}{" "}
-                          {part.applianceTypeSlug}s.
-                        </p>
-                      </div>
-                    )}
-                </div>
-              </section>
-
-              <section>
-                <h3 className="text-[11px] font-black uppercase text-zinc-400 tracking-[0.2em] mb-3">
-                  Description
-                </h3>
-                <p className="text-sm text-zinc-600 leading-relaxed font-medium">
-                  {part.description}
-                </p>
-              </section>
-            </div>
-
-            {/* Desktop CTAs */}
-            <div className="hidden md:flex gap-4 mt-12 pt-8 border-t border-zinc-100">
-              <Link
-                href={`/spare-parts/enquiry?part=${part._id}`}
-                className="flex-[2] h-14 bg-primary text-white font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20 hover:scale-[0.99] transition-all flex items-center justify-center gap-3"
-              >
-                <Mail className="w-5 h-5" />
-                Get Best Price
-              </Link>
-              <button className="flex-1 h-14 border-2 border-primary text-primary font-black uppercase tracking-widest rounded-2xl hover:bg-primary/5 transition-all flex items-center justify-center gap-3">
-                <Phone className="w-5 h-5" />
-                Call Now
-              </button>
             </div>
           </div>
-        </div>
-      </main>
-
-      {/* Mobile Sticky CTA Trio - IndiaMART Style */}
-      <div className="md:hidden fixed left-0 right-0 p-3 bg-white border-t border-zinc-100 grid grid-cols-3 gap-2.5 z-40 mobile-bottom-cta shadow-[0_-8px_30px_rgba(0,0,0,0.1)]">
-        <a 
-          href="tel:+919999999999"
-          className="min-w-0 h-12 border-2 border-primary text-primary font-black text-[10px] uppercase tracking-widest rounded-lg flex flex-col items-center justify-center leading-none gap-1 active:bg-primary/5 transition-all"
-        >
-          <Phone className="w-4 h-4" />
-          Call
-        </a>
-        <a 
-          href={`https://wa.me/919999999999?text=I'm%20interested%20in%20${encodeURIComponent(part.name)}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="min-w-0 h-12 bg-[#25D366] text-white font-black text-[10px] uppercase tracking-widest rounded-lg flex flex-col items-center justify-center leading-none gap-1 active:brightness-90 transition-all"
-        >
-          <MessageCircle className="w-4 h-4" />
-          WhatsApp
-        </a>
-        <Link 
-          href={`/spare-parts/enquiry?part=${part._id}`}
-          className="min-w-0 h-12 bg-primary text-white font-black text-[10px] uppercase tracking-widest rounded-lg flex flex-col items-center justify-center leading-none gap-1 shadow-lg shadow-primary/20 active:brightness-110 transition-all"
-        >
-          <Mail className="w-4 h-4" />
-          Enquire Now
-        </Link>
+        </section>
       </div>
+    </main>
+  );
+}
 
-      <Footer />
+function TrustItem({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-3">
+      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-50 text-primary">
+        {icon}
+      </span>
+
+      <p className="mt-2 text-[8px] font-black uppercase tracking-wide text-slate-400">
+        {label}
+      </p>
+
+      <p className="mt-0.5 truncate text-[9px] font-black text-slate-700">
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function InfoRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="min-w-0">
+      <p className="text-[8px] font-black uppercase tracking-wide text-slate-400">
+        {label}
+      </p>
+
+      <p className="mt-0.5 truncate text-[9px] font-black text-slate-700">
+        {value}
+      </p>
     </div>
   );
 }

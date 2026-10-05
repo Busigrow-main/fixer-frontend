@@ -1,44 +1,68 @@
 "use client";
 
 import Link from "next/link";
-import type { ACProduct } from "../types";
+import {
+  ArrowRight,
+  MessageCircle,
+  Phone,
+} from "lucide-react";
 
 interface ACDetailStickyBarProps {
-  product: ACProduct;
+  product: {
+    slug: string;
+    name?: string;
+  };
 }
 
-export function ACDetailStickyBar({ product }: ACDetailStickyBarProps) {
-  const waText = encodeURIComponent(
-    `Hi Fixxer! I'm interested in the ${product.name}. Please share more details.`,
+export default function ACDetailStickyBar({
+  product,
+}: ACDetailStickyBarProps) {
+  const enquiryHref = `/spare-parts/enquiry?product=${encodeURIComponent(
+    product.slug,
+  )}&type=appliance`;
+
+  const whatsappMessage = encodeURIComponent(
+    `Hi Fixxer, I am interested in ${product.name || "this AC"}. Please help me with availability, pricing and installation.`,
   );
 
   return (
-    <div className="md:hidden fixed left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] px-3 py-2.5 mobile-bottom-cta">
-      <div className="grid grid-cols-3 gap-2.5">
+    <div className="fixed inset-x-0 bottom-0 z-50 border-t border-slate-200 bg-white/95 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_30px_rgba(15,23,42,0.12)] backdrop-blur-xl md:hidden">
+      <div className="mx-auto flex max-w-lg items-center gap-2">
+        {/* Call */}
         <a
-          href="tel:+917004771388"
-          className="min-w-0 h-11 border-2 border-[#C8102E] text-[#C8102E] font-bold text-[10px] uppercase tracking-wide rounded-lg flex flex-col items-center justify-center gap-0.5 active:bg-[#FFF5F5]"
+          href="tel:+919999999999"
+          aria-label="Call Fixxer"
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition-colors active:bg-slate-50"
         >
-          <span className="material-symbols-outlined text-[18px]">call</span>
-          Call
+          <Phone className="h-4.5 w-4.5" />
         </a>
+
+        {/* WhatsApp */}
         <a
-          href={`https://wa.me/917004771388?text=${waText}`}
+          href={`https://wa.me/919999999999?text=${whatsappMessage}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="min-w-0 h-11 bg-[#25D366] text-white font-bold text-[10px] uppercase tracking-wide rounded-lg flex flex-col items-center justify-center gap-0.5 active:brightness-95"
+          aria-label="Chat with Fixxer on WhatsApp"
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-600 transition-colors active:bg-emerald-100"
         >
-          <span className="material-symbols-outlined text-[18px]">chat</span>
-          WhatsApp
+          <MessageCircle className="h-4.5 w-4.5" />
         </a>
+
+        {/* Primary enquiry */}
         <Link
-          href={`/spare-parts/enquiry?product=${product.slug}&type=appliance`}
-          className="min-w-0 h-11 bg-[#C8102E] text-white font-bold text-[10px] uppercase tracking-wide rounded-lg flex flex-col items-center justify-center gap-0.5 shadow-md shadow-[#C8102E]/20 active:brightness-110"
+          href={enquiryHref}
+          className="flex h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-[11px] font-black text-white shadow-lg shadow-primary/20 transition-all active:scale-[0.98] active:bg-primary/90"
         >
-          <span className="material-symbols-outlined text-[18px]">mail</span>
-          Enquire Now
+          <span className="truncate">
+            Enquire Now
+          </span>
+          <ArrowRight className="h-4 w-4 shrink-0" />
         </Link>
       </div>
+
+      <p className="mx-auto mt-1.5 max-w-lg text-center text-[8px] font-semibold text-slate-400">
+        No payment required · Fixxer will confirm availability
+      </p>
     </div>
   );
 }

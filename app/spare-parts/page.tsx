@@ -1,46 +1,81 @@
 import SparePartsClient from "@/app/components/spare-parts/SparePartsClient";
-import { Suspense } from "react";
 
-export default async function SparePartsPage() {
-  const apiUrl =
-    process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/v1";
+const API =
+  process.env.NEXT_PUBLIC_API_URL ||
+  "http://localhost:5000/api";
 
-  let initialCategories = [];
-
+async function getJson<T>(
+  path: string,
+  fallback: T,
+): Promise<T> {
   try {
-    // Fetch the pre-computed navigation tree
-    const res = await fetch(`${apiUrl}/spare-parts/categories`, {
-      cache: "no-store",
+    const response = await fetch(`${API}${path}`, {
+      headers: {
+        Accept: "application/json",
+      },
+      next: {
+        revalidate: 60,
+      },
     });
 
-    if (res.ok) {
-      initialCategories = await res.json();
+    if (!response.ok) {
+      return fallback;
     }
-  } catch (error) {
-    console.error("Failed to fetch spare parts navigation tree:", error);
+
+    return await response.json();
+  } catch {
+    return fallback;
+  }
+}
+
+async function getCategories() {
+  const response = await getJson<any>(
+    "/spare-parts/categories",
+    [],
+  );
+
+  if (Array.isArray(response)) {
+    return response;
   }
 
   return (
-    <Suspense fallback={<SparePartsLoadingFallback />}>
-      <SparePartsClient initialCategories={initialCategories} apiUrl={apiUrl} />
-    </Suspense>
+    response?.data ||
+    response?.categories ||
+    response?.categoryTree ||
+    []
   );
 }
 
-function SparePartsLoadingFallback() {
+async function getPopularParts() {
+  const response = await getJson<any>(
+    "/spare-parts?isActive=true&isFeatured=true&limit=8",
+    { data: [] },
+  );
+
+  if (Array.isArray(response)) {
+    return response;
+  }
+
   return (
-    <div className="flex flex-col min-h-screen bg-white">
-      <div className="h-20 bg-zinc-100 animate-pulse" />
-      <div className="flex-1 p-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div
-              key={i}
-              className="h-48 bg-zinc-100 rounded-3xl animate-pulse"
-            />
-          ))}
-        </div>
-      </div>
-    </div>
+    response?.data ||
+    response?.parts ||
+    response?.products ||
+    []
+  );
+}
+
+export default async function SparePartsPage() {
+  const [categories, popularParts] =
+    await Promise.all([
+      getCategories(),
+      getPopularParts(),
+    ]);
+
+  return (
+    <SparePartsClient
+      initialCategories={categories}
+      initialPopularParts={popularParts}
+      apiUrl={API}
+    />
   );
 }

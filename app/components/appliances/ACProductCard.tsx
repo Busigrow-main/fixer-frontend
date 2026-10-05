@@ -2,6 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import {
+  ArrowRight,
+  CheckCircle2,
+  ShieldCheck,
+  Star,
+  Wrench,
+} from "lucide-react";
 
 interface ACProduct {
   id: string;
@@ -26,140 +33,224 @@ interface ACProductCardProps {
   product: ACProduct;
 }
 
-export function ACProductCard({ product }: ACProductCardProps) {
-  const discountPercent = product.originalPrice
+export function ACProductCard({
+  product,
+}: ACProductCardProps) {
+  const hasOriginalPrice =
+    typeof product.originalPrice === "number" &&
+    product.originalPrice > product.price;
+
+  const discountPercent = hasOriginalPrice
     ? Math.round(
-        ((product.originalPrice - product.price) / product.originalPrice) * 100,
+        ((product.originalPrice! - product.price) /
+          product.originalPrice!) *
+          100,
       )
     : 0;
 
+  const detailHref = `/spare-parts/appliances/ac/${encodeURIComponent(
+    product.slug,
+  )}`;
+
+  const enquiryHref = `/spare-parts/enquiry?product=${encodeURIComponent(
+    product.slug,
+  )}&type=appliance`;
+
   return (
-    <Link href={`/spare-parts/appliances/ac/${product.slug}`}>
-      <div className="group h-full rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 overflow-hidden cursor-pointer flex flex-col">
-        {/* Image Section */}
-        <div className="relative h-48 bg-gray-100 overflow-hidden flex-shrink-0">
-          {product.images && product.images.length > 0 ? (
+    <article className="group flex h-full min-w-0 flex-col overflow-hidden rounded-[22px] border border-slate-200 bg-white transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-xl hover:shadow-slate-200/60">
+      {/* Image */}
+      <Link
+        href={detailHref}
+        aria-label={`View ${product.name}`}
+        className="block"
+      >
+        <div className="relative aspect-[4/3] overflow-hidden bg-slate-50">
+          {product.images?.length > 0 ? (
             <Image
               src={product.images[0]}
               alt={product.name}
               fill
-              className="object-contain p-4 group-hover:scale-110 transition-transform duration-300"
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              unoptimized
+              className="object-contain p-5 transition-transform duration-500 group-hover:scale-[1.04] sm:p-7"
+              sizes="(max-width: 767px) 50vw, (max-width: 1023px) 50vw, 33vw"
             />
           ) : (
-            <div className="flex items-center justify-center h-full bg-gray-200">
-              <span className="material-symbols-outlined text-gray-400 text-4xl">
-                image_not_supported
-              </span>
+            <div className="flex h-full items-center justify-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-300">
+                <Wrench className="h-6 w-6" />
+              </div>
             </div>
           )}
 
-          {/* Status Badges */}
-          <div className="absolute top-3 right-3 flex flex-col gap-2">
-            {product.inStock && (
-              <span className="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded whitespace-nowrap">
-                In Stock
-              </span>
-            )}
-            {!product.inStock && (
-              <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded whitespace-nowrap">
-                Out of Stock
-              </span>
-            )}
-          </div>
-
-          {/* Discount Badge */}
-          {discountPercent > 0 && (
-            <div className="absolute bottom-3 right-3 bg-[#C8102E] text-white text-xs font-bold px-2 py-1 rounded">
-              {discountPercent}% OFF
-            </div>
-          )}
-
-          {/* Brand Badge */}
-          <div className="absolute top-3 left-3">
-            <span className="bg-black bg-opacity-50 text-white text-xs font-semibold px-2 py-1 rounded">
+          {/* Top badges */}
+          <div className="absolute left-3 top-3 flex max-w-[calc(100%-24px)] flex-wrap gap-1.5">
+            <span className="rounded-lg bg-slate-950/90 px-2 py-1 text-[9px] font-black uppercase tracking-wide text-white">
               {product.brand}
             </span>
-          </div>
-        </div>
 
-        {/* Content Section */}
-        <div className="p-4 flex flex-col flex-grow">
-          {/* Model Number */}
-          <div className="text-xs text-gray-500 font-medium mb-2">
-            {product.modelNumber}
-          </div>
-
-          {/* Product Name */}
-          <h3 className="font-bold text-sm text-gray-900 line-clamp-2 mb-2">
-            {product.name}
-          </h3>
-
-          {/* Short Description */}
-          {product.shortDescription && (
-            <p className="text-xs text-gray-600 line-clamp-1 mb-3">
-              {product.shortDescription}
-            </p>
-          )}
-
-          {/* Specs Chips */}
-          <div className="flex flex-wrap gap-1 mb-3">
-            <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded font-medium">
-              {product.capacityTon}T
-            </span>
-            <span className="inline-flex items-center gap-0.5 text-xs bg-amber-50 text-amber-700 px-2 py-1 rounded font-medium">
-              <span className="material-symbols-outlined text-xs icon-filled">star</span>
-              {product.starRating}
-            </span>
-            <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded font-medium capitalize">
-              {product.acType}
-            </span>
-            {product.isInverter && (
-              <span className="text-xs bg-primary-container text-on-primary-container px-2 py-1 rounded font-medium">
+            {product.isInverter ? (
+              <span className="rounded-lg bg-white/95 px-2 py-1 text-[9px] font-black text-slate-800 shadow-sm">
                 Inverter
               </span>
-            )}
+            ) : null}
           </div>
 
-          {/* Trust Badges */}
-          <div className="flex gap-2 mb-3 pb-3 border-b border-gray-200 flex-wrap">
-            {product.installationIncluded && (
-              <div className="flex items-center gap-1 text-xs text-[#C8102E] font-medium">
-                <span className="material-symbols-outlined text-sm">
-                  verified
-                </span>
-                Install
-              </div>
-            )}
-            <div className="flex items-center gap-1 text-xs text-[#D48F0E] font-medium">
-              <span className="material-symbols-outlined text-sm">shield</span>
-              {product.warrantyYears}Y
-            </div>
-          </div>
-
-          {/* Price Section */}
-          <div className="mb-4 flex-grow">
-            <div className="flex items-baseline gap-2">
-              <span className="text-lg font-bold text-gray-900">
-                ₹{product.price.toLocaleString("en-IN")}
+          {/* Availability */}
+          <div className="absolute right-3 top-3">
+            {product.inStock ? (
+              <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2 py-1 text-[9px] font-black text-white shadow-sm">
+                <CheckCircle2 className="h-3 w-3" />
+                In stock
               </span>
-              {product.originalPrice && (
-                <span className="text-xs text-gray-500 line-through">
-                  ₹{product.originalPrice.toLocaleString("en-IN")}
-                </span>
-              )}
-            </div>
+            ) : (
+              <span className="rounded-lg bg-slate-900/90 px-2 py-1 text-[9px] font-black text-white">
+                Check availability
+              </span>
+            )}
           </div>
 
-          {/* CTA Button */}
-          <button className="w-full bg-[#C8102E] hover:bg-[#A00826] text-white font-semibold py-2 rounded transition-colors duration-200 flex items-center justify-center gap-2">
-            View Details
-            <span className="material-symbols-outlined text-sm">
-              arrow_forward
+          {/* Discount */}
+          {discountPercent > 0 ? (
+            <span className="absolute bottom-3 left-3 rounded-lg bg-primary px-2 py-1 text-[9px] font-black text-white shadow-sm">
+              {discountPercent}% OFF
             </span>
-          </button>
+          ) : null}
+        </div>
+      </Link>
+
+      {/* Content */}
+      <div className="flex flex-1 flex-col p-3.5 sm:p-4">
+        {/* Model */}
+        <p className="truncate text-[9px] font-black uppercase tracking-[0.12em] text-slate-400">
+          {product.modelNumber}
+        </p>
+
+        {/* Name */}
+        <Link
+          href={detailHref}
+          className="mt-1.5 block"
+        >
+          <h3 className="line-clamp-2 text-sm font-black leading-5 tracking-[-0.015em] text-slate-950 transition-colors group-hover:text-primary sm:text-[15px]">
+            {product.name}
+          </h3>
+        </Link>
+
+        {/* Description */}
+        {product.shortDescription ? (
+          <p className="mt-1.5 line-clamp-2 text-[10px] leading-4 text-slate-500 sm:text-xs">
+            {product.shortDescription}
+          </p>
+        ) : null}
+
+        {/* Specs */}
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          <SpecChip>
+            {product.capacityTon}T
+          </SpecChip>
+
+          <SpecChip icon={<Star />}>
+            {product.starRating}
+          </SpecChip>
+
+          <SpecChip>
+            {formatAcType(product.acType)}
+          </SpecChip>
+        </div>
+
+        {/* Service information */}
+        <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1.5 border-t border-slate-100 pt-3">
+          {product.installationIncluded ? (
+            <div className="inline-flex items-center gap-1 text-[9px] font-bold text-primary sm:text-[10px]">
+              <Wrench className="h-3.5 w-3.5" />
+              Installation included
+            </div>
+          ) : null}
+
+          <div className="inline-flex items-center gap-1 text-[9px] font-bold text-slate-500 sm:text-[10px]">
+            <ShieldCheck className="h-3.5 w-3.5" />
+            {product.warrantyYears}Y warranty
+          </div>
+        </div>
+
+        {/* Price */}
+        <div className="mt-4">
+          <div className="flex flex-wrap items-baseline gap-2">
+            <span className="text-lg font-black tracking-tight text-slate-950 sm:text-xl">
+              ₹{Number(product.price || 0).toLocaleString("en-IN")}
+            </span>
+
+            {hasOriginalPrice ? (
+              <span className="text-[10px] font-semibold text-slate-400 line-through sm:text-xs">
+                ₹
+                {product.originalPrice!.toLocaleString(
+                  "en-IN",
+                )}
+              </span>
+            ) : null}
+          </div>
+
+          <p className="mt-0.5 text-[9px] font-semibold text-slate-400">
+            Final availability and installation details confirmed by Fixxer.
+          </p>
+        </div>
+
+        {/* Actions */}
+        <div className="mt-auto pt-4">
+          <div className="grid grid-cols-[1fr_auto] gap-2">
+            <Link
+              href={enquiryHref}
+              className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-primary px-3 text-[10px] font-black text-white transition-all hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/15 sm:text-xs"
+            >
+              Enquire now
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+
+            <Link
+              href={detailHref}
+              aria-label={`View details for ${product.name}`}
+              className="inline-flex min-h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition-colors hover:border-primary/30 hover:text-primary"
+            >
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          <p className="mt-2 text-center text-[8px] font-semibold text-slate-400 sm:text-[9px]">
+            No payment required to send an enquiry
+          </p>
         </div>
       </div>
-    </Link>
+    </article>
   );
+}
+
+function SpecChip({
+  children,
+  icon,
+}: {
+  children: React.ReactNode;
+  icon?: React.ReactNode;
+}) {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-1.5 text-[9px] font-black text-slate-600 sm:text-[10px]">
+      {icon ? (
+        <span className="text-amber-500">
+          {icon}
+        </span>
+      ) : null}
+
+      {children}
+    </span>
+  );
+}
+
+function formatAcType(value: string) {
+  if (!value) {
+    return "AC";
+  }
+
+  return value
+    .replace(/[-_]/g, " ")
+    .replace(/\b\w/g, (letter) =>
+      letter.toUpperCase(),
+    );
 }
