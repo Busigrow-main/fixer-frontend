@@ -361,7 +361,7 @@ export function openJobSheet(booking: any) {
         <td style="border:none; padding:0; line-height: 1.4;">
           <strong>Authorised Service Provider : FIXXER SERVICE PLATFORM</strong><br>
           <span style="color:#555;">Contact Center Number :</span> 1800-FIXX-NOW | Mobile Number Select 1 for Appliances Division<br>
-          <span style="color:#555;">Website :</span> www.fixer.in | <span style="color:#555;">Fixxer Services Email ID :</span> support@fixer.in | <span style="color:#555;">WhatsApp :</span> +91 99999 99999<br>
+          <span style="color:#555;">Website :</span> www.fixxer.in | <span style="color:#555;">Fixxer Services Email ID :</span> support@fixxer.in | <span style="color:#555;">WhatsApp :</span> +91 99999 99999<br>
           <div style="margin-top:2px; font-style: italic; color:#777;">Note: This is a record rendered and is for usage by Authorised service provider only.</div>
         </td>
       </tr>
@@ -562,7 +562,7 @@ export function openRetailInvoice(booking: any) {
   <div class="footer">
     <p>&copy; 2026 Fixxer - Precision Home Services. All rights reserved.</p>
     <p style="font-weight: 600;">This is a computer generated tax invoice and does not require a physical signature.</p>
-    <p>www.fixer.in | Support: support@fixer.in | Toll Free: 1800-FIXXER</p>
+    <p>www.fixxer.in | Support: support@fixxer.in | Toll Free: 1800-FIXXER</p>
   </div>
 </body>
 </html>`;
@@ -595,5 +595,4 @@ export function openRetailInvoice(booking: any) {
     }, 1000);
   };
 }
-
 

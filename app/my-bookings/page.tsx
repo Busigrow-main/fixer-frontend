@@ -365,7 +365,7 @@ function MyBookingsContent() {
     help: {
       icon: "support_agent",
       title: "No part-help requests found",
-      body: "Not sure which part you need? Ask a Fixer expert to identify it for you.",
+      body: "Not sure which part you need? Ask a Fixxer expert to identify it for you.",
       href: "/spare-parts/help",
       cta: "Ask an Expert",
     },
@@ -595,7 +595,7 @@ function MyBookingsContent() {
                     </div>
                     {request.adminResponse && (
                       <div className="mt-5 rounded-2xl bg-primary/[0.05] p-4">
-                        <p className="text-xs font-black uppercase tracking-wider text-primary">Fixer&apos;s response</p>
+                        <p className="text-xs font-black uppercase tracking-wider text-primary">Fixxer&apos;s response</p>
                         <p className="mt-2 text-sm text-on-surface">{request.adminResponse}</p>
                         {request.quotedPrice != null && (
                           <p className="mt-2 text-xl font-black text-on-surface">
