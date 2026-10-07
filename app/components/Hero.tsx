@@ -12,8 +12,8 @@ const TRUST_ITEMS = [
   },
   {
     icon: "schedule",
-    value: "30-Min",
-    label: "Avg. arrival",
+    value: "Same-Day",
+    label: "Arrival",
   },
   {
     icon: "groups",
@@ -345,10 +345,11 @@ export default function Hero() {
                     group
                     flex
                     min-w-0
+                    flex-col
                     items-center
-                    justify-center
-                    gap-2
-                    px-2
+                    justify-start
+                    gap-1.5
+                    px-1
                     py-1
                     transition-colors
                     hover:text-primary
@@ -393,11 +394,12 @@ export default function Hero() {
                     <span
                       className="
                         block
-                        text-[11px]
+                        text-center
+                        text-[10px]
                         font-extrabold
                         leading-none
                         text-on-surface
-                        sm:text-xs
+                        sm:text-[11px]
                       "
                     >
                       {value}
@@ -405,9 +407,9 @@ export default function Hero() {
 
                     <span
                       className="
-                        mt-1
                         block
-                        truncate
+                        whitespace-nowrap
+                        text-center
                         text-[8px]
                         leading-none
                         text-on-surface-variant

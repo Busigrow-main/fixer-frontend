@@ -12,24 +12,15 @@ export default function BookingModal() {
 
   useEffect(() => {
     if (!pathname) return;
-
-    if (pathname === "/login" || pathname === "/register") {
-      closeBooking();
-    }
+    if (pathname === "/login" || pathname === "/register") closeBooking();
   }, [pathname, closeBooking]);
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        closeBooking();
-      }
+      if (e.key === "Escape") closeBooking();
     };
-
     window.addEventListener("keydown", handleEsc);
-
-    return () => {
-      window.removeEventListener("keydown", handleEsc);
-    };
+    return () => window.removeEventListener("keydown", handleEsc);
   }, [closeBooking]);
 
   useEffect(() => {
@@ -38,179 +29,96 @@ export default function BookingModal() {
       setMounted(true);
     } else {
       document.body.style.overflow = "unset";
-
-      const timer = setTimeout(() => {
-        setMounted(false);
-      }, 300);
-
+      const timer = setTimeout(() => setMounted(false), 300);
       return () => clearTimeout(timer);
     }
-
     return () => {
       document.body.style.overflow = "unset";
     };
   }, [isOpen]);
 
-  if (!mounted && !isOpen) {
-    return null;
-  }
-
-  const modalClassName = [
-    "relative",
-    "w-[calc(100%-24px)]",
-    "max-w-[560px]",
-    "max-h-[calc(100dvh-32px)]",
-    "sm:max-h-[calc(100svh-48px)]",
-    "bg-white",
-    "rounded-[1.5rem]",
-    "sm:rounded-[1.75rem]",
-    "border",
-    "border-black/[0.06]",
-    "shadow-[0_24px_80px_rgba(0,0,0,0.22)]",
-    "overflow-hidden",
-    "transition-all",
-    "duration-300",
-    "ease-out",
-    "flex",
-    "flex-col",
-    "min-h-0",
-    "transform",
-    isOpen
-      ? "translate-y-0 scale-100 opacity-100"
-      : "translate-y-4 scale-[0.98] opacity-0",
-  ].join(" ");
-
-  const overlayClassName = [
-    "fixed",
-    "inset-0",
-    "z-[100]",
-    "flex",
-    "items-center",
-    "justify-center",
-    "p-3",
-    "sm:p-6",
-    "transition-all",
-    "duration-300",
-    isOpen ? "opacity-100" : "opacity-0 pointer-events-none",
-  ].join(" ");
-
-  const backdropClassName = [
-    "absolute",
-    "inset-0",
-    "bg-zinc-950/55",
-    "backdrop-blur-[5px]",
-    "transition-opacity",
-    "duration-300",
-    isOpen ? "opacity-100" : "opacity-0",
-  ].join(" ");
+  if (!mounted && !isOpen) return null;
 
   return (
-    <div className={overlayClassName}>
+    <div
+      className={`fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 transition-opacity duration-300 ${
+        isOpen ? "opacity-100" : "pointer-events-none opacity-0"
+      }`}
+    >
+      {/* Backdrop */}
       <div
-        className={backdropClassName}
+        className="absolute inset-0 bg-zinc-950/60 backdrop-blur-[5px]"
         onClick={closeBooking}
         aria-hidden="true"
       />
 
+      {/* Floating card: never full-bleed on any screen size */}
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Book your repair service"
-        className={modalClassName}
+        aria-label="Book a repair"
+        className={`relative flex min-h-0 w-full max-w-[460px] flex-col overflow-hidden rounded-[28px] bg-white
+          max-h-[min(720px,calc(100dvh-32px))]
+          shadow-[0_2px_6px_rgba(0,0,0,0.06),0_40px_100px_-16px_rgba(0,0,0,0.45)]
+          transition-all duration-300 ease-out ${
+            isOpen
+              ? "translate-y-0 scale-100 opacity-100"
+              : "translate-y-5 scale-[0.96] opacity-0"
+          }`}
       >
-        <div className="relative shrink-0 border-b border-black/[0.06] bg-white">
-          <div className="px-5 sm:px-7 pt-5 sm:pt-6 pb-4 sm:pb-5">
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <div className="inline-flex items-center gap-1.5 bg-primary/10 text-primary px-2.5 py-1 rounded-full mb-2.5">
-                  <span className="material-symbols-outlined text-[14px] icon-filled">
-                    verified
-                  </span>
-                  <span className="text-[9px] font-black uppercase tracking-[0.12em]">
-                    Priority Dispatch
-                  </span>
-                </div>
-
-                <h2 className="font-headline text-[1.55rem] sm:text-2xl leading-tight text-on-surface tracking-tight">
-                  Book your <span className="italic text-primary">Master</span> Repair
-                </h2>
-
-                <p className="text-on-surface-variant text-[11px] sm:text-xs mt-1.5 leading-relaxed max-w-[390px] opacity-80">
-                  Professional dispatch to your neighborhood.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={closeBooking}
-                aria-label="Close booking form"
-                className="shrink-0 w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full border border-black/[0.06] bg-zinc-50 text-on-surface-variant hover:bg-zinc-100 hover:text-on-surface active:scale-95 transition-all"
-              >
-                <span className="material-symbols-outlined text-[20px]">
-                  close
+        {/* Header */}
+        <header className="relative flex shrink-0 items-center justify-between gap-3 bg-gradient-to-b from-primary/[0.08] to-white px-5 pb-3 pt-4 sm:px-6 sm:pt-5">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] bg-primary text-white shadow-[0_8px_18px_-6px_rgba(200,16,46,0.65)]">
+              <span className="material-symbols-outlined icon-filled text-[21px]">home_repair_service</span>
+            </span>
+            <div className="min-w-0 leading-tight">
+              <h2 className="font-headline text-[18px] tracking-tight text-zinc-900">Book a repair</h2>
+              <p className="mt-0.5 flex items-center gap-1.5 text-[12px] text-zinc-500">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-70" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
                 </span>
-              </button>
+                Technicians online · assigned right away
+              </p>
             </div>
           </div>
-        </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain custom-scrollbar">
-          <div className="px-4 sm:px-7 pt-4 sm:pt-5 pb-5 sm:pb-7">
-            <BookingForm
-              initialServiceSlug={selectedService}
-              onSuccess={closeBooking}
-            />
-          </div>
+          <button
+            type="button"
+            onClick={closeBooking}
+            aria-label="Close booking form"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/80 text-zinc-600 ring-1 ring-zinc-200/80 transition hover:bg-white hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 active:scale-95"
+          >
+            <span className="material-symbols-outlined text-[19px]">close</span>
+          </button>
+        </header>
+
+        {/* Scrollable body: the form has its own sticky stepper and action bar */}
+        <div className="booking-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          <BookingForm initialServiceSlug={selectedService} onSuccess={closeBooking} />
         </div>
       </div>
 
       <style jsx>{`
-        .custom-scrollbar {
+        .booking-scroll {
           scrollbar-width: thin;
-          scrollbar-color: #d4d4d4 transparent;
+          scrollbar-color: #e4e4e7 transparent;
           -webkit-overflow-scrolling: touch;
         }
-
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 5px;
+        .booking-scroll::-webkit-scrollbar {
+          width: 4px;
         }
-
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #d4d4d4;
+        .booking-scroll::-webkit-scrollbar-thumb {
+          background: #e4e4e7;
           border-radius: 999px;
         }
-
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #a3a3a3;
-        }
-
         @media (max-width: 639px) {
-          .custom-scrollbar {
+          .booking-scroll {
             scrollbar-width: none;
           }
-
-          .custom-scrollbar::-webkit-scrollbar {
+          .booking-scroll::-webkit-scrollbar {
             display: none;
-          }
-        }
-
-        @media (max-height: 700px) and (max-width: 639px) {
-          .custom-scrollbar {
-            scrollbar-width: thin;
-          }
-
-          .custom-scrollbar::-webkit-scrollbar {
-            display: block;
-            width: 4px;
-          }
-
-          .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #d4d4d4;
-            border-radius: 999px;
           }
         }
       `}</style>
