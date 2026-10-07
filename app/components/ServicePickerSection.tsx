@@ -44,11 +44,11 @@ export default function ServicePickerSection() {
     <section
       id="service-picker"
       aria-labelledby="service-picker-heading"
-      className="overflow-hidden bg-white py-8 sm:py-10 md:py-16 lg:py-20"
+      className="overflow-hidden bg-white py-12 md:py-20"
     >
-      <div className="mx-auto w-full max-w-7xl px-3 sm:px-6 md:px-8 lg:px-10 xl:px-12">
+      <div className="mx-auto w-full max-w-screen-2xl px-5 sm:px-6 md:px-10 xl:px-12">
         {/* Header */}
-        <div className="mb-6 sm:mb-8 md:mb-10 lg:mb-12">
+        <div className="mb-8 md:mb-12">
           <div className="flex items-end justify-between gap-4">
             <div className="min-w-0">
               <p className="mb-2 text-[8px] font-black uppercase tracking-[0.22em] text-primary sm:text-[10px] md:text-xs">

@@ -193,7 +193,7 @@ export default function DifferenceSection() {
   }, []);
 
   return (
-    <section className="relative overflow-hidden bg-[#F7F5F0] py-14 sm:py-16 md:py-20 lg:py-24">
+    <section className="relative overflow-hidden bg-[#F7F5F0] py-12 md:py-20">
       {/* Ambient background */}
       <div
         aria-hidden="true"
@@ -205,7 +205,7 @@ export default function DifferenceSection() {
         className="pointer-events-none absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-secondary/[0.035] blur-[110px]"
       />
 
-      <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 md:px-8 lg:px-10">
+      <div className="relative z-10 mx-auto w-full max-w-screen-2xl px-5 sm:px-6 md:px-10 xl:px-12">
         {/* Header */}
         <div className="mb-8 sm:mb-11 md:mb-14">
           <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">

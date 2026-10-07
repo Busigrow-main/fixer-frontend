@@ -46,7 +46,7 @@ export default function HomeShopSection() {
       <div className="pointer-events-none absolute -right-24 top-0 h-72 w-72 rounded-full bg-primary/10 blur-[100px]" />
       <div className="pointer-events-none absolute -left-16 bottom-0 h-56 w-56 rounded-full bg-secondary-container/40 blur-[80px]" />
 
-      <div className="relative z-10 container mx-auto max-w-screen-2xl px-6 md:px-10">
+      <div className="relative z-10 container mx-auto max-w-screen-2xl px-5 sm:px-6 md:px-10 xl:px-12">
         {/* Header */}
         <div className="mx-auto mb-10 max-w-3xl text-center md:mb-14">
           <p className="mb-3 font-label text-[10px] font-black uppercase tracking-[0.28em] text-primary md:text-xs">

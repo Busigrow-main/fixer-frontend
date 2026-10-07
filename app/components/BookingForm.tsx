@@ -14,16 +14,144 @@ interface BookingFormProps {
   className?: string;
 }
 
-export default function BookingForm({
-  initialServiceSlug,
-  onSuccess,
+const STEPS = ["Repair", "Visit", "Details"];
+
+const SLOTS = [
+  { value: "", label: "Any time", hint: "First available", icon: "schedule" },
+  { value: "MORNING", label: "Morning", hint: "8am – 12pm", icon: "wb_twilight" },
+  { value: "AFTERNOON", label: "Afternoon", hint: "12pm – 4pm", icon: "light_mode" },
+  { value: "EVENING", label: "Evening", hint: "4pm – 8pm", icon: "bedtime" },
+];
+
+const NEXT_STEPS = [
+  { icon: "notifications_active", title: "Technician assigned right away", text: "Nearby pros are notified the moment you book." },
+  { icon: "call", title: "They call you to confirm", text: "Your technician contacts you before the visit." },
+  { icon: "verified_user", title: "Repair + 60-day warranty", text: "Warranty starts when the job is done." },
+];
+
+const BRAND_PREVIEW = 8;
+
+const iconFor = (name = "") => {
+  const n = name.toLowerCase();
+  if (/wash|laundry/.test(n)) return "local_laundry_service";
+  if (/fridge|refrig/.test(n)) return "kitchen";
+  if (/\bac\b|air con|cooler/.test(n)) return "ac_unit";
+  if (/tv|television/.test(n)) return "tv";
+  if (/micro|oven/.test(n)) return "microwave";
+  if (/water|ro\b|purif/.test(n)) return "water_drop";
+  if (/geyser|heater/.test(n)) return "water_heater";
+  if (/fan/.test(n)) return "mode_fan";
+  if (/chimney|hob|stove/.test(n)) return "oven_gen";
+  return "home_repair_service";
+};
+
+const inputCls =
+  "h-[52px] w-full rounded-2xl border border-zinc-200 bg-zinc-50/70 pl-11 pr-10 text-base sm:text-[15px] text-zinc-900 " +
+  "placeholder:text-zinc-400 transition hover:border-zinc-300 focus:border-primary focus:bg-white focus:outline-none " +
+  "focus:ring-4 focus:ring-primary/10";
+
+const toISO = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+const fromISO = (s: string) => {
+  const [y, m, d] = s.split("-").map(Number);
+  return new Date(y, m - 1, d);
+};
+
+/* ---------- building blocks ---------- */
+
+function Label({ children, optional }: { children: React.ReactNode; optional?: boolean }) {
+  return (
+    <p className="mb-2 flex items-baseline gap-1.5 text-[13px] font-semibold text-zinc-800">
+      {children}
+      {optional && <span className="text-xs font-normal text-zinc-400">optional</span>}
+    </p>
+  );
+}
+
+function Tick() {
+  return (
+    <span className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-white animate-in zoom-in duration-200">
+      <span className="material-symbols-outlined text-[14px]">check</span>
+    </span>
+  );
+}
+
+function Choice({
+  active,
+  onClick,
+  children,
   className = "",
-}: BookingFormProps) {
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={onClick}
+      className={`relative rounded-2xl border text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 active:scale-[0.985] ${
+        active
+          ? "border-primary bg-primary/[0.05] shadow-[0_0_0_1px_var(--primary,#C8102E),0_8px_20px_-10px_rgba(200,16,46,0.5)]"
+          : "border-zinc-200 bg-white hover:-translate-y-px hover:border-zinc-300 hover:shadow-[0_6px_16px_-10px_rgba(0,0,0,0.25)]"
+      } ${className}`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function Radio({ active }: { active: boolean }) {
+  return (
+    <span
+      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition ${
+        active ? "border-primary bg-primary" : "border-zinc-300 bg-white"
+      }`}
+    >
+      {active && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+    </span>
+  );
+}
+
+function IconInput({ icon, valid, children }: { icon: string; valid?: boolean; children: React.ReactNode }) {
+  return (
+    <div className="relative">
+      <span className="material-symbols-outlined pointer-events-none absolute left-3.5 top-[15px] text-[21px] text-zinc-400">
+        {icon}
+      </span>
+      {children}
+      {valid && (
+        <span className="material-symbols-outlined icon-filled pointer-events-none absolute right-3.5 top-[15px] text-[20px] text-emerald-500 animate-in zoom-in duration-200">
+          check_circle
+        </span>
+      )}
+    </div>
+  );
+}
+
+function StepTitle({ title, sub }: { title: string; sub: string }) {
+  return (
+    <div>
+      <h3 className="font-headline text-[1.7rem] leading-[1.08] tracking-tight text-zinc-900">{title}</h3>
+      <p className="mt-2 max-w-[34ch] text-[13.5px] leading-snug text-zinc-500">{sub}</p>
+    </div>
+  );
+}
+
+/* ---------- main ---------- */
+
+export default function BookingForm({ initialServiceSlug, onSuccess, className = "" }: BookingFormProps) {
   const { user, token, continueWithPhone } = useAuth();
   const router = useRouter();
   const { resumeDraft, clearResumeDraft } = useBooking();
 
   const [services, setServices] = useState<any[]>([]);
+  const [step, setStep] = useState(0);
+  const [pickingDate, setPickingDate] = useState(false);
+  const [showAllBrands, setShowAllBrands] = useState(false);
 
   const [formData, setFormData] = useState({
     serviceId: "",
@@ -43,224 +171,173 @@ export default function BookingForm({
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState("");
   const errorRef = useRef<HTMLDivElement>(null);
+  const topRef = useRef<HTMLDivElement>(null);
 
-  // Today's local date, used to prevent selecting a past visit date.
-  const today = new Date();
+  const now = new Date();
+  const minVisitDate = toISO(now);
+  const quickDays = [0, 1, 2].map((i) => {
+    const d = new Date(now);
+    d.setDate(now.getDate() + i);
+    return {
+      iso: toISO(d),
+      top: i === 0 ? "Today" : i === 1 ? "Tomorrow" : d.toLocaleDateString("en-IN", { weekday: "short" }),
+      num: d.getDate(),
+      month: d.toLocaleDateString("en-IN", { month: "short" }),
+    };
+  });
 
-  const minVisitDate = `${today.getFullYear()}-${String(
-    today.getMonth() + 1,
-  ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  const set = (patch: Partial<typeof formData>) => setFormData((p) => ({ ...p, ...patch }));
 
-  // Fetch services on mount
+  /* ---------- data + draft ---------- */
   useEffect(() => {
     const fetchServices = async () => {
       try {
         const res = await fetch(`${API_URL}/services`);
-
         if (res.ok) {
           const data = await res.json();
-
           setServices(data);
-
-          // Handle initial service slug if provided.
-          // This is used when the user clicks "Book Now"
-          // from a specific service card.
           if (initialServiceSlug) {
-            const matched = data.find(
-              (s: any) => s.slug === initialServiceSlug,
-            );
-
-            if (matched) {
-              setFormData((prev) => ({
-                ...prev,
-                serviceId: matched._id,
-                subCategoryId: "",
-              }));
-            }
+            const matched = data.find((s: any) => s.slug === initialServiceSlug);
+            if (matched) setFormData((p) => ({ ...p, serviceId: matched._id, subCategoryId: "" }));
           }
         }
       } catch (err) {
         console.error("Failed to load services:", err);
       }
     };
-
     fetchServices();
   }, [initialServiceSlug]);
 
-  // Sync user info if it loads later
   useEffect(() => {
     if (user) {
-      setFormData((prev) => ({
-        ...prev,
-        name: prev.name || user.fullName || "",
-        phone: prev.phone || user.phone || "",
+      setFormData((p) => ({
+        ...p,
+        name: p.name || user.fullName || "",
+        phone: p.phone || user.phone || "",
       }));
     }
   }, [user]);
 
-  // Apply one-shot resume from pending booking
   useEffect(() => {
     if (!resumeDraft || services.length === 0) return;
+    const initialService = initialServiceSlug ? services.find((s) => s.slug === initialServiceSlug) : null;
+    const resolvedServiceId = initialService ? initialService._id : resumeDraft.serviceId;
+    const restoreSub = !initialService || resumeDraft.serviceId === initialService._id;
 
-    const initialService = initialServiceSlug
-      ? services.find((s) => s.slug === initialServiceSlug)
-      : null;
-
-    /*
-     * If this form was opened from a specific service card,
-     * that service must always take priority over a resumed draft.
-     *
-     * This prevents a previous booking draft from changing
-     * "Washing Machine Repair" into another category, for example.
-     */
-    const resolvedServiceId = initialService
-      ? initialService._id
-      : resumeDraft.serviceId;
-
-    /*
-     * Only restore the draft subcategory when it belongs to
-     * the same service. If the user opened a different service
-     * card, start the subcategory selection fresh.
-     */
-    const shouldRestoreSubCategory =
-      !initialService ||
-      resumeDraft.serviceId === initialService._id;
-
-    setFormData((prev) => ({
-      ...prev,
+    setFormData((p) => ({
+      ...p,
       serviceId: resolvedServiceId,
-      subCategoryId: shouldRestoreSubCategory
-        ? resumeDraft.subCategoryId
-        : "",
-      brand: resumeDraft.brand || prev.brand,
-      name: resumeDraft.name || prev.name,
-      phone: resumeDraft.phone || prev.phone,
+      subCategoryId: restoreSub ? resumeDraft.subCategoryId : "",
+      brand: resumeDraft.brand || p.brand,
+      name: resumeDraft.name || p.name,
+      phone: resumeDraft.phone || p.phone,
       zip: resumeDraft.zip,
       address: resumeDraft.address,
       description: resumeDraft.description,
       preferredVisitDate:
-        resumeDraft.preferredVisitDate &&
-        resumeDraft.preferredVisitDate >= minVisitDate
+        resumeDraft.preferredVisitDate && resumeDraft.preferredVisitDate >= minVisitDate
           ? resumeDraft.preferredVisitDate
           : "",
-      preferredVisitSlot:
-        resumeDraft.preferredVisitSlot || prev.preferredVisitSlot,
+      preferredVisitSlot: resumeDraft.preferredVisitSlot || p.preferredVisitSlot,
     }));
-
     clearResumeDraft();
-  }, [
-    resumeDraft,
-    services,
-    initialServiceSlug,
-    clearResumeDraft,
-    minVisitDate,
-  ]);
+  }, [resumeDraft, services, initialServiceSlug, clearResumeDraft, minVisitDate]);
 
-  const selectedServiceData = services.find(
-    (s) => s._id === formData.serviceId,
-  );
+  useEffect(() => {
+    topRef.current?.scrollIntoView({ block: "start" });
+  }, [step]);
 
-  const selectedSubCategory =
-    selectedServiceData?.subCategories?.find(
-      (sc: any) => sc._id === formData.subCategoryId,
-    );
+  useEffect(() => {
+    if (error) requestAnimationFrame(() => errorRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }));
+  }, [error]);
 
-  /*
-   * When initialServiceSlug exists and the service has been resolved,
-   * the category is locked to that service.
-   *
-   * Normal bookings without an initialServiceSlug continue to show
-   * all service categories.
-   */
-  const isServiceLocked =
-    Boolean(initialServiceSlug) && Boolean(selectedServiceData);
+  /* ---------- derived ---------- */
+  const selectedService = services.find((s) => s._id === formData.serviceId);
+  const selectedSub = selectedService?.subCategories?.find((sc: any) => sc._id === formData.subCategoryId);
+  const isServiceLocked = Boolean(initialServiceSlug) && Boolean(selectedService);
+  const resolvedBrand = formData.brand === OTHER_BRAND ? formData.brandOther.trim() : formData.brand.trim();
 
-  const resolvedBrand =
-    formData.brand === OTHER_BRAND
-      ? formData.brandOther.trim()
-      : formData.brand.trim();
+  const brandList = APPLIANCE_BRANDS.filter((b: string) => b !== OTHER_BRAND);
+  const shownBrands = showAllBrands ? brandList : brandList.slice(0, BRAND_PREVIEW);
+
+  const matchedQuick = quickDays.find((d) => d.iso === formData.preferredVisitDate);
+  const dateChoice = pickingDate ? "custom" : matchedQuick ? matchedQuick.iso : formData.preferredVisitDate ? "custom" : "any";
+
+  const visitSummary = (() => {
+    const day = formData.preferredVisitDate
+      ? fromISO(formData.preferredVisitDate).toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" })
+      : "Any day";
+    const slot = SLOTS.find((s) => s.value === formData.preferredVisitSlot)?.label || "Any time";
+    return `${day} · ${slot}`;
+  })();
+
+  /* ---------- validation ---------- */
+  const validate = (s: number): string => {
+    if (s === 0) {
+      if (!selectedService) return "Choose the appliance you need repaired.";
+      if (!selectedSub) return "Choose the type of repair.";
+      if (!formData.brand) return "Select your appliance brand.";
+      if (formData.brand === OTHER_BRAND && !resolvedBrand) return "Enter your appliance brand name.";
+    }
+    if (s === 1) {
+      if (formData.preferredVisitDate && formData.preferredVisitDate < minVisitDate)
+        return "Please select today or a future visit date.";
+    }
+    if (s === 2) {
+      if (!formData.name.trim()) return "Enter your name.";
+      if (!isValidPhone(formData.phone)) return "Enter a valid 10-digit mobile number.";
+      if (!formData.address.trim()) return "Enter your address so the technician can find you.";
+      if (!/^\d{6}$/.test(formData.zip.trim())) return "Please enter a valid 6-digit pincode.";
+    }
+    return "";
+  };
+
+  const next = () => {
+    const msg = validate(step);
+    if (msg) return setError(msg);
+    setError("");
+    setStep((s) => s + 1);
+  };
+
+  const goTo = (i: number) => {
+    if (i < step) {
+      setError("");
+      setStep(i);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (step < STEPS.length - 1) return next();
+
+    for (let i = 0; i < STEPS.length; i++) {
+      const msg = validate(i);
+      if (msg) {
+        setStep(i);
+        setError(msg);
+        return;
+      }
+    }
+
     setError("");
-
-    const pincode = formData.zip.trim();
-
-    if (
-      formData.preferredVisitDate &&
-      formData.preferredVisitDate < minVisitDate
-    ) {
-      setError("Please select today or a future visit date.");
-      return;
-    }
-
-    if (!/^\d{6}$/.test(pincode)) {
-      setError("Please enter a valid 6-digit pincode.");
-      return;
-    }
-
-    console.log("BOOKING PINCODE SENT:", pincode);
-
-    if (!selectedServiceData || !selectedSubCategory) {
-      setError("Please select a valid specific service before booking.");
-      return;
-    }
-
-    if (!isValidPhone(formData.phone)) {
-      setError("Enter a valid 10-digit mobile number.");
-      return;
-    }
-
-    if (!formData.brand) {
-      setError("Please select your appliance brand.");
-      return;
-    }
-
-    if (formData.brand === OTHER_BRAND && !resolvedBrand) {
-      setError("Please enter your appliance brand name.");
-      return;
-    }
-
     setIsSubmitting(true);
-
     let authToken = token;
 
     try {
-      if (!user || !authToken) {
-        authToken = await continueWithPhone(
-          formData.phone,
-          formData.name,
-        );
-      }
+      if (!user || !authToken) authToken = await continueWithPhone(formData.phone, formData.name);
 
       const res = await fetch(`${API_URL}/bookings`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${authToken}`,
-        },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
         body: JSON.stringify({
           serviceId: formData.serviceId,
           subCategoryId: formData.subCategoryId,
           contactPhone: formData.phone,
-          productDetails: {
-            brand: resolvedBrand,
-          },
-          addressData: {
-            zip: formData.zip,
-            text: formData.address,
-          },
+          productDetails: { brand: resolvedBrand },
+          addressData: { zip: formData.zip.trim(), text: formData.address },
           description: formData.description,
-          ...(formData.preferredVisitDate
-            ? {
-                preferredVisitDate: formData.preferredVisitDate,
-              }
-            : {}),
-          ...(formData.preferredVisitSlot
-            ? {
-                preferredVisitSlot: formData.preferredVisitSlot,
-              }
-            : {}),
+          ...(formData.preferredVisitDate ? { preferredVisitDate: formData.preferredVisitDate } : {}),
+          ...(formData.preferredVisitSlot ? { preferredVisitSlot: formData.preferredVisitSlot } : {}),
         }),
       });
 
@@ -270,1201 +347,577 @@ export default function BookingForm({
       }
 
       setIsSuccess(true);
-
-      if (onSuccess) {
-        setTimeout(onSuccess, 10000);
-      }
+      if (onSuccess) setTimeout(onSuccess, 10000);
     } catch (err: unknown) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Something went wrong. Please try again.",
-      );
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  useEffect(() => {
-    if (error) {
-      requestAnimationFrame(() => {
-        errorRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      });
-    }
-  }, [error]);
-
+  /* ---------- success ---------- */
   if (isSuccess) {
     return (
-      <div className="flex flex-col items-center justify-center py-6 sm:py-10 text-center animate-in fade-in zoom-in duration-500">
-        <div className="w-16 h-16 sm:w-20 sm:h-20 bg-primary/10 rounded-full flex items-center justify-center mb-5 sm:mb-6">
-          <span className="material-symbols-outlined text-primary text-3xl sm:text-4xl icon-filled">
-            check_circle
-          </span>
+      <div className="px-5 pb-6 pt-6 sm:px-6">
+        <div className="flex flex-col items-center text-center">
+          <div className="success-ring relative mb-4 flex h-[84px] w-[84px] items-center justify-center rounded-full bg-emerald-50">
+            <svg viewBox="0 0 52 52" className="h-11 w-11" fill="none" aria-hidden="true">
+              <circle cx="26" cy="26" r="24" stroke="#10b981" strokeWidth="3" className="success-circle" />
+              <path d="M15 27l8 8 14-16" stroke="#10b981" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" className="success-check" />
+            </svg>
+          </div>
+          <h3 className="font-headline text-[1.65rem] leading-tight tracking-tight text-zinc-900">You're booked</h3>
+          <p className="mt-1.5 max-w-[30ch] text-[13.5px] leading-snug text-zinc-500">
+            {selectedService?.name}
+            {selectedSub ? ` · ${selectedSub.name}` : ""}
+            <br />
+            {visitSummary}
+          </p>
         </div>
 
-        <h3 className="font-headline text-xl sm:text-2xl text-on-surface mb-2">
-          Request Received!
-        </h3>
-
-        <p className="text-on-surface-variant max-w-xs mx-auto text-sm">
-          Nearby technicians have been notified. Someone will pick up your
-          request shortly — usually within{" "}
-          <span className="font-bold text-on-surface">10 minutes</span>.
-        </p>
-
-        <div className="mt-6 sm:mt-8 p-3.5 sm:p-4 bg-primary/5 rounded-xl border border-primary/10 w-full space-y-2">
-          <p className="text-[10px] uppercase tracking-widest font-black text-primary mb-1">
-            Service Warranty
-          </p>
-
-          <p className="text-xs font-medium text-on-surface">
-            60-day warranty included — activates when your job is completed.
-          </p>
-
-          <a
-            href="/warranty"
-            className="text-[11px] font-bold text-primary hover:underline inline-flex items-center gap-1"
-          >
-            View warranty policy
-            <span className="material-symbols-outlined text-sm">
-              arrow_forward
-            </span>
-          </a>
-        </div>
+        <ol className="relative mt-6 space-y-4">
+          <span className="absolute bottom-3 left-[17px] top-3 w-px bg-zinc-200" aria-hidden="true" />
+          {NEXT_STEPS.map((s, i) => (
+            <li key={s.title} className="relative flex items-start gap-3">
+              <span
+                className={`relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full ring-4 ring-white ${
+                  i === 0 ? "bg-primary text-white" : "bg-zinc-100 text-zinc-600"
+                }`}
+              >
+                <span className="material-symbols-outlined text-[18px]">{s.icon}</span>
+              </span>
+              <div className="pt-0.5">
+                <p className="text-sm font-semibold text-zinc-900">{s.title}</p>
+                <p className="text-[12.5px] leading-snug text-zinc-500">{s.text}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
 
         <button
           type="button"
           onClick={() => router.push("/my-bookings")}
-          className="mt-6 text-xs font-black uppercase tracking-widest text-primary hover:underline"
+          className="mt-6 h-[52px] w-full rounded-2xl bg-zinc-900 text-sm font-semibold text-white transition hover:bg-zinc-800 active:scale-[0.99]"
         >
-          View My Bookings
+          View my bookings
         </button>
+        <a href="/warranty" className="mt-3 block text-center text-[13px] font-semibold text-primary hover:underline">
+          Read warranty policy
+        </a>
+
+        <style jsx>{`
+          .success-circle {
+            stroke-dasharray: 151;
+            stroke-dashoffset: 151;
+            animation: draw 0.7s ease-out forwards;
+          }
+          .success-check {
+            stroke-dasharray: 40;
+            stroke-dashoffset: 40;
+            animation: draw 0.45s 0.55s ease-out forwards;
+          }
+          .success-ring {
+            animation: pop 0.5s ease-out;
+          }
+          @keyframes draw {
+            to {
+              stroke-dashoffset: 0;
+            }
+          }
+          @keyframes pop {
+            0% {
+              transform: scale(0.7);
+              opacity: 0;
+            }
+            60% {
+              transform: scale(1.06);
+              opacity: 1;
+            }
+            100% {
+              transform: scale(1);
+            }
+          }
+          @media (prefers-reduced-motion: reduce) {
+            .success-circle,
+            .success-check {
+              animation-duration: 0.01s;
+              animation-delay: 0s;
+            }
+            .success-ring {
+              animation: none;
+            }
+          }
+        `}</style>
       </div>
     );
   }
 
+  const isLast = step === STEPS.length - 1;
+
+  /* ---------- form ---------- */
   return (
-    <form
-      onSubmit={handleSubmit}
-      className={`booking-form space-y-3.5 ${className}`}
-    >
-      {error && (
-        <div
-          ref={errorRef}
-          className="booking-error animate-in fade-in slide-in-from-top-2"
-        >
-          <span className="material-symbols-outlined">error</span>
-          <span>{error}</span>
-        </div>
-      )}
+    <form onSubmit={handleSubmit} noValidate className={`flex min-h-full flex-col ${className}`}>
+      <div ref={topRef} />
 
-      <div className="booking-shell">
-        <div className="booking-hero">
-          <div className="booking-hero-glow booking-hero-glow-one" />
-          <div className="booking-hero-glow booking-hero-glow-two" />
-
-          <div className="relative z-10 flex items-center justify-between gap-4">
-            <div>
-              <div className="booking-brand">
-                <span className="material-symbols-outlined icon-filled">
-                  bolt
-                </span>
-                FIXXER
-              </div>
-              <h2 className="booking-title">Book a repair</h2>
-              <p className="booking-subtitle">
-                Simple. Fast. Done.
-              </p>
-            </div>
-
-            <div className="booking-hero-icon">
-              <span className="material-symbols-outlined icon-filled">
-                handyman
-              </span>
-            </div>
-          </div>
-
-          <div className="booking-hero-line">
-            <span />
-            <span />
-            <span />
-          </div>
-        </div>
-
-        <div className="booking-content">
-          {/* SERVICE */}
-          <section className="booking-section booking-service-section">
-            <div className="booking-section-heading">
-              <div className="booking-step-icon">
-                <span className="material-symbols-outlined">build</span>
-              </div>
-              <div>
-                <span className="booking-kicker">01</span>
-                <h3>Service</h3>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="booking-field">
-                <label htmlFor="service">Appliance</label>
-                <div className="booking-select-wrap">
-                  <select
-                    id="service"
-                    required
-                    disabled={isServiceLocked}
-                    value={formData.serviceId}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        serviceId: e.target.value,
-                        subCategoryId: "",
-                      })
-                    }
-                    className={`booking-input booking-select ${
-                      isServiceLocked ? "booking-locked" : ""
+      {/* Stepper */}
+      <nav aria-label="Booking progress" className="sticky top-0 z-10 bg-white/95 px-5 pb-3 pt-3 backdrop-blur sm:px-6">
+        <ol className="flex items-center">
+          {STEPS.map((s, i) => {
+            const done = i < step;
+            const current = i === step;
+            return (
+              <li key={s} className={`flex items-center ${i < STEPS.length - 1 ? "flex-1" : ""}`}>
+                <button
+                  type="button"
+                  onClick={() => goTo(i)}
+                  disabled={i > step}
+                  aria-current={current ? "step" : undefined}
+                  className="group flex items-center gap-2 focus-visible:outline-none disabled:cursor-default"
+                >
+                  <span
+                    className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition-all duration-300 group-focus-visible:ring-4 group-focus-visible:ring-primary/20 ${
+                      done
+                        ? "bg-primary text-white"
+                        : current
+                          ? "bg-primary text-white shadow-[0_0_0_4px_rgba(200,16,46,0.14)]"
+                          : "bg-zinc-100 text-zinc-400"
                     }`}
                   >
-                    <option value="" disabled>
-                      Select appliance
-                    </option>
-
-                    {services.map((s) => (
-                      <option key={s._id} value={s._id}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </select>
-
-                  <span className="material-symbols-outlined booking-select-icon">
-                    {isServiceLocked ? "lock" : "expand_more"}
+                    {done ? <span className="material-symbols-outlined text-[16px]">check</span> : i + 1}
                   </span>
+                  <span
+                    className={`text-xs transition-colors ${
+                      current ? "font-semibold text-zinc-900" : done ? "font-medium text-zinc-600" : "font-medium text-zinc-400"
+                    }`}
+                  >
+                    {s}
+                  </span>
+                </button>
+                {i < STEPS.length - 1 && (
+                  <span className="mx-2.5 h-0.5 flex-1 overflow-hidden rounded-full bg-zinc-100" aria-hidden="true">
+                    <span className={`block h-full rounded-full bg-primary transition-all duration-500 ease-out ${done ? "w-full" : "w-0"}`} />
+                  </span>
+                )}
+              </li>
+            );
+          })}
+        </ol>
+      </nav>
+
+      <div className="flex-1 px-5 pb-5 pt-3 sm:px-6">
+        {error && (
+          <div
+            ref={errorRef}
+            role="alert"
+            className="mb-4 flex items-start gap-2.5 rounded-2xl border border-red-200 bg-red-50 px-3.5 py-3 text-[13px] font-medium leading-snug text-red-700 animate-in fade-in slide-in-from-top-2"
+          >
+            <span className="material-symbols-outlined text-[18px]">error</span>
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* ================= STEP 1: REPAIR ================= */}
+        {step === 0 && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-right-3 duration-300">
+            <StepTitle title="What needs fixing?" sub="Pick your appliance and the problem. Prices are starting charges." />
+
+            <div>
+              <Label>Appliance</Label>
+              {isServiceLocked ? (
+                <div className="flex items-center gap-3 rounded-2xl border border-primary/30 bg-primary/[0.05] p-3.5">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-white">
+                    <span className="material-symbols-outlined text-[24px]">{iconFor(selectedService.name)}</span>
+                  </span>
+                  <span className="flex-1 text-[15px] font-semibold text-zinc-900">{selectedService.name}</span>
+                  <span className="material-symbols-outlined text-[18px] text-primary">lock</span>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2.5">
+                  {services.map((s) => {
+                    const active = formData.serviceId === s._id;
+                    return (
+                      <Choice
+                        key={s._id}
+                        active={active}
+                        onClick={() => set({ serviceId: s._id, subCategoryId: "" })}
+                        className="flex flex-col gap-2.5 p-3.5"
+                      >
+                        {active && <Tick />}
+                        <span
+                          className={`flex h-10 w-10 items-center justify-center rounded-xl transition-colors ${
+                            active ? "bg-primary text-white" : "bg-zinc-100 text-zinc-600"
+                          }`}
+                        >
+                          <span className="material-symbols-outlined text-[22px]">{iconFor(s.name)}</span>
+                        </span>
+                        <span className="text-[13.5px] font-semibold leading-tight text-zinc-900">{s.name}</span>
+                      </Choice>
+                    );
+                  })}
+                  {services.length === 0 &&
+                    [0, 1, 2, 3].map((i) => <div key={i} className="h-[106px] animate-pulse rounded-2xl bg-zinc-100" />)}
+                </div>
+              )}
+            </div>
+
+            {selectedService && (
+              <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                <Label>What's the issue?</Label>
+                <div className="space-y-2">
+                  {selectedService.subCategories?.map((sc: any) => {
+                    const active = formData.subCategoryId === sc._id;
+                    return (
+                      <Choice
+                        key={sc._id}
+                        active={active}
+                        onClick={() => set({ subCategoryId: sc._id })}
+                        className="flex w-full items-center gap-3 px-3.5 py-3.5"
+                      >
+                        <Radio active={active} />
+                        <span className="flex-1 text-sm font-medium text-zinc-900">{sc.name}</span>
+                        {sc.price && (
+                          <span
+                            className={`rounded-full px-2.5 py-1 text-xs font-bold transition-colors ${
+                              active ? "bg-primary text-white" : "bg-zinc-100 text-zinc-800"
+                            }`}
+                          >
+                            {sc.price}
+                          </span>
+                        )}
+                      </Choice>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {selectedSub && (
+              <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                <Label>Brand</Label>
+                <div className="flex flex-wrap gap-2">
+                  {shownBrands.map((b: string) => (
+                    <Choice
+                      key={b}
+                      active={formData.brand === b}
+                      onClick={() => set({ brand: b, brandOther: "" })}
+                      className="px-3.5 py-2"
+                    >
+                      <span className="text-[13px] font-medium text-zinc-900">{b}</span>
+                    </Choice>
+                  ))}
+                  {!showAllBrands && brandList.length > BRAND_PREVIEW && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAllBrands(true)}
+                      className="rounded-2xl px-3 py-2 text-[13px] font-semibold text-primary hover:bg-primary/5"
+                    >
+                      +{brandList.length - BRAND_PREVIEW} more
+                    </button>
+                  )}
+                  <Choice
+                    active={formData.brand === OTHER_BRAND}
+                    onClick={() => set({ brand: OTHER_BRAND })}
+                    className="px-3.5 py-2"
+                  >
+                    <span className="text-[13px] font-medium text-zinc-900">{OTHER_BRAND}</span>
+                  </Choice>
+                </div>
+
+                {formData.brand === OTHER_BRAND && (
+                  <div className="mt-3 animate-in fade-in">
+                    <IconInput icon="sell">
+                      <input
+                        type="text"
+                        autoFocus
+                        aria-label="Brand name"
+                        placeholder="Enter brand name"
+                        value={formData.brandOther}
+                        onChange={(e) => set({ brandOther: e.target.value })}
+                        className={inputCls}
+                      />
+                    </IconInput>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ================= STEP 2: VISIT ================= */}
+        {step === 1 && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-right-3 duration-300">
+            <StepTitle title="When can we come?" sub="Choose what suits you. Skip it and we'll send the first available technician." />
+
+            <div>
+              <Label>Day</Label>
+              <div className="grid grid-cols-3 gap-2.5">
+                {quickDays.map((d) => {
+                  const active = dateChoice === d.iso;
+                  return (
+                    <Choice
+                      key={d.iso}
+                      active={active}
+                      onClick={() => {
+                        setPickingDate(false);
+                        set({ preferredVisitDate: d.iso });
+                      }}
+                      className="flex flex-col items-center px-2 py-3 text-center"
+                    >
+                      <span className={`text-[11px] font-semibold ${active ? "text-primary" : "text-zinc-500"}`}>{d.top}</span>
+                      <span className="mt-0.5 font-headline text-[28px] leading-none text-zinc-900">{d.num}</span>
+                      <span className="mt-1 text-[11px] text-zinc-500">{d.month}</span>
+                    </Choice>
+                  );
+                })}
+              </div>
+
+              <div className="mt-2.5 grid grid-cols-2 gap-2.5">
+                <Choice
+                  active={dateChoice === "custom"}
+                  onClick={() => setPickingDate(true)}
+                  className="flex items-center justify-center gap-1.5 px-3 py-2.5"
+                >
+                  <span className="material-symbols-outlined text-[18px] text-zinc-500">edit_calendar</span>
+                  <span className="text-[13px] font-semibold text-zinc-900">Pick a date</span>
+                </Choice>
+                <Choice
+                  active={dateChoice === "any"}
+                  onClick={() => {
+                    setPickingDate(false);
+                    set({ preferredVisitDate: "" });
+                  }}
+                  className="flex items-center justify-center gap-1.5 px-3 py-2.5"
+                >
+                  <span className="material-symbols-outlined text-[18px] text-zinc-500">all_inclusive</span>
+                  <span className="text-[13px] font-semibold text-zinc-900">Any day</span>
+                </Choice>
+              </div>
+
+              {dateChoice === "custom" && (
+                <div className="mt-3 animate-in fade-in">
+                  <IconInput icon="calendar_month">
+                    <input
+                      type="date"
+                      aria-label="Visit date"
+                      min={minVisitDate}
+                      value={formData.preferredVisitDate}
+                      onChange={(e) => set({ preferredVisitDate: e.target.value })}
+                      className={inputCls}
+                    />
+                  </IconInput>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <Label>Time</Label>
+              <div className="grid grid-cols-2 gap-2.5">
+                {SLOTS.map((slot) => {
+                  const active = formData.preferredVisitSlot === slot.value;
+                  return (
+                    <Choice
+                      key={slot.label}
+                      active={active}
+                      onClick={() => set({ preferredVisitSlot: slot.value })}
+                      className="flex items-center gap-2.5 p-3"
+                    >
+                      <span
+                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors ${
+                          active ? "bg-primary text-white" : "bg-zinc-100 text-zinc-600"
+                        }`}
+                      >
+                        <span className="material-symbols-outlined text-[19px]">{slot.icon}</span>
+                      </span>
+                      <span className="min-w-0 leading-tight">
+                        <span className="block text-[13px] font-semibold text-zinc-900">{slot.label}</span>
+                        <span className="block text-[11px] text-zinc-500">{slot.hint}</span>
+                      </span>
+                    </Choice>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ================= STEP 3: DETAILS ================= */}
+        {step === 2 && (
+          <div className="space-y-5 animate-in fade-in slide-in-from-right-3 duration-300">
+            <StepTitle title="Where should we go?" sub="Your technician will call this number before arriving." />
+
+            <div className="space-y-3.5">
+              <div>
+                <Label>Your name</Label>
+                <IconInput icon="person" valid={formData.name.trim().length > 1}>
+                  <input
+                    type="text"
+                    autoComplete="name"
+                    placeholder="Full name"
+                    value={formData.name}
+                    onChange={(e) => set({ name: e.target.value })}
+                    className={inputCls}
+                  />
+                </IconInput>
+              </div>
+
+              <div>
+                <Label>Mobile number</Label>
+                <IconInput icon="call" valid={isValidPhone(formData.phone)}>
+                  <input
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    placeholder="+91 00000 00000"
+                    value={formData.phone}
+                    onChange={(e) => set({ phone: e.target.value })}
+                    className={inputCls}
+                  />
+                </IconInput>
+              </div>
+
+              <div className="grid grid-cols-[1fr_132px] gap-3">
+                <div>
+                  <Label>Address</Label>
+                  <IconInput icon="home">
+                    <input
+                      type="text"
+                      autoComplete="street-address"
+                      placeholder="House no, area"
+                      value={formData.address}
+                      onChange={(e) => set({ address: e.target.value })}
+                      className={inputCls}
+                    />
+                  </IconInput>
+                </div>
+                <div>
+                  <Label>Pincode</Label>
+                  <IconInput icon="pin_drop" valid={/^\d{6}$/.test(formData.zip)}>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="postal-code"
+                      maxLength={6}
+                      placeholder="000000"
+                      value={formData.zip}
+                      onChange={(e) => set({ zip: e.target.value.replace(/\D/g, "").slice(0, 6) })}
+                      className={`${inputCls} font-semibold tracking-wider`}
+                    />
+                  </IconInput>
                 </div>
               </div>
 
-              <div
-                className={`booking-field ${
-                  !formData.serviceId ? "booking-disabled" : ""
-                }`}
-              >
-                <label htmlFor="subcategory">Repair type</label>
-
-                <div className="booking-select-wrap">
-                  <select
-                    id="subcategory"
-                    required
-                    value={formData.subCategoryId}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        subCategoryId: e.target.value,
-                      })
-                    }
-                    className="booking-input booking-select"
-                  >
-                    <option value="" disabled>
-                      Select repair
-                    </option>
-
-                    {selectedServiceData?.subCategories?.map((sc: any) => (
-                      <option key={sc._id} value={sc._id}>
-                        {sc.name}
-                        {sc.price ? ` — ${sc.price}` : ""}
-                      </option>
-                    ))}
-                  </select>
-
-                  <span className="material-symbols-outlined booking-select-icon">
-                    expand_more
-                  </span>
-                </div>
+              <div>
+                <Label optional>Anything the technician should know?</Label>
+                <textarea
+                  rows={2}
+                  placeholder="e.g. Makes a loud noise during spin"
+                  value={formData.description}
+                  onChange={(e) => set({ description: e.target.value })}
+                  className="min-h-[76px] w-full resize-y rounded-2xl border border-zinc-200 bg-zinc-50/70 px-4 py-3 text-base leading-relaxed text-zinc-900 transition placeholder:text-zinc-400 hover:border-zinc-300 focus:border-primary focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/10 sm:text-[15px]"
+                />
               </div>
             </div>
 
-            {isServiceLocked && selectedServiceData && (
-              <div className="booking-selected">
-                <span className="material-symbols-outlined icon-filled">
-                  verified
-                </span>
-                {selectedServiceData.name} selected
-              </div>
-            )}
-          </section>
-
-          {/* PRICE */}
-          {selectedSubCategory && (
-            <div className="booking-price">
-              <div className="booking-price-left">
-                <div className="booking-price-icon">
-                  <span className="material-symbols-outlined icon-filled">
-                    receipt_long
+            {/* Repair ticket */}
+            {selectedSub && (
+              <div className="relative overflow-hidden rounded-2xl border border-zinc-200 bg-gradient-to-b from-zinc-50 to-white">
+                <div className="flex items-start gap-3 p-4">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-[0_8px_16px_-6px_rgba(200,16,46,0.6)]">
+                    <span className="material-symbols-outlined text-[23px]">{iconFor(selectedService?.name)}</span>
                   </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[15px] font-semibold text-zinc-900">{selectedService?.name}</p>
+                    <p className="truncate text-[13px] text-zinc-500">
+                      {selectedSub.name} · {resolvedBrand || "Brand"}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setStep(0)}
+                    className="shrink-0 rounded-lg px-2 py-1 text-[13px] font-semibold text-primary hover:bg-primary/5"
+                  >
+                    Edit
+                  </button>
                 </div>
 
-                <div>
-                  <span className="booking-price-label">Starting charge</span>
-                  <div className="booking-price-value">
-                    {selectedSubCategory.price}
-                    <span>visit + labour</span>
+                <div className="relative">
+                  <div className="mx-4 border-t-2 border-dashed border-zinc-200" />
+                  <span className="absolute -left-2.5 -top-2.5 h-5 w-5 rounded-full border border-zinc-200 bg-white" />
+                  <span className="absolute -right-2.5 -top-2.5 h-5 w-5 rounded-full border border-zinc-200 bg-white" />
+                </div>
+
+                <div className="space-y-2.5 p-4 text-[13px]">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="flex items-center gap-1.5 text-zinc-500">
+                      <span className="material-symbols-outlined text-[16px]">event</span>
+                      Visit
+                    </span>
+                    <span className="font-semibold text-zinc-900">{visitSummary}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="flex items-center gap-1.5 text-zinc-500">
+                      <span className="material-symbols-outlined text-[16px]">receipt_long</span>
+                      Starting charge
+                    </span>
+                    <span className="text-[15px] font-bold text-zinc-900">{selectedSub.price}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 rounded-xl bg-emerald-50 px-3 py-2 text-emerald-700">
+                    <span className="material-symbols-outlined icon-filled text-[16px]">verified_user</span>
+                    60-day warranty included
                   </div>
                 </div>
               </div>
+            )}
+          </div>
+        )}
+      </div>
 
-              <a href="/warranty" className="booking-warranty">
-                <span className="material-symbols-outlined icon-filled">
-                  verified
-                </span>
-                60 days
-              </a>
-            </div>
-          )}
-
-          {/* APPLIANCE */}
-          <section className="booking-section">
-            <div className="booking-section-heading">
-              <div className="booking-step-icon">
-                <span className="material-symbols-outlined">
-                  devices_other
-                </span>
-              </div>
-              <div>
-                <span className="booking-kicker">02</span>
-                <h3>Appliance</h3>
-              </div>
-            </div>
-
-            <div
-              className={
-                !formData.serviceId ? "booking-disabled" : ""
-              }
+      {/* Sticky action bar */}
+      <div className="sticky bottom-0 z-10 border-t border-zinc-100 bg-white/95 px-5 pb-4 pt-3 backdrop-blur sm:px-6">
+        <div className="flex items-center gap-2.5">
+          {step > 0 && (
+            <button
+              type="button"
+              onClick={() => goTo(step - 1)}
+              aria-label="Go back"
+              className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl border border-zinc-200 text-zinc-700 transition hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 active:scale-95"
             >
-              <div className="booking-field">
-                <label htmlFor="brand">Brand</label>
-
-                <div className="booking-select-wrap">
-                  <select
-                    id="brand"
-                    required
-                    value={formData.brand}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        brand: e.target.value,
-                        brandOther:
-                          e.target.value === OTHER_BRAND
-                            ? formData.brandOther
-                            : "",
-                      })
-                    }
-                    className="booking-input booking-select"
-                  >
-                    <option value="" disabled>
-                      Select brand
-                    </option>
-
-                    {APPLIANCE_BRANDS.map((brand) => (
-                      <option key={brand} value={brand}>
-                        {brand}
-                      </option>
-                    ))}
-                  </select>
-
-                  <span className="material-symbols-outlined booking-select-icon">
-                    expand_more
-                  </span>
-                </div>
-              </div>
-
-              {formData.brand === OTHER_BRAND && (
-                <input
-                  type="text"
-                  required
-                  placeholder="Enter brand name"
-                  value={formData.brandOther}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      brandOther: e.target.value,
-                    })
-                  }
-                  className="booking-input mt-3 animate-in fade-in slide-in-from-top-1"
-                />
-              )}
-            </div>
-          </section>
-
-          {/* VISIT */}
-          <section className="booking-section">
-            <div className="booking-section-heading">
-              <div className="booking-step-icon">
-                <span className="material-symbols-outlined">
-                  calendar_month
-                </span>
-              </div>
-              <div>
-                <span className="booking-kicker">03</span>
-                <h3>Visit</h3>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="booking-field">
-                <label htmlFor="preferredVisitDate">
-                  Date <span>optional</span>
-                </label>
-
-                <input
-                  id="preferredVisitDate"
-                  type="date"
-                  min={minVisitDate}
-                  value={formData.preferredVisitDate}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      preferredVisitDate: e.target.value,
-                    })
-                  }
-                  className="booking-input"
-                />
-              </div>
-
-              <div className="booking-field">
-                <label htmlFor="preferredVisitSlot">
-                  Time <span>optional</span>
-                </label>
-
-                <div className="booking-select-wrap">
-                  <select
-                    id="preferredVisitSlot"
-                    value={formData.preferredVisitSlot}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        preferredVisitSlot: e.target.value,
-                      })
-                    }
-                    className="booking-input booking-select"
-                  >
-                    <option value="">Any time</option>
-                    <option value="MORNING">Morning · 8am–12pm</option>
-                    <option value="AFTERNOON">
-                      Afternoon · 12pm–4pm
-                    </option>
-                    <option value="EVENING">Evening · 4pm–8pm</option>
-                  </select>
-
-                  <span className="material-symbols-outlined booking-select-icon">
-                    expand_more
-                  </span>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* CONTACT */}
-          <section className="booking-section">
-            <div className="booking-section-heading">
-              <div className="booking-step-icon">
-                <span className="material-symbols-outlined">person</span>
-              </div>
-              <div>
-                <span className="booking-kicker">04</span>
-                <h3>Your details</h3>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="booking-field">
-                <label htmlFor="name">Name</label>
-
-                <input
-                  id="name"
-                  type="text"
-                  required
-                  placeholder="Your name"
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      name: e.target.value,
-                    })
-                  }
-                  className="booking-input"
-                />
-              </div>
-
-              <div className="booking-field">
-                <label htmlFor="phone">Mobile</label>
-
-                <input
-                  id="phone"
-                  type="tel"
-                  required
-                  inputMode="tel"
-                  placeholder="+91 00000-00000"
-                  value={formData.phone}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      phone: e.target.value,
-                    })
-                  }
-                  className="booking-input"
-                />
-              </div>
-            </div>
-          </section>
-
-          {/* LOCATION */}
-          <section className="booking-section">
-            <div className="booking-section-heading">
-              <div className="booking-step-icon">
-                <span className="material-symbols-outlined">
-                  location_on
-                </span>
-              </div>
-              <div>
-                <span className="booking-kicker">05</span>
-                <h3>Location</h3>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-[108px_1fr] gap-3">
-              <div className="booking-field">
-                <label htmlFor="zip">Pincode</label>
-
-                <input
-                  id="zip"
-                  type="text"
-                  required
-                  inputMode="numeric"
-                  maxLength={6}
-                  placeholder="000000"
-                  value={formData.zip}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      zip: e.target.value
-                        .replace(/\D/g, "")
-                        .slice(0, 6),
-                    })
-                  }
-                  className="booking-input booking-pincode"
-                />
-              </div>
-
-              <div className="booking-field">
-                <label htmlFor="address">Address</label>
-
-                <input
-                  id="address"
-                  type="text"
-                  required
-                  placeholder="House no, building, area"
-                  value={formData.address}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      address: e.target.value,
-                    })
-                  }
-                  className="booking-input"
-                />
-              </div>
-            </div>
-          </section>
-
-          {/* PROBLEM */}
-          <section className="booking-section booking-problem">
-            <div className="booking-section-heading">
-              <div className="booking-step-icon">
-                <span className="material-symbols-outlined">
-                  edit_note
-                </span>
-              </div>
-              <div>
-                <span className="booking-kicker">06</span>
-                <h3>Problem</h3>
-              </div>
-            </div>
-
-            <div className="booking-field">
-              <textarea
-                id="description"
-                rows={3}
-                placeholder="Tell us briefly what's happening..."
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    description: e.target.value,
-                  })
-                }
-                className="booking-input booking-textarea"
-              />
-            </div>
-          </section>
-        </div>
-      </div>
-
-      {/* CTA */}
-      <div className="booking-submit-wrap">
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="booking-submit"
-        >
-          <span className="booking-submit-shine" />
-
-          {isSubmitting ? (
-            <>
-              <span className="booking-spinner" />
-              Booking...
-            </>
-          ) : (
-            <>
-              <span className="material-symbols-outlined icon-filled">
-                bolt
-              </span>
-              Book my repair
-              <span className="material-symbols-outlined booking-submit-arrow">
-                arrow_forward
-              </span>
-            </>
+              <span className="material-symbols-outlined text-[22px]">arrow_back</span>
+            </button>
           )}
-        </button>
 
-        <div className="booking-secure">
-          <span className="material-symbols-outlined">lock</span>
-          Secure booking <i /> No payment required
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="group relative flex h-[52px] flex-1 items-center justify-center gap-2 overflow-hidden rounded-2xl bg-primary text-[15px] font-semibold text-white shadow-[0_12px_26px_-8px_rgba(200,16,46,0.75)] transition hover:brightness-105 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/25 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <span className="pointer-events-none absolute inset-y-0 -left-1/3 w-1/4 -skew-x-[20deg] bg-white/15 transition-all duration-700 group-hover:left-[120%]" />
+            {isSubmitting ? (
+              <>
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                Booking…
+              </>
+            ) : (
+              <>
+                {isLast ? "Confirm booking" : "Continue"}
+                {selectedSub && (
+                  <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-bold">{selectedSub.price}</span>
+                )}
+                <span className="material-symbols-outlined text-[19px] transition-transform group-hover:translate-x-0.5">
+                  {isLast ? "check" : "arrow_forward"}
+                </span>
+              </>
+            )}
+          </button>
         </div>
-      </div>
 
-      {!user && (
-        <p className="booking-login-note">
-          Your mobile number is used to save and manage your booking.
+        <p className="mt-2.5 flex items-center justify-center gap-1.5 text-[11px] text-zinc-400">
+          <span className="material-symbols-outlined text-[13px]">lock</span>
+          {isLast && !user
+            ? "We use your mobile number to save and manage this booking."
+            : "No payment now · 60-day warranty on every repair"}
         </p>
-      )}
-
-      <style jsx>{`
-        .booking-shell {
-          position: relative;
-          overflow: hidden;
-          border: 1px solid rgba(24, 24, 27, 0.08);
-          border-radius: 24px;
-          background: #ffffff;
-          box-shadow:
-            0 20px 60px rgba(0, 0, 0, 0.07),
-            0 2px 8px rgba(0, 0, 0, 0.025);
-        }
-
-        .booking-hero {
-          position: relative;
-          overflow: hidden;
-          padding: 22px 22px 18px;
-          color: #ffffff;
-          background:
-            radial-gradient(circle at 85% 20%, rgba(255, 255, 255, 0.1), transparent 28%),
-            linear-gradient(135deg, #111111 0%, #191919 55%, #101010 100%);
-        }
-
-        .booking-hero-glow {
-          position: absolute;
-          width: 150px;
-          height: 150px;
-          border-radius: 999px;
-          pointer-events: none;
-          filter: blur(45px);
-        }
-
-        .booking-hero-glow-one {
-          right: -65px;
-          top: -85px;
-          background: rgba(255, 255, 255, 0.1);
-        }
-
-        .booking-hero-glow-two {
-          left: 30%;
-          bottom: -125px;
-          background: rgba(255, 255, 255, 0.045);
-        }
-
-        .booking-brand {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          margin-bottom: 7px;
-          color: rgba(255, 255, 255, 0.48);
-          font-size: 8px;
-          font-weight: 900;
-          letter-spacing: 0.2em;
-        }
-
-        .booking-brand .material-symbols-outlined {
-          color: var(--primary, #C8102E);
-          font-size: 14px;
-        }
-
-        .booking-title {
-          margin: 0;
-          font-family: var(--font-headline, inherit);
-          font-size: clamp(24px, 5vw, 30px);
-          font-weight: 700;
-          line-height: 0.98;
-          letter-spacing: -0.045em;
-        }
-
-        .booking-subtitle {
-          margin: 8px 0 0;
-          color: rgba(255, 255, 255, 0.43);
-          font-size: 10px;
-          line-height: 1.4;
-        }
-
-        .booking-hero-icon {
-          display: flex;
-          width: 54px;
-          height: 54px;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 17px;
-          background: rgba(255, 255, 255, 0.055);
-          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-        }
-
-        .booking-hero-icon .material-symbols-outlined {
-          color: var(--primary, #C8102E);
-          font-size: 27px;
-        }
-
-        .booking-hero-line {
-          position: relative;
-          display: flex;
-          gap: 5px;
-          margin-top: 20px;
-        }
-
-        .booking-hero-line span {
-          height: 3px;
-          flex: 1;
-          border-radius: 999px;
-          background: rgba(255, 255, 255, 0.1);
-        }
-
-        .booking-hero-line span:first-child {
-          background: var(--primary, #C8102E);
-        }
-
-        .booking-content {
-          background:
-            linear-gradient(
-              180deg,
-              #ffffff 0%,
-              #ffffff 65%,
-              #fcfcfb 100%
-            );
-        }
-
-        .booking-section {
-          padding: 21px 22px;
-          border-bottom: 1px solid #f0f0f0;
-        }
-
-        .booking-service-section {
-          padding-top: 23px;
-        }
-
-        .booking-problem {
-          border-bottom: 0;
-        }
-
-        .booking-section-heading {
-          display: flex;
-          align-items: center;
-          gap: 11px;
-          margin-bottom: 16px;
-        }
-
-        .booking-step-icon {
-          display: flex;
-          width: 37px;
-          height: 37px;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-          border: 1px solid #ededed;
-          border-radius: 12px;
-          background: #fafafa;
-          color: #27272a;
-          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.025);
-        }
-
-        .booking-step-icon .material-symbols-outlined {
-          font-size: 19px;
-        }
-
-        .booking-kicker {
-          display: block;
-          margin-bottom: 1px;
-          color: var(--primary, #C8102E);
-          font-size: 8px;
-          font-weight: 900;
-          line-height: 1;
-          letter-spacing: 0.18em;
-        }
-
-        .booking-section-heading h3 {
-          margin: 0;
-          color: #18181b;
-          font-family: var(--font-headline, inherit);
-          font-size: 17px;
-          font-weight: 700;
-          line-height: 1.1;
-          letter-spacing: -0.025em;
-        }
-
-        .booking-field label {
-          display: flex;
-          align-items: center;
-          gap: 5px;
-          margin-bottom: 7px;
-          color: #71717a;
-          font-size: 9px;
-          font-weight: 900;
-          line-height: 1;
-          letter-spacing: 0.105em;
-          text-transform: uppercase;
-        }
-
-        .booking-field label span {
-          color: #a1a1aa;
-          font-size: 8px;
-          font-weight: 600;
-          letter-spacing: 0;
-          text-transform: lowercase;
-        }
-
-        .booking-input {
-          width: 100%;
-          height: 49px;
-          border: 1px solid #e4e4e7;
-          border-radius: 14px;
-          background: #fafafa;
-          padding: 0 14px;
-          color: #18181b;
-          font-size: 13px;
-          font-weight: 500;
-          outline: none;
-          transition:
-            border-color 180ms ease,
-            background 180ms ease,
-            box-shadow 180ms ease,
-            transform 180ms ease;
-        }
-
-        .booking-input::placeholder {
-          color: #a1a1aa;
-        }
-
-        .booking-input:hover {
-          border-color: #d4d4d8;
-        }
-
-        .booking-input:focus {
-          border-color: var(--primary, #C8102E);
-          background: #ffffff;
-          box-shadow: 0 0 0 4px rgba(200, 16, 46, 0.09);
-        }
-
-        .booking-input:disabled {
-          cursor: not-allowed;
-        }
-
-        .booking-select-wrap {
-          position: relative;
-        }
-
-        .booking-select {
-          appearance: none;
-          cursor: pointer;
-          padding-right: 42px;
-        }
-
-        .booking-select-icon {
-          position: absolute;
-          right: 13px;
-          top: 50%;
-          transform: translateY(-50%);
-          pointer-events: none;
-          color: #a1a1aa;
-          font-size: 19px;
-        }
-
-        .booking-locked {
-          border-color: rgba(200, 16, 46, 0.2);
-          background: rgba(200, 16, 46, 0.045);
-          cursor: not-allowed;
-        }
-
-        .booking-locked + .booking-select-icon {
-          color: var(--primary, #C8102E);
-        }
-
-        .booking-disabled {
-          opacity: 0.46;
-        }
-
-        .booking-selected {
-          display: inline-flex;
-          align-items: center;
-          gap: 5px;
-          margin-top: 8px;
-          color: var(--primary, #C8102E);
-          font-size: 8px;
-          font-weight: 800;
-        }
-
-        .booking-selected .material-symbols-outlined {
-          font-size: 13px;
-        }
-
-        .booking-price {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 14px;
-          padding: 13px 22px;
-          border-bottom: 1px solid rgba(200, 16, 46, 0.1);
-          background:
-            linear-gradient(
-              90deg,
-              rgba(200, 16, 46, 0.045),
-              rgba(200, 16, 46, 0.018)
-            );
-        }
-
-        .booking-price-left {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          min-width: 0;
-        }
-
-        .booking-price-icon {
-          display: flex;
-          width: 34px;
-          height: 34px;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-          border-radius: 11px;
-          background: rgba(200, 16, 46, 0.1);
-          color: var(--primary, #C8102E);
-        }
-
-        .booking-price-icon .material-symbols-outlined {
-          font-size: 17px;
-        }
-
-        .booking-price-label {
-          display: block;
-          margin-bottom: 2px;
-          color: #a1a1aa;
-          font-size: 7px;
-          font-weight: 900;
-          letter-spacing: 0.15em;
-          text-transform: uppercase;
-        }
-
-        .booking-price-value {
-          color: #18181b;
-          font-size: 14px;
-          font-weight: 800;
-        }
-
-        .booking-price-value span {
-          margin-left: 5px;
-          color: #a1a1aa;
-          font-size: 8px;
-          font-weight: 500;
-        }
-
-        .booking-warranty {
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-          flex-shrink: 0;
-          border-radius: 999px;
-          background: #effaf2;
-          padding: 7px 9px;
-          color: #278044;
-          font-size: 7px;
-          font-weight: 900;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          text-decoration: none;
-          transition: transform 180ms ease;
-        }
-
-        .booking-warranty:hover {
-          transform: translateY(-1px);
-        }
-
-        .booking-warranty .material-symbols-outlined {
-          font-size: 12px;
-        }
-
-        .booking-textarea {
-          height: auto;
-          min-height: 92px;
-          padding-top: 13px;
-          padding-bottom: 13px;
-          resize: vertical;
-          line-height: 1.55;
-        }
-
-        .booking-pincode {
-          letter-spacing: 0.08em;
-          font-weight: 700;
-        }
-
-        .booking-submit-wrap {
-          margin-top: 13px;
-          padding: 9px;
-          border: 1px solid rgba(24, 24, 27, 0.08);
-          border-radius: 21px;
-          background: #ffffff;
-          box-shadow:
-            0 14px 40px rgba(0, 0, 0, 0.07),
-            0 2px 8px rgba(0, 0, 0, 0.025);
-        }
-
-        .booking-submit {
-          position: relative;
-          display: flex;
-          width: 100%;
-          min-height: 56px;
-          align-items: center;
-          justify-content: center;
-          gap: 9px;
-          overflow: hidden;
-          border: 0;
-          border-radius: 15px;
-          background: var(--primary, #C8102E);
-          color: var(--on-primary, #ffffff);
-          font-size: 11px;
-          font-weight: 900;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          box-shadow:
-            0 9px 22px rgba(0, 0, 0, 0.12),
-            inset 0 1px 0 rgba(255, 255, 255, 0.16);
-          cursor: pointer;
-          transition:
-            transform 180ms ease,
-            box-shadow 180ms ease,
-            filter 180ms ease;
-        }
-
-        .booking-submit:hover {
-          transform: translateY(-1px);
-          filter: brightness(1.02);
-          box-shadow:
-            0 13px 28px rgba(0, 0, 0, 0.15),
-            inset 0 1px 0 rgba(255, 255, 255, 0.16);
-        }
-
-        .booking-submit:active {
-          transform: scale(0.985);
-        }
-
-        .booking-submit:disabled {
-          cursor: not-allowed;
-          transform: none;
-          opacity: 0.55;
-        }
-
-        .booking-submit-shine {
-          position: absolute;
-          top: 0;
-          left: -30%;
-          width: 22%;
-          height: 100%;
-          transform: skewX(-20deg);
-          background: rgba(255, 255, 255, 0.13);
-          transition: left 500ms ease;
-        }
-
-        .booking-submit:hover .booking-submit-shine {
-          left: 115%;
-        }
-
-        .booking-submit-arrow {
-          font-size: 17px;
-          transition: transform 180ms ease;
-        }
-
-        .booking-submit:hover .booking-submit-arrow {
-          transform: translateX(3px);
-        }
-
-        .booking-spinner {
-          width: 19px;
-          height: 19px;
-          border: 2px solid rgba(255, 255, 255, 0.3);
-          border-top-color: #ffffff;
-          border-radius: 999px;
-          animation: booking-spin 700ms linear infinite;
-        }
-
-        .booking-secure {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 5px;
-          margin-top: 8px;
-          color: #a1a1aa;
-          font-size: 8px;
-          font-weight: 600;
-        }
-
-        .booking-secure .material-symbols-outlined {
-          font-size: 12px;
-        }
-
-        .booking-secure i {
-          width: 3px;
-          height: 3px;
-          border-radius: 999px;
-          background: #d4d4d8;
-        }
-
-        .booking-login-note {
-          margin: 8px auto 0;
-          max-width: 360px;
-          padding: 0 12px;
-          color: #a1a1aa;
-          font-size: 9px;
-          line-height: 1.5;
-          text-align: center;
-        }
-
-        .booking-error {
-          display: flex;
-          align-items: flex-start;
-          gap: 9px;
-          padding: 12px 14px;
-          border: 1px solid #fecaca;
-          border-radius: 15px;
-          background: #fef2f2;
-          color: #b91c1c;
-          font-size: 11px;
-          font-weight: 700;
-          line-height: 1.45;
-        }
-
-        .booking-error .material-symbols-outlined {
-          flex-shrink: 0;
-          margin-top: 1px;
-          font-size: 17px;
-        }
-
-        @keyframes booking-spin {
-          to {
-            transform: rotate(360deg);
-          }
-        }
-
-        @media (max-width: 639px) {
-          .booking-hero {
-            padding: 19px 17px 16px;
-            border-radius: 20px 20px 0 0;
-          }
-
-          .booking-hero-icon {
-            width: 45px;
-            height: 45px;
-            border-radius: 14px;
-          }
-
-          .booking-hero-icon .material-symbols-outlined {
-            font-size: 23px;
-          }
-
-          .booking-title {
-            font-size: 24px;
-          }
-
-          .booking-section {
-            padding: 18px 16px;
-          }
-
-          .booking-section-heading {
-            margin-bottom: 13px;
-          }
-
-          .booking-step-icon {
-            width: 34px;
-            height: 34px;
-            border-radius: 11px;
-          }
-
-          .booking-section-heading h3 {
-            font-size: 16px;
-          }
-
-          .booking-price {
-            padding: 12px 16px;
-          }
-
-          .booking-price-value {
-            font-size: 13px;
-          }
-
-          .booking-price-value span {
-            display: none;
-          }
-
-          .booking-input {
-            height: 50px;
-            border-radius: 14px;
-            font-size: 16px;
-          }
-
-          .booking-textarea {
-            min-height: 94px;
-          }
-
-          .booking-submit-wrap {
-            margin-top: 11px;
-            padding: 7px;
-            border-radius: 18px;
-          }
-
-          .booking-submit {
-            min-height: 55px;
-            border-radius: 14px;
-          }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          .booking-input,
-          .booking-submit,
-          .booking-submit-arrow,
-          .booking-submit-shine,
-          .booking-warranty {
-            transition: none;
-          }
-
-          .booking-spinner {
-            animation-duration: 1.5s;
-          }
-        }
-      `}</style>
+      </div>
     </form>
   );
 }
