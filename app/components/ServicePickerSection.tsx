@@ -144,7 +144,7 @@ export default function ServicePickerSection() {
         <div className="mt-5 border-t border-outline/40 pt-5 md:hidden">
           <Link
             href="/services"
-            className="group flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-outline/60 bg-white px-4 text-[10px] font-black uppercase tracking-[0.14em] text-on-surface transition-all duration-200 hover:border-primary/40 hover:text-primary active:scale-[0.99]"
+            className="group flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 text-[10px] font-black uppercase tracking-[0.14em] text-white shadow-sm shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:shadow-primary/25 active:translate-y-0 active:scale-[0.99]"
           >
             <span>View all repair services</span>
 

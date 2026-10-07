@@ -43,7 +43,7 @@ export default function ShopHeader({
           className="shrink-0 text-[17px] font-black tracking-[-0.04em] text-slate-950 sm:text-lg"
           aria-label="Fixxer Shop home"
         >
-          FIXER{" "}
+          FIXXER{" "}
           <span className="text-primary">
             Shop
           </span>

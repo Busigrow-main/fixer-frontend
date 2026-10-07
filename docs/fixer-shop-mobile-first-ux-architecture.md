@@ -1,4 +1,4 @@
-# Fixer Shop: Mobile-First UX and Flow Architecture
+# Fixxer Shop: Mobile-First UX and Flow Architecture
 
 **Status:** Proposed
 **Audience:** Product, design, frontend, backend, operations
@@ -7,7 +7,7 @@
 
 ## 1. Product direction
 
-Fixer Shop should feel like a trusted local appliance expert with marketplace convenience. It should not behave like a smaller copy of a general e-commerce catalog.
+Fixxer Shop should feel like a trusted local appliance expert with marketplace convenience. It should not behave like a smaller copy of a general e-commerce catalog.
 
 The two catalog areas have different customer jobs:
 
@@ -18,12 +18,12 @@ The two catalog areas have different customer jobs:
 
 ### Recommendation
 
-Build one shared **Fixer Shop** experience with two purpose-built funnels:
+Build one shared **Fixxer Shop** experience with two purpose-built funnels:
 
 1. **Parts Finder:** appliance -> brand/model -> fault or part category -> compatible parts -> assisted order.
 2. **Appliance Store:** category -> filters -> compare -> product detail -> enquiry and installation scheduling.
 
-This borrows useful patterns from Urban Company (guided intent, trust, service follow-through) and Flipkart (search, filters, comparison, order tracking), while keeping the core Fixer advantage: a technician can validate the choice and complete the job.
+This borrows useful patterns from Urban Company (guided intent, trust, service follow-through) and Flipkart (search, filters, comparison, order tracking), while keeping the core Fixxer advantage: a technician can validate the choice and complete the job.
 
 ## 2. Experience principles
 
@@ -104,7 +104,7 @@ The current `/spare-parts` and `/spare-parts/appliances` URLs should remain vali
 6. Track it in My Bookings under **Part Help**.
 7. Approve the suggested part and price from the request detail screen.
 
-This is the most important Fixer-specific flow. It prevents customers from abandoning because they cannot translate a repair problem into a catalog term.
+This is the most important Fixxer-specific flow. It prevents customers from abandoning because they cannot translate a repair problem into a catalog term.
 
 ### Flow C: Customer buys an appliance
 
@@ -115,7 +115,7 @@ This is the most important Fixer-specific flow. It prevents customers from aband
 5. Open a product detail page.
 6. Review price, installation inclusion, warranty, delivery area, specifications, and total next steps.
 7. Submit an appliance enquiry with quantity and preferred installation slot.
-8. Receive confirmation that Fixer will verify stock and schedule delivery/installation.
+8. Receive confirmation that Fixxer will verify stock and schedule delivery/installation.
 9. Track the order and installation timeline in My Bookings.
 
 ### Flow D: Customer comes from a repair
@@ -132,7 +132,7 @@ This is the most important Fixer-specific flow. It prevents customers from aband
 
 Every Shop screen should use the same structure:
 
-1. Compact top bar: back, Fixer Shop label, search, and request basket/order count.
+1. Compact top bar: back, Fixxer Shop label, search, and request basket/order count.
 2. Context rail: current category or appliance type, horizontally scrollable.
 3. Main content: one clear task per screen.
 4. Sticky bottom action only when the next action is unambiguous.
@@ -172,7 +172,7 @@ Use a two-stage layout:
 - Filter button opening a bottom sheet
 - Compatibility status on every card: `Fits your model`, `Check fit`, or `Universal`
 - Price and availability
-- Optional `Install with Fixer` label
+- Optional `Install with Fixxer` label
 
 The existing URL state (`type`, `cat`, `brand`, `q`, `universal`) is a good foundation. Add model context rather than replacing it.
 
@@ -224,7 +224,7 @@ Use a sticky summary bar with product name, price, and enquiry CTA. The content 
 7. Frequently asked questions
 8. Similar products
 
-Do not hide installation information inside a long specification table. It is a purchase decision factor for Fixer.
+Do not hide installation information inside a long specification table. It is a purchase decision factor for Fixxer.
 
 ### Enquiry and checkout-like form
 
@@ -466,4 +466,4 @@ Measure the funnel separately for parts and appliances.
 
 ## Final recommendation
 
-Position Fixer Shop as **"the fastest way to get the right appliance solution"**, not merely a catalog. The differentiator is the bridge between commerce and service: customers can search like Flipkart, get guided confidence like Urban Company, and finish with a Fixer technician when the problem is too ambiguous for self-service.
+Position Fixxer Shop as **"the fastest way to get the right appliance solution"**, not merely a catalog. The differentiator is the bridge between commerce and service: customers can search like Flipkart, get guided confidence like Urban Company, and finish with a Fixxer technician when the problem is too ambiguous for self-service.
