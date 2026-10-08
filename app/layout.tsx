@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Newsreader } from "next/font/google";
 import { BookingProvider } from "@/app/context/BookingContext";
 import { AuthProvider } from "@/app/context/AuthContext";
@@ -24,6 +24,12 @@ export const metadata: Metadata = {
   description:
     "Cool Air Refrigeration (Fixxer) provides certified technicians at your door in 30 minutes in Patna. Guaranteed OEM parts for all major luxury brands. Local, licensed, and background-checked.",
   keywords: ["appliance repair Patna", "spare parts Patna", "Cool Air Refrigeration", "refrigerator repair Bihar", "AC service Patna"],
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
