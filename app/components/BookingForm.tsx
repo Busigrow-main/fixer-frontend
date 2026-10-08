@@ -358,32 +358,58 @@ export default function BookingForm({ initialServiceSlug, onSuccess, className =
   /* ---------- success ---------- */
   if (isSuccess) {
     return (
-      <div className="px-5 pb-6 pt-6 sm:px-6">
-        <div className="flex flex-col items-center text-center">
-          <div className="success-ring relative mb-4 flex h-[84px] w-[84px] items-center justify-center rounded-full bg-emerald-50">
-            <svg viewBox="0 0 52 52" className="h-11 w-11" fill="none" aria-hidden="true">
-              <circle cx="26" cy="26" r="24" stroke="#10b981" strokeWidth="3" className="success-circle" />
-              <path d="M15 27l8 8 14-16" stroke="#10b981" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" className="success-check" />
-            </svg>
-          </div>
-          <h3 className="font-headline text-[1.65rem] leading-tight tracking-tight text-zinc-900">You're booked</h3>
-          <p className="mt-1.5 max-w-[30ch] text-[13.5px] leading-snug text-zinc-500">
-            {selectedService?.name}
-            {selectedSub ? ` · ${selectedSub.name}` : ""}
-            <br />
-            {visitSummary}
-          </p>
+      <div className="px-5 pb-6 pt-5 sm:px-6" role="status" aria-live="polite">
+        <div className="relative overflow-hidden rounded-[24px] border border-primary/10 bg-gradient-to-b from-primary/[0.08] via-white to-white px-4 pb-5 pt-6 text-center shadow-[0_12px_30px_-22px_rgba(200,16,46,0.65)] sm:px-5">
+            <span className="pointer-events-none absolute -right-10 -top-12 h-32 w-32 rounded-full bg-secondary/[0.12] blur-2xl" aria-hidden="true" />
+            <div className="relative flex flex-col items-center">
+              <div className="success-ring relative mb-4 flex h-[84px] w-[84px] items-center justify-center rounded-full bg-primary-container text-primary shadow-[0_10px_24px_-14px_rgba(200,16,46,0.7)]">
+                <svg viewBox="0 0 52 52" className="h-11 w-11" fill="none" aria-hidden="true">
+                  <circle cx="26" cy="26" r="24" stroke="currentColor" strokeWidth="3" className="success-circle" />
+                  <path d="M15 27l8 8 14-16" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" className="success-check" />
+                </svg>
+              </div>
+              <span className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-primary">
+                <span className="material-symbols-outlined icon-filled text-[14px]">verified</span>
+                Booking confirmed
+              </span>
+              <h3 className="font-headline text-[1.7rem] leading-tight tracking-tight text-zinc-900">You&apos;re booked</h3>
+              <p className="mt-1.5 max-w-[30ch] text-[13.5px] leading-snug text-zinc-500">
+                Your repair request is in. We&apos;ll keep you posted every step of the way.
+              </p>
+            </div>
+
+            <div className="relative mt-5 rounded-2xl border border-zinc-200/80 bg-white/85 px-4 py-3 text-left shadow-sm">
+              <div className="flex items-start gap-3">
+                <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/[0.08] text-primary">
+                  <span className="material-symbols-outlined icon-filled text-[19px]">{iconFor(selectedService?.name)}</span>
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-zinc-400">Your appointment</p>
+                  <p className="mt-0.5 truncate text-sm font-semibold text-zinc-900">
+                    {selectedService?.name}
+                    {selectedSub ? ` · ${selectedSub.name}` : ""}
+                  </p>
+                  <p className="mt-1 flex items-center gap-1.5 text-[12.5px] text-zinc-500">
+                    <span className="material-symbols-outlined text-[15px] text-secondary">event</span>
+                    {visitSummary}
+                  </p>
+                </div>
+              </div>
+            </div>
         </div>
 
-        <ol className="relative mt-6 space-y-4">
-          <span className="absolute bottom-3 left-[17px] top-3 w-px bg-zinc-200" aria-hidden="true" />
-          {NEXT_STEPS.map((s, i) => (
-            <li key={s.title} className="relative flex items-start gap-3">
-              <span
-                className={`relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full ring-4 ring-white ${
-                  i === 0 ? "bg-primary text-white" : "bg-zinc-100 text-zinc-600"
-                }`}
-              >
+        <div className="px-1">
+            <p className="mt-5 text-[12px] font-bold uppercase tracking-[0.1em] text-zinc-400">What happens next</p>
+
+        <ol className="relative mt-3 space-y-4">
+            <span className="absolute bottom-3 left-[17px] top-3 w-px bg-primary/15" aria-hidden="true" />
+            {NEXT_STEPS.map((s, i) => (
+              <li key={s.title} className="relative flex items-start gap-3">
+                <span
+                  className={`relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full ring-4 ring-white ${
+                    i === 0 ? "bg-primary text-white" : "bg-zinc-100 text-zinc-600"
+                  }`}
+                >
                 <span className="material-symbols-outlined text-[18px]">{s.icon}</span>
               </span>
               <div className="pt-0.5">
@@ -397,13 +423,14 @@ export default function BookingForm({ initialServiceSlug, onSuccess, className =
         <button
           type="button"
           onClick={() => router.push("/my-bookings")}
-          className="mt-6 h-[52px] w-full rounded-2xl bg-zinc-900 text-sm font-semibold text-white transition hover:bg-zinc-800 active:scale-[0.99]"
+          className="mt-6 h-[52px] w-full rounded-2xl bg-primary text-sm font-semibold text-white shadow-[0_10px_20px_-12px_rgba(200,16,46,0.9)] transition hover:bg-[#a80d26] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 active:scale-[0.99]"
         >
           View my bookings
         </button>
-        <a href="/warranty" className="mt-3 block text-center text-[13px] font-semibold text-primary hover:underline">
+        <a href="/warranty" className="mt-3 block text-center text-[13px] font-semibold text-primary transition hover:text-[#a80d26] hover:underline">
           Read warranty policy
         </a>
+        </div>
 
         <style jsx>{`
           .success-circle {
