@@ -82,69 +82,8 @@ function Choice({
   onClick,
   children,
   className = "",
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <button
-      type="button"
-      aria-pressed={active}
-      onClick={onClick}
-      className={`relative rounded-2xl border text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 active:scale-[0.985] ${
-        active
-          ? "border-primary bg-primary/[0.05] shadow-[0_0_0_1px_var(--primary,#C8102E),0_8px_20px_-10px_rgba(200,16,46,0.5)]"
-          : "border-zinc-200 bg-white hover:-translate-y-px hover:border-zinc-300 hover:shadow-[0_6px_16px_-10px_rgba(0,0,0,0.25)]"
-      } ${className}`}
-    >
-      {children}
-    </button>
-  );
-}
-
-function Radio({ active }: { active: boolean }) {
-  return (
-    <span
-      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition ${
-        active ? "border-primary bg-primary" : "border-zinc-300 bg-white"
-      }`}
-    >
-      {active && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
-    </span>
-  );
-}
-
-function IconInput({ icon, valid, children }: { icon: string; valid?: boolean; children: React.ReactNode }) {
-  return (
-    <div className="relative">
-      <span className="material-symbols-outlined pointer-events-none absolute left-3.5 top-[15px] text-[21px] text-zinc-400">
-        {icon}
-      </span>
-      {children}
-      {valid && (
-        <span className="material-symbols-outlined icon-filled pointer-events-none absolute right-3.5 top-[15px] text-[20px] text-emerald-500 animate-in zoom-in duration-200">
-          check_circle
-        </span>
-      )}
-    </div>
-  );
-}
-
-function StepTitle({ title, sub }: { title: string; sub: string }) {
-  return (
-    <div>
-      <h3 className="font-headline text-[1.7rem] leading-[1.08] tracking-tight text-zinc-900">{title}</h3>
-      <p className="mt-2 max-w-[34ch] text-[13.5px] leading-snug text-zinc-500">{sub}</p>
-    </div>
-  );
-}
-
-/* ---------- main ---------- */
-
-export default function BookingForm({ initialServiceSlug, onSuccess, className = "" }: BookingFormProps) {
-  const { user, token, continueWithPhone } = useAuth();
+}: BookingFormProps) {
+  const { user, token, continueWithPhone, refreshUser } = useAuth();
   const router = useRouter();
   const { resumeDraft, clearResumeDraft } = useBooking();
 
@@ -344,6 +283,10 @@ export default function BookingForm({ initialServiceSlug, onSuccess, className =
       if (!res.ok) {
         const err = await res.json();
         throw new Error(err.message || "Failed to book service");
+      }
+
+      if (user) {
+        await refreshUser();
       }
 
       setIsSuccess(true);

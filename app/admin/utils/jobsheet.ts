@@ -413,23 +413,32 @@ export function openRetailInvoice(booking: any) {
         <strong>${booking.serviceId?.name || 'Service'} Fee</strong><br>
         <span style="font-size:11px; color:#666;">${booking.serviceType || 'Repair'} Service for ${brand} ${modelNo}</span>
       </td>
+      <td style="padding:12px; border:1px solid #eee; text-align:right;">1</td>
+      <td style="padding:12px; border:1px solid #eee; text-align:right;">₹${booking.invoiceData?.serviceTotal || 0}</td>
       <td style="padding:12px; border:1px solid #eee; text-align:right;">₹${booking.invoiceData?.serviceTotal || 0}</td>
     </tr>`,
-    // Spare Parts Row (Source of Truth)
-    ...(booking.invoiceData?.spareParts || []).map((p: any) => `
+    ...(booking.invoiceData?.spareParts || []).map((p: any) => {
+      const qty = Number(p.quantity) || 1;
+      const rate = p.warrantyCovered ? 0 : Number(p.cost) || 0;
+      const line = rate * qty;
+      return `
     <tr>
       <td style="padding:12px; border:1px solid #eee;">
-        <strong>${p.partName}</strong>${p.warrantyCovered ? ' <span style="font-size:10px; color:#16a34a; font-weight:700;">WARRANTY REPLACEMENT</span>' : ''}<br>
-        <span style="font-size:11px; color:#666;">Qty: ${p.quantity} | ${p.isThirdParty ? 'Third Party' : 'Inventory'} Component${p.serialNumber ? ` | S/N ${p.serialNumber}` : ''}</span>
+        <strong>${p.partName}</strong>${p.warrantyCovered ? ' <span style="font-size:10px; color:#16a34a; font-weight:700;">WARRANTY REPLACEMENT</span>' : ''}${Number(p.warrantyMonths) > 0 ? ` <span style="font-size:10px; color:#C8102E; font-weight:700;">${Number(p.warrantyMonths)}-MONTH WARRANTY</span>` : ''}<br>
+        <span style="font-size:11px; color:#666;">${p.isThirdParty ? 'Third Party' : 'Inventory'} Component${p.serialNumber ? ` | S/N ${p.serialNumber}` : ''}</span>
       </td>
-      <td style="padding:12px; border:1px solid #eee; text-align:right;">₹${p.warrantyCovered ? 0 : (p.cost * p.quantity)}</td>
-    </tr>`),
-    // Additional Charges
+      <td style="padding:12px; border:1px solid #eee; text-align:right;">${qty}</td>
+      <td style="padding:12px; border:1px solid #eee; text-align:right;">₹${rate}</td>
+      <td style="padding:12px; border:1px solid #eee; text-align:right;">₹${line}</td>
+    </tr>`;
+    }),
     ...(booking.invoiceData?.additionalCharges || []).map((c: any) => `
     <tr>
       <td style="padding:12px; border:1px solid #eee;">
         <strong>${c.label}</strong>
       </td>
+      <td style="padding:12px; border:1px solid #eee; text-align:right;">1</td>
+      <td style="padding:12px; border:1px solid #eee; text-align:right;">₹${c.amount}</td>
       <td style="padding:12px; border:1px solid #eee; text-align:right;">₹${c.amount}</td>
     </tr>
     `)
@@ -468,7 +477,7 @@ export function openRetailInvoice(booking: any) {
       <p style="margin-top: 8px; color: #71717a;">Reliable Repairs, Master Technicians.</p>
     </div>
     <div class="invoice-label">
-      <h1 style="margin: 0; font-size: 32px; font-weight: 800; letter-spacing: -1px;">Retail Invoice</h1>
+      <h1 style="margin: 0; font-size: 32px; font-weight: 800; letter-spacing: -1px;">Service Bill</h1>
       <p style="margin: 4px 0 0 0; font-weight: 700; font-size: 16px;">#${invoiceNo}</p>
       <p style="margin: 2px 0 0 0; font-weight: 500; color: #71717a;">Date: ${date}</p>
     </div>
@@ -495,6 +504,8 @@ export function openRetailInvoice(booking: any) {
     <thead>
       <tr>
         <th>Description of Service / Part</th>
+        <th style="text-align:right;">Qty</th>
+        <th style="text-align:right;">Rate</th>
         <th style="text-align:right;">Amount (INR)</th>
       </tr>
     </thead>
@@ -504,18 +515,11 @@ export function openRetailInvoice(booking: any) {
   </table>
 
   <div class="totals">
-    <div class="total-row">
-      <span>Subtotal</span>
-      <span>₹${booking.invoiceData?.totalAmount || 0}</span>
-    </div>
-    <div class="total-row" style="color: #71717a;">
-      <span>Taxes (Included)</span>
-      <span>₹0.00</span>
-    </div>
     <div class="total-row grand-total">
       <span>Grand Total</span>
       <span>₹${booking.invoiceData?.totalAmount || 0}</span>
     </div>
+    <p style="margin: 10px 0 0 0; font-size: 11px; color: #71717a;">GST is not added on this service bill. The total matches the admin billing breakdown.</p>
   </div>
 
   <div style="margin-top: 50px; padding: 30px; background: #fdfdfd; border-radius: 20px; border: 1px solid #f1f1f1; position: relative; overflow: hidden;">
@@ -535,8 +539,15 @@ export function openRetailInvoice(booking: any) {
                ${booking.jobDetails?.warrantyPeriod || '60 Days'} Master Warranty
              </p>
              <p style="margin: 4px 0 0 0; color: #71717a; font-size: 11px; line-height: 1.4;">
-               Covers labour for the same fault for ${booking.jobDetails?.warrantyPeriod || '60 Days'} from job completion,
-               and genuine Fixxer-installed parts for 6 months (unless a longer manufacturer warranty applies).
+               Covers labour for the same fault for ${booking.jobDetails?.warrantyPeriod || '60 Days'} from job completion.
+               ${(booking.invoiceData?.spareParts || [])
+                 .map((p: any) => {
+                   if (p.warrantyCovered) return `${p.partName}: warranty replacement, no charge`;
+                   if (Number(p.warrantyMonths) > 0) return `${p.partName}: ${Number(p.warrantyMonths)}-month part warranty`;
+                   return '';
+                 })
+                 .filter(Boolean)
+                 .join('. ')}
                Exclusions apply (misuse, third-party parts, unrelated faults, consumables unless listed).
                Full policy: ${typeof window !== 'undefined' ? window.location.origin : ''}/warranty — keep this invoice for claims.
              </p>
@@ -561,6 +572,8 @@ export function openRetailInvoice(booking: any) {
 
   <div class="footer">
     <p>&copy; 2026 Fixxer - Precision Home Services. All rights reserved.</p>
+    <p style="font-weight: 600;">This is a computer generated service bill and does not require a physical signature.</p>
+    <p>www.fixer.in | Support: support@fixer.in | Toll Free: 1800-FIXXER</p>
     <p style="font-weight: 600;">This is a computer generated tax invoice and does not require a physical signature.</p>
     <p>www.fixxer.in | Support: support@fixxer.in | Toll Free: 1800-FIXXER</p>
   </div>

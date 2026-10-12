@@ -6,7 +6,7 @@ import { API_URL as API_ROOT } from "@/app/config";
 
 interface User {
   _id: string;
-  phone: string;
+  phone?: string;
   fullName?: string;
   email?: string;
   role: string;
@@ -19,6 +19,8 @@ interface AuthContextType {
   login: (phone: string, password: string) => Promise<void>;
   /** Phone-only sign-in; returns JWT for immediate API calls. */
   continueWithPhone: (phone: string, fullName?: string) => Promise<string>;
+  /** Google Identity Services ID token → Fixxer JWT. Phone is saved later from the booking form. */
+  continueWithGoogle: (idToken: string) => Promise<string>;
   register: (data: any) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
@@ -107,6 +109,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return persistSession(access_token);
   };
 
+  const continueWithGoogle = async (idToken: string) => {
+    const res = await fetch(`${API_URL}/google`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ idToken }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      const body = err && typeof err.message === "object" ? err.message : err;
+      const message =
+        typeof body?.message === "string"
+          ? body.message
+          : typeof err.message === "string"
+            ? err.message
+            : "Google sign-in failed";
+      throw new Error(message);
+    }
+
+    const { access_token } = await res.json();
+    return persistSession(access_token);
+  };
+
   const register = async (data: any) => {
     const res = await fetch(`${API_URL}/register`, {
       method: "POST",
@@ -136,7 +161,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, token, loading, login, continueWithPhone, register, logout, refreshUser }}
+      value={{
+        user,
+        token,
+        loading,
+        login,
+        continueWithPhone,
+        continueWithGoogle,
+        register,
+        logout,
+        refreshUser,
+      }}
     >
       {children}
     </AuthContext.Provider>
