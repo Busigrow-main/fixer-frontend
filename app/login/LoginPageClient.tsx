@@ -14,6 +14,7 @@ import {
 } from "@/app/lib/pending-booking";
 import type { PendingBookingDraft } from "@/app/lib/pending-booking";
 import { isValidPhone } from "@/app/lib/auth";
+import GoogleSignInButton from "@/app/components/GoogleSignInButton";
 
 function LoginFormInner() {
   const [phone, setPhone] = useState("");
@@ -23,12 +24,21 @@ function LoginFormInner() {
   const [pendingDraft, setPendingDraft] = useState<PendingBookingDraft | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { continueWithPhone, token } = useAuth();
+  const { continueWithPhone, continueWithGoogle, token } = useAuth();
 
   const redirect = safeAppRedirect(searchParams.get("redirect"));
   const source = searchParams.get("source");
   const isBookingFlow = source === BOOKING_FLOW_SOURCE;
   const authQuery = searchParams.toString();
+
+  const afterAuth = async () => {
+    const draft = loadPendingBookingDraft();
+    if (draft && isBookingFlow) {
+      setPendingDraft(draft);
+      return;
+    }
+    router.push(redirect);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,14 +53,20 @@ function LoginFormInner() {
 
     try {
       await continueWithPhone(phone, fullName);
-      const draft = loadPendingBookingDraft();
-      if (draft && isBookingFlow) {
-        setPendingDraft(draft);
-        return;
-      }
-      router.push(redirect);
+      await afterAuth();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Could not continue. Try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogle = async (idToken: string) => {
+    setError("");
+    setLoading(true);
+    try {
+      await continueWithGoogle(idToken);
+      await afterAuth();
     } finally {
       setLoading(false);
     }
@@ -138,6 +154,10 @@ function LoginFormInner() {
               )}
             </button>
           </form>
+
+          <div className="mt-6">
+            <GoogleSignInButton onCredential={handleGoogle} disabled={loading} />
+          </div>
 
           <p className="mt-6 text-center text-xs text-on-surface-variant leading-relaxed">
             New here? We&apos;ll create your account automatically. No password to remember.

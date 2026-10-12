@@ -120,6 +120,7 @@ export function buildCustomerPricingSummary(booking: {
     Number(booking.estimatedAmount) > 0 ? Number(booking.estimatedAmount) : serviceTotal;
 
   const hasExtras = partsTotal > 0 || additionalChargesTotal > 0;
+  const billDiffersFromQuote = Math.abs(totalAmount - estimatedAmount) > 0.009;
   const isFinal =
     booking.isBilled === true ||
     booking.jobClosed === true ||
@@ -129,7 +130,7 @@ export function buildCustomerPricingSummary(booking: {
 
   let displayLabel: CustomerPricingSummary["displayLabel"] = "Estimated";
   if (isFinal) displayLabel = "Final";
-  else if (hasExtras) displayLabel = "Current total";
+  else if (hasExtras || billDiffersFromQuote) displayLabel = "Current total";
 
   return {
     estimatedAmount,
