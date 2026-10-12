@@ -1,218 +1,144 @@
 "use client";
 
-import React, { useState } from 'react';
-import { 
-  Truck, 
-  ShieldCheck, 
-  Clock, 
-  Users, 
-  Building2, 
+import Link from "next/link";
+import {
   ArrowRight,
-  Sparkles,
-  Zap
-} from 'lucide-react';
-import { useAuth } from "@/app/context/AuthContext";
-import Link from 'next/link';
-import { cn } from '@/app/lib/utils';
-import LeadFormModal from '@/app/components/LeadFormModal';
+  Camera,
+  CheckCircle2,
+  HelpCircle,
+  ShieldCheck,
+  Wrench,
+} from "lucide-react";
 
-export const ServicePromiseGrid = () => {
-  const promises = [
-    {
-      icon: <Truck className="w-6 h-6 text-primary" />,
-      title: "Same Day Delivery",
-      desc: "Fast delivery across Patna & Bihar for urgent repairs."
-    },
-    {
-      icon: <ShieldCheck className="w-6 h-6 text-primary" />,
-      title: "100% Genuine",
-      desc: "Sourced directly from OEM manufacturers with warranty."
-    },
-    {
-      icon: <Clock className="w-6 h-6 text-primary" />,
-      title: "24/7 Support",
-      desc: "Technical guidance to find the right part for your model."
-    },
-    {
-      icon: <Zap className="w-6 h-6 text-primary" />,
-      title: "Expert Fitting",
-      desc: "Option to book a verified technician for installation."
-    }
-  ];
-
-  return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-      {promises.map((p, i) => (
-        <div key={i} className="p-6 bg-white border border-zinc-100 rounded-3xl hover:shadow-xl transition-all group">
-          <div className="w-12 h-12 rounded-2xl bg-zinc-50 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-            {p.icon}
-          </div>
-          <h3 className="text-sm font-black text-zinc-900 mb-2 uppercase tracking-tight">{p.title}</h3>
-          <p className="text-xs text-zinc-500 font-medium leading-relaxed">{p.desc}</p>
-        </div>
-      ))}
-    </div>
-  );
+type PromotionalSectionsProps = {
+  className?: string;
 };
 
-export const UniversalPartsTeaser = () => {
+export default function PromotionalSections({
+  className = "",
+}: PromotionalSectionsProps) {
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-zinc-900 p-8 md:p-12 text-white">
-      <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 blur-[100px] -mr-32 -mt-32" />
-      
-      <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
-        <div className="max-w-xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full text-[10px] font-black uppercase tracking-widest text-primary mb-6">
-            <Sparkles className="w-3 h-3" />
-            Technician Choice
+    <section
+      className={`grid gap-3 sm:grid-cols-2 lg:grid-cols-3 ${className}`}
+      aria-label="Fixxer Shop help and support"
+    >
+      {/* Identify a part */}
+      <Link
+        href="/spare-parts/help"
+        className="group relative overflow-hidden rounded-[22px] border border-slate-200 bg-white p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_14px_35px_rgba(15,23,42,0.08)]"
+      >
+        <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-primary/[0.045] transition-transform duration-500 group-hover:scale-125" />
+
+        <div className="relative">
+          <div className="flex items-start justify-between gap-4">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/[0.08] text-primary">
+              <HelpCircle className="h-5 w-5" />
+            </span>
+
+            <ArrowRight className="h-4 w-4 text-slate-300 transition-all group-hover:translate-x-0.5 group-hover:text-primary" />
           </div>
-          <h2 className="text-3xl md:text-4xl font-black mb-4">Universal Compatibility Parts</h2>
-          <p className="text-zinc-400 font-medium text-sm md:text-base leading-relaxed">
-            Looking for a reliable alternative? Our universal range fits multiple brands like Samsung, LG, and Whirlpool, offering the same performance at a better price.
+
+          <h3 className="mt-4 text-sm font-black text-slate-950 sm:text-base">
+            Not sure which part you need?
+          </h3>
+
+          <p className="mt-1.5 text-xs leading-5 text-slate-500">
+            Tell us about your appliance and the problem. We&apos;ll help
+            identify the right part.
           </p>
-          <div className="flex flex-wrap gap-4 mt-8">
-            <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-xl border border-white/10">
-               <span className="w-2 h-2 rounded-full bg-green-500" />
-               <span className="text-xs font-bold">100+ Brands Compatible</span>
-            </div>
-            <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-xl border border-white/10">
-               <span className="w-2 h-2 rounded-full bg-blue-500" />
-               <span className="text-xs font-bold">Easy Installation</span>
-            </div>
+
+          <span className="mt-4 inline-flex items-center gap-1.5 text-[11px] font-black text-primary">
+            Get help identifying it
+            <ArrowRight className="h-3 w-3" />
+          </span>
+        </div>
+      </Link>
+
+      {/* Photo help */}
+      <Link
+        href="/spare-parts/help"
+        className="group relative overflow-hidden rounded-[22px] border border-slate-200 bg-white p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_14px_35px_rgba(15,23,42,0.08)]"
+      >
+        <div className="relative">
+          <div className="flex items-start justify-between gap-4">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 transition-colors group-hover:bg-primary/[0.08] group-hover:text-primary">
+              <Camera className="h-5 w-5" />
+            </span>
+
+            <ArrowRight className="h-4 w-4 text-slate-300 transition-all group-hover:translate-x-0.5 group-hover:text-primary" />
+          </div>
+
+          <h3 className="mt-4 text-sm font-black text-slate-950 sm:text-base">
+            Have the old part?
+          </h3>
+
+          <p className="mt-1.5 text-xs leading-5 text-slate-500">
+            Use our assisted request flow to describe what you have and what
+            needs replacing.
+          </p>
+
+          <span className="mt-4 inline-flex items-center gap-1.5 text-[11px] font-black text-primary">
+            Start a part request
+            <ArrowRight className="h-3 w-3" />
+          </span>
+        </div>
+      </Link>
+
+      {/* Trust / support */}
+      <div className="relative overflow-hidden rounded-[22px] border border-slate-200 bg-slate-950 p-5 text-white sm:col-span-2 lg:col-span-1">
+        <div className="absolute -bottom-10 -right-10 h-28 w-28 rounded-full bg-primary/20 blur-2xl" />
+
+        <div className="relative">
+          <div className="flex items-start justify-between gap-4">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-white">
+              <ShieldCheck className="h-5 w-5" />
+            </span>
+
+            <span className="rounded-full border border-white/10 bg-white/[0.06] px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-white/60">
+              Fixxer support
+            </span>
+          </div>
+
+          <h3 className="mt-4 text-sm font-black sm:text-base">
+            Buy with confidence
+          </h3>
+
+          <div className="mt-3 space-y-2">
+            <TrustRow
+              icon={<CheckCircle2 />}
+              text="Verified catalog information"
+            />
+
+            <TrustRow
+              icon={<Wrench />}
+              text="Technician support when needed"
+            />
+
+            <TrustRow
+              icon={<ShieldCheck />}
+              text="Request first — no payment required"
+            />
           </div>
         </div>
-        
-        <Link 
-          href="/spare-parts?universal=true" 
-          className="h-16 px-10 bg-primary text-white rounded-2xl flex items-center justify-center font-black uppercase tracking-widest text-sm shadow-2xl shadow-primary/40 hover:scale-105 transition-all"
-        >
-          Explore Universal Range
-          <ArrowRight className="w-5 h-5 ml-2" />
-        </Link>
       </div>
+    </section>
+  );
+}
+
+function TrustRow({
+  icon,
+  text,
+}: {
+  icon: React.ReactNode;
+  text: string;
+}) {
+  return (
+    <div className="flex items-center gap-2.5 text-[10px] font-semibold text-white/65">
+      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-white/[0.08] text-primary">
+        {icon}
+      </span>
+
+      <span>{text}</span>
     </div>
   );
-};
-
-export const BulkBusinessInquiry = () => {
-  const [activeForm, setActiveForm] = useState<
-    "business" | "technician" | null
-  >(null);
-
-  const { token } = useAuth();
-
-  const handleLeadSubmit = async (
-    data: Record<string, string>,
-  ) => {
-    if (!token) {
-      throw new Error("Please login to submit this form.");
-    }
-
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081/api/v1"}/leads`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          type: activeForm === "business" ? "BUSINESS" : "TECHNICIAN",
-          name: data.name,
-          phone: data.phone.trim(),
-          email: data.email.trim() || undefined,
-
-          ...(activeForm === "business"
-            ? {
-                shopName: data.shopName,
-                shopAddress: data.shopAddress,
-              }
-            : {
-                address: data.address,
-                applianceExpertise: data.applianceExpertise,
-              }),
-        }),
-      },
-    );
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        result?.message || "Failed to submit your request.",
-      );
-    }
-
-    console.log("LEAD CREATED:", result);
-  };
-
-  return (
-    <>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Business */}
-        <div className="p-8 md:p-12 rounded-[2.5rem] bg-primary/5 border border-primary/10 flex flex-col justify-between">
-          <div>
-            <div className="w-14 h-14 rounded-2xl bg-primary text-white flex items-center justify-center mb-8">
-              <Building2 className="w-8 h-8" />
-            </div>
-
-            <h3 className="text-2xl font-black text-zinc-900 mb-4 tracking-tight">
-              For Businesses & Retailers
-            </h3>
-
-            <p className="text-zinc-600 font-medium text-sm leading-relaxed mb-8">
-              Are you a repair shop owner or a local retailer in Bihar?
-              Get exclusive trade pricing, credit facilities, and prioritized
-              logistics for bulk orders.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setActiveForm("business")}
-            className="flex items-center gap-3 text-primary font-black uppercase text-xs tracking-widest hover:translate-x-2 transition-transform"
-          >
-            Apply for Business Account
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* Technician */}
-        <div className="p-8 md:p-12 rounded-[2.5rem] bg-zinc-900 border border-zinc-800 flex flex-col justify-between text-white">
-          <div>
-            <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center mb-8">
-              <Users className="w-8 h-8 text-primary" />
-            </div>
-
-            <h3 className="text-2xl font-black mb-4 tracking-tight">
-              Join as a Technician
-            </h3>
-
-            <p className="text-zinc-400 font-medium text-sm leading-relaxed mb-8">
-              Verified technicians get special discounts on every spare part
-              purchase and access to our technical training workshops.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setActiveForm("technician")}
-            className="flex items-center gap-3 text-white font-black uppercase text-xs tracking-widest hover:translate-x-2 transition-transform"
-          >
-            Become a Partner
-            <ArrowRight className="w-4 h-4 text-primary" />
-          </button>
-        </div>
-      </div>
-
-      {/* Popup */}
-      {activeForm && (
-        <LeadFormModal
-          type={activeForm}
-          onClose={() => setActiveForm(null)}
-          onSubmit={handleLeadSubmit}
-        />
-      )}
-    </>
-  );
-};
+}

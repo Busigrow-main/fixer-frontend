@@ -202,7 +202,7 @@ export default function Navbar() {
 
           {/* Actions */}
           <div className="flex items-center gap-3">
-            {!hasInPageSearch && (
+            {!hasInPageSearch && pathname !== "/my-bookings" && (
               <form
                 onSubmit={handleGlobalSearchSubmit}
                 className="hidden lg:flex items-center bg-surface-container rounded-full px-4 py-2.5 border border-outline gap-2 transition-all duration-200 focus-within:border-primary/30 focus-within:shadow-sm"
@@ -301,7 +301,7 @@ export default function Navbar() {
           {/* Right actions */}
           <div className="flex items-center gap-1">
             {/* Search - Icon only for mobile if subpage */}
-            {isSubpage && !hasInPageSearch && (
+            {isSubpage && !hasInPageSearch && pathname !== "/my-bookings" && (
               <button
                 onClick={() => router.push("/spare-parts")}
                 className="w-10 h-10 flex items-center justify-center rounded-full active:bg-surface-container transition-colors"

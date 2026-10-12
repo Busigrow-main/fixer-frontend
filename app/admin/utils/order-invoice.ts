@@ -6,8 +6,8 @@ const SELLER = {
   gstin: "19AABCF1234A1Z5",
   pan: "AABCF1234A",
   phone: "+91 70047 71388",
-  email: "support@fixer.in",
-  website: "www.fixer.in",
+  email: "support@fixxer.in",
+  website: "www.fixxer.in",
 };
 
 function escapeHtml(value: unknown): string {

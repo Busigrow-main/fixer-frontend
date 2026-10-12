@@ -7,7 +7,7 @@ export default function InsuranceBanner() {
   const { openBooking } = useBooking();
 
   return (
-    <section className="container mx-auto px-4 sm:px-6 mb-12 md:my-20">
+    <section className="container mx-auto my-12 max-w-screen-2xl px-5 sm:px-6 md:my-20 md:px-10 xl:px-12">
       <div className="relative bg-zinc-900 rounded-[2rem] md:rounded-[3rem] p-8 md:p-12 overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8 border border-white/10 shadow-2xl">
         <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/20 blur-[100px] -translate-y-1/2 translate-x-1/4 rounded-full pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-primary/10 blur-[80px] translate-y-1/2 -translate-x-1/4 rounded-full pointer-events-none" />
