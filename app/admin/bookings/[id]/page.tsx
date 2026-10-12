@@ -881,9 +881,16 @@ export default function BookingDetailPage() {
                             <span className="admin-badge admin-badge-success" style={{ zoom: 0.8 }}>Inventory</span>
                           )}
                         </td>
-                        <td style={{ padding: "12px 0" }}>{p.quantity}</td>
+                        <td style={{ padding: "12px 0" }}>{p.quantity || 1}</td>
                         <td style={{ padding: "12px 0", textAlign: "right", fontWeight: 600 }}>
-                          {p.warrantyCovered ? "Warranty ₹0" : `₹${p.cost}`}
+                          {p.warrantyCovered
+                            ? "Warranty ₹0"
+                            : `₹${((Number(p.cost) || 0) * (Number(p.quantity) || 1)).toLocaleString("en-IN")}`}
+                          {!p.warrantyCovered && Number(p.quantity) > 1 ? (
+                            <div style={{ fontSize: 11, fontWeight: 500, color: "var(--admin-text-dim)" }}>
+                              ₹{p.cost} × {p.quantity}
+                            </div>
+                          ) : null}
                         </td>
                       </tr>
                       );
@@ -1140,14 +1147,46 @@ export default function BookingDetailPage() {
                 </button>
               )}
 
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--admin-text-muted)", letterSpacing: 0.6, textTransform: "uppercase" }}>
+                  Spare parts on the bill
+                </div>
+                {(booking.invoiceData?.spareParts || []).length === 0 ? (
+                  <div style={{ fontSize: 13, color: "var(--admin-text-dim)" }}>No parts on the bill.</div>
+                ) : (
+                  (booking.invoiceData.spareParts as any[]).map((p, idx) => {
+                    const qty = Number(p.quantity) || 1;
+                    const line = p.warrantyCovered ? 0 : (Number(p.cost) || 0) * qty;
+                    return (
+                      <div key={`${p.partName}-${p.serialNumber || idx}`} style={{ display: "flex", justifyContent: "space-between", gap: 12, fontSize: 13 }}>
+                        <span>
+                          {p.partName || "Spare part"}
+                          <span style={{ color: "var(--admin-text-dim)" }}> · qty {qty}{p.serialNumber ? ` · ${p.serialNumber}` : ""}</span>
+                        </span>
+                        <span style={{ fontWeight: 600 }}>{p.warrantyCovered ? "Warranty ₹0" : `₹${line.toLocaleString("en-IN")}`}</span>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginTop: 8 }}>
                 <span>Spare Parts Total:</span>
-                <span style={{ fontWeight: 600 }}>₹{booking.invoiceData?.partsTotal || 0}</span>
+                <span style={{ fontWeight: 600 }}>₹{(booking.invoiceData?.partsTotal || 0).toLocaleString("en-IN")}</span>
               </div>
 
               <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, borderTop: "1px solid var(--admin-border)", paddingTop: 12, marginTop: 4, fontSize: 15 }}>
                 <span>Grand Total:</span>
-                <span style={{ color: 'var(--admin-primary)' }}>₹{booking.invoiceData?.totalAmount || 0}</span>
+                <span style={{ color: 'var(--admin-primary)' }}>
+                  ₹{(
+                    Number(serviceFee || 0) +
+                    additionalCharges.reduce((sum, c) => sum + (Number(c.amount) || 0), 0) +
+                    Number(booking.invoiceData?.partsTotal || 0)
+                  ).toLocaleString("en-IN")}
+                </span>
+              </div>
+              <div style={{ fontSize: 11, color: "var(--admin-text-dim)" }}>
+                This total is what the customer is billed: service charge + other charges + parts. GST is not added on top.
               </div>
 
               {booking.technicianSettlement && (
@@ -1156,12 +1195,16 @@ export default function BookingDetailPage() {
                     This collection — Fixxer vs technician
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>Customer paid</span>
+                    <span>Customer billed</span>
                     <span>₹{booking.technicianSettlement.customerTotal ?? booking.invoiceData?.totalAmount ?? 0}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>Service charges (100% to technician)</span>
-                    <span>₹{booking.technicianSettlement.labour}</span>
+                    <span>Base service charge (to technician)</span>
+                    <span>₹{(Number(booking.technicianSettlement.labour) || 0) - (Number(booking.technicianSettlement.additionalTotal) || 0)}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Other charges (to technician)</span>
+                    <span>₹{booking.technicianSettlement.additionalTotal || 0}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span>Inventory parts (10% commission)</span>

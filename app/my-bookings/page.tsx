@@ -656,9 +656,10 @@ function RepairBookingCard({
   const pricing = buildCustomerPricingSummary(booking);
   const scheduleLabel = formatScheduleLabel(booking);
   const showAmount = pricing.estimatedAmount > 0 || pricing.totalAmount > 0;
-  const displayAmount = pricing.isFinal || pricing.hasExtras
-    ? pricing.totalAmount
-    : pricing.estimatedAmount || pricing.serviceTotal;
+  const displayAmount =
+    pricing.displayLabel === "Estimated"
+      ? pricing.estimatedAmount || pricing.serviceTotal || pricing.totalAmount
+      : pricing.totalAmount;
 
   return (
     <article className="rounded-3xl border border-outline bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow">
@@ -709,14 +710,21 @@ function RepairBookingCard({
               {(booking.isWarrantyClaim ? booking.originalParts : booking.installedParts)?.map((p: any) => (
                 <div key={p.usageId} className="flex justify-between gap-3 text-sm">
                   <div>
-                    <p className="font-medium text-on-surface">{p.partName}</p>
+                    <p className="font-medium text-on-surface">
+                      {p.partName}
+                      {Number(p.quantity) > 1 ? ` × ${p.quantity}` : ""}
+                    </p>
                     <p className="text-xs text-on-surface-variant">
                       {p.serialNumber ? `Serial ${p.serialNumber}` : "No serial"}
                       {p.covered ? " · still under warranty" : p.warrantyStatus && p.warrantyStatus !== "NONE" ? ` · ${p.warrantyStatus.toLowerCase()}` : ""}
                     </p>
                   </div>
-                  {p.covered ? (
+                  {p.covered || p.warrantyCovered ? (
                     <span className="text-[10px] font-black uppercase tracking-wider text-green-700 shrink-0">Covered</span>
+                  ) : Number(p.cost) > 0 ? (
+                    <span className="text-sm font-semibold text-on-surface shrink-0">
+                      {formatInr(Number(p.cost) * (Number(p.quantity) || 1))}
+                    </span>
                   ) : null}
                 </div>
               ))}
@@ -809,38 +817,61 @@ function RepairBookingCard({
               <p className="text-3xl font-headline font-bold text-on-surface">
                 {formatInr(displayAmount)}
               </p>
-              <div className="mt-3 text-left space-y-1.5 text-xs text-on-surface-variant border-t border-outline pt-3">
-                <div className="flex justify-between gap-3">
-                  <span>Base service</span>
-                  <span className="font-medium text-on-surface">
-                    {formatInr(pricing.serviceTotal || pricing.estimatedAmount)}
-                  </span>
-                </div>
-                {pricing.partsTotal > 0 ? (
+              <div className="mt-4 text-left border-t border-outline pt-3">
+                <p className="text-[10px] uppercase tracking-widest font-black text-on-surface-variant mb-3">
+                  Cost breakdown
+                </p>
+                <div className="space-y-3 text-sm">
                   <div className="flex justify-between gap-3">
-                    <span>Parts</span>
-                    <span className="font-medium text-on-surface">{formatInr(pricing.partsTotal)}</span>
-                  </div>
-                ) : null}
-                {pricing.additionalChargesTotal > 0 ? (
-                  <div className="flex justify-between gap-3">
-                    <span>Additional</span>
-                    <span className="font-medium text-on-surface">
-                      {formatInr(pricing.additionalChargesTotal)}
+                    <div>
+                      <p className="text-on-surface">Base service</p>
+                      <p className="text-[11px] text-on-surface-variant">Visit charge</p>
+                    </div>
+                    <span className="font-medium text-on-surface shrink-0">
+                      {formatInr(pricing.serviceTotal || pricing.estimatedAmount)}
                     </span>
                   </div>
-                ) : null}
-                {(booking.invoiceData?.additionalCharges || []).map(
-                  (c: { label?: string; amount?: number }, i: number) =>
-                    c?.label && Number(c.amount) > 0 ? (
-                      <div key={`${c.label}-${i}`} className="flex justify-between gap-3 pl-2 opacity-80">
-                        <span>{c.label}</span>
-                        <span>{formatInr(Number(c.amount))}</span>
+                  {(booking.invoiceData?.spareParts || []).map((p: any, i: number) => {
+                    const qty = Number(p.quantity) || 1;
+                    const rate = p.warrantyCovered ? 0 : Number(p.cost) || 0;
+                    return (
+                      <div key={`${p.partName}-${p.serialNumber || i}`} className="flex justify-between gap-3">
+                        <div>
+                          <p className="text-on-surface">{p.partName || "Spare part"}</p>
+                          <p className="text-[11px] text-on-surface-variant">
+                            Qty {qty} · {formatInr(rate)} each
+                            {p.serialNumber ? ` · ${p.serialNumber}` : ""}
+                            {p.warrantyCovered ? " · warranty" : ""}
+                          </p>
+                        </div>
+                        <span className="font-medium text-on-surface shrink-0">{formatInr(rate * qty)}</span>
                       </div>
-                    ) : null,
-                )}
+                    );
+                  })}
+                  {(booking.invoiceData?.additionalCharges || []).map(
+                    (c: { label?: string; amount?: number }, i: number) => (
+                      <div key={`${c.label}-${i}`} className="flex justify-between gap-3">
+                        <div>
+                          <p className="text-on-surface">{c.label || "Other charge"}</p>
+                          <p className="text-[11px] text-on-surface-variant">Other charge</p>
+                        </div>
+                        <span className="font-medium text-on-surface shrink-0">{formatInr(Number(c.amount) || 0)}</span>
+                      </div>
+                    ),
+                  )}
+                </div>
+                <div className="mt-3 pt-3 border-t border-outline flex justify-between gap-3 text-sm font-semibold text-on-surface">
+                  <span>{pricing.displayLabel} total</span>
+                  <span>{formatInr(displayAmount)}</span>
+                </div>
+                {pricing.estimatedAmount > 0 && pricing.estimatedAmount !== displayAmount ? (
+                  <p className="text-[11px] text-on-surface-variant mt-2">
+                    Original estimate {formatInr(pricing.estimatedAmount)}
+                  </p>
+                ) : null}
+                <p className="text-[11px] text-on-surface-variant mt-2">GST is not added on top.</p>
               </div>
-              <p className="text-xs text-on-surface-variant mt-3">
+              <p className="text-xs text-on-surface-variant mt-3 text-left">
                 {pricing.isFinal
                   ? "Final amount after approved work. No upfront payment required at booking."
                   : pricing.hasExtras

@@ -77,6 +77,15 @@ describe("customer-booking helpers", () => {
       expect(formatInr(undefined as unknown as number)).toBe("₹0");
     });
 
+    it("shows the admin service charge when it differs from the original estimate", () => {
+      const summary = buildCustomerPricingSummary({
+        estimatedAmount: 499,
+        invoiceData: { serviceTotal: 349, partsTotal: 0, totalAmount: 349 },
+      });
+      expect(summary.displayLabel).toBe("Current total");
+      expect(summary.totalAmount).toBe(349);
+    });
+
     it("marks unpaid incomplete bookings as estimated even without estimate field", () => {
       const summary = buildCustomerPricingSummary({
         invoiceData: { serviceTotal: 249, partsTotal: 0, totalAmount: 249 },
