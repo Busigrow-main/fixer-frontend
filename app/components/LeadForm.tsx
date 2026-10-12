@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
+import { API_URL } from "@/app/config";
+import { useAuth } from "@/app/context/AuthContext";
 
 type LeadFormType = "business" | "technician";
 
@@ -11,6 +13,7 @@ interface LeadFormProps {
 
 export default function LeadForm({ type, onSubmit }: LeadFormProps) {
   const isBusiness = type === "business";
+  const { token, continueWithPhone } = useAuth();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -38,6 +41,11 @@ export default function LeadForm({ type, onSubmit }: LeadFormProps) {
     setError("");
 
     const phone = formData.phone.trim();
+
+    if (!formData.name.trim()) {
+      setError("Please enter your full name.");
+      return;
+    }
 
     // Basic phone validation
     if (!/^\d{10}$/.test(phone)) {
@@ -70,6 +78,51 @@ export default function LeadForm({ type, onSubmit }: LeadFormProps) {
     setIsSubmitting(true);
 
     try {
+      let authToken = token;
+
+      if (!authToken) {
+        authToken = await continueWithPhone(
+          phone,
+          formData.name.trim(),
+        );
+      }
+
+      const response = await fetch(`${API_URL}/leads`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+          type: isBusiness ? "BUSINESS" : "TECHNICIAN",
+          name: formData.name.trim(),
+          phone,
+          email: formData.email.trim() || undefined,
+          ...(isBusiness
+            ? {
+                shopName: formData.shopName.trim(),
+                shopAddress: formData.shopAddress.trim(),
+              }
+            : {
+                address: formData.address.trim(),
+                applianceExpertise:
+                  formData.applianceExpertise.trim(),
+              }),
+        }),
+      });
+
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const message = Array.isArray(result?.message)
+          ? result.message.join(", ")
+          : result?.message;
+
+        throw new Error(
+          message || "We could not submit your request.",
+        );
+      }
+
       if (onSubmit) {
         await onSubmit(formData);
       }

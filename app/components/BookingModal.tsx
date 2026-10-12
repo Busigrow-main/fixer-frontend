@@ -12,24 +12,15 @@ export default function BookingModal() {
 
   useEffect(() => {
     if (!pathname) return;
-
-    if (pathname === "/login" || pathname === "/register") {
-      closeBooking();
-    }
+    if (pathname === "/login" || pathname === "/register") closeBooking();
   }, [pathname, closeBooking]);
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        closeBooking();
-      }
+      if (e.key === "Escape") closeBooking();
     };
-
     window.addEventListener("keydown", handleEsc);
-
-    return () => {
-      window.removeEventListener("keydown", handleEsc);
-    };
+    return () => window.removeEventListener("keydown", handleEsc);
   }, [closeBooking]);
 
   useEffect(() => {
@@ -38,153 +29,96 @@ export default function BookingModal() {
       setMounted(true);
     } else {
       document.body.style.overflow = "unset";
-
-      const timer = setTimeout(() => {
-        setMounted(false);
-      }, 300);
-
+      const timer = setTimeout(() => setMounted(false), 300);
       return () => clearTimeout(timer);
     }
-
     return () => {
       document.body.style.overflow = "unset";
     };
   }, [isOpen]);
 
-  if (!mounted && !isOpen) {
-    return null;
-  }
-
-  const modalClassName = [
-    "relative",
-    "w-[calc(100%-24px)]",
-    "sm:w-full",
-    "max-w-xl",
-    "bg-white",
-    "rounded-[2rem]",
-    "sm:rounded-[2.5rem]",
-    "shadow-2xl",
-    "shadow-black/20",
-    "overflow-hidden",
-    "transition-all",
-    "duration-300",
-    "transform",
-    "mb-3",
-    "sm:mb-0",
-    "pb-safe",
-    isOpen
-      ? "translate-y-0 sm:scale-100 opacity-100"
-      : "translate-y-full sm:translate-y-8 sm:scale-95 opacity-0",
-  ].join(" ");
-
-  const overlayClassName = [
-    "fixed",
-    "inset-0",
-    "z-[100]",
-    "flex",
-    "items-end",
-    "sm:items-center",
-    "justify-center",
-    "transition-all",
-    "duration-300",
-    isOpen
-      ? "opacity-100"
-      : "opacity-0 pointer-events-none",
-  ].join(" ");
-
-  const backdropClassName = [
-    "absolute",
-    "inset-0",
-    "bg-zinc-900/60",
-    "backdrop-blur-sm",
-    "transition-opacity",
-    "duration-300",
-    isOpen ? "opacity-100" : "opacity-0",
-  ].join(" ");
+  if (!mounted && !isOpen) return null;
 
   return (
-    <div className={overlayClassName}>
+    <div
+      className={`fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 transition-opacity duration-300 ${
+        isOpen ? "opacity-100" : "pointer-events-none opacity-0"
+      }`}
+    >
       {/* Backdrop */}
       <div
-        className={backdropClassName}
+        className="absolute inset-0 bg-zinc-950/60 backdrop-blur-[5px]"
         onClick={closeBooking}
+        aria-hidden="true"
       />
 
-      {/* Modal */}
-      <div className={modalClassName}>
-        {/* Mobile drag handle */}
-        <div className="flex justify-center pt-4 sm:hidden">
-          <div className="w-10 h-1.5 bg-surface-container-highest rounded-full" />
-        </div>
-
+      {/* Floating card: never full-bleed on any screen size */}
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Book a repair"
+        className={`relative flex min-h-0 w-full max-w-[460px] flex-col overflow-hidden rounded-[28px] bg-white
+          max-h-[min(720px,calc(100dvh-32px))]
+          shadow-[0_2px_6px_rgba(0,0,0,0.06),0_40px_100px_-16px_rgba(0,0,0,0.45)]
+          transition-all duration-300 ease-out ${
+            isOpen
+              ? "translate-y-0 scale-100 opacity-100"
+              : "translate-y-5 scale-[0.96] opacity-0"
+          }`}
+      >
         {/* Header */}
-        <div className="relative px-6 sm:px-8 pt-6 sm:pt-10 pb-2 text-center">
-          {/* Close */}
+        <header className="relative flex shrink-0 items-center justify-between gap-3 bg-gradient-to-b from-primary/[0.08] to-white px-5 pb-3 pt-4 sm:px-6 sm:pt-5">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] bg-primary text-white shadow-[0_8px_18px_-6px_rgba(200,16,46,0.65)]">
+              <span className="material-symbols-outlined icon-filled text-[21px]">home_repair_service</span>
+            </span>
+            <div className="min-w-0 leading-tight">
+              <h2 className="font-headline text-[18px] tracking-tight text-zinc-900">Book a repair</h2>
+              <p className="mt-0.5 flex items-center gap-1.5 text-[12px] text-zinc-500">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-70" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                </span>
+                Technicians online · assigned right away
+              </p>
+            </div>
+          </div>
+
           <button
             type="button"
             onClick={closeBooking}
             aria-label="Close booking form"
-            className="absolute top-4 sm:top-6 right-4 sm:right-6 w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container active:bg-surface-container transition-colors"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/80 text-zinc-600 ring-1 ring-zinc-200/80 transition hover:bg-white hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 active:scale-95"
           >
-            <span className="material-symbols-outlined text-on-surface-variant">
-              close
-            </span>
+            <span className="material-symbols-outlined text-[19px]">close</span>
           </button>
+        </header>
 
-          {/* Priority badge */}
-          <div className="inline-flex items-center gap-2 bg-primary-container text-primary px-3 py-1 rounded-full mb-4">
-            <span className="material-symbols-outlined text-sm icon-filled">
-              verified
-            </span>
-
-            <span className="text-[10px] font-black uppercase tracking-widest">
-              Priority Dispatch
-            </span>
-          </div>
-
-          {/* Title */}
-          <h2 className="font-headline text-2xl sm:text-4xl text-on-surface tracking-tight">
-            Book your{" "}
-            <span className="italic text-primary">Master</span> Repair
-          </h2>
-
-          {/* Subtitle */}
-          <p className="text-on-surface-variant text-xs sm:text-sm mt-3 max-w-sm mx-auto opacity-80">
-            Professional dispatch to your neighborhood.
-          </p>
-        </div>
-
-        {/* Form */}
-        <div className="px-3 sm:px-8 pb-10 pt-4 max-h-[75vh] lg:max-h-[70vh] overflow-y-auto custom-scrollbar">
-          <BookingForm
-            initialServiceSlug={selectedService}
-            onSuccess={closeBooking}
-          />
+        {/* Scrollable body: the form has its own sticky stepper and action bar */}
+        <div className="booking-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          <BookingForm initialServiceSlug={selectedService} onSuccess={closeBooking} />
         </div>
       </div>
 
       <style jsx>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
+        .booking-scroll {
+          scrollbar-width: thin;
+          scrollbar-color: #e4e4e7 transparent;
+          -webkit-overflow-scrolling: touch;
         }
-
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
+        .booking-scroll::-webkit-scrollbar {
+          width: 4px;
         }
-
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #e0e0e0;
-          border-radius: 10px;
+        .booking-scroll::-webkit-scrollbar-thumb {
+          background: #e4e4e7;
+          border-radius: 999px;
         }
-
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #bdbdbd;
-        }
-
         @media (max-width: 639px) {
-          .custom-scrollbar {
-            scrollbar-width: thin;
-            scrollbar-color: #e0e0e0 transparent;
+          .booking-scroll {
+            scrollbar-width: none;
+          }
+          .booking-scroll::-webkit-scrollbar {
+            display: none;
           }
         }
       `}</style>
