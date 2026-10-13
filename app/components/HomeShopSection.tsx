@@ -46,7 +46,7 @@ export default function HomeShopSection() {
       <div className="pointer-events-none absolute -right-24 top-0 h-72 w-72 rounded-full bg-primary/10 blur-[100px]" />
       <div className="pointer-events-none absolute -left-16 bottom-0 h-56 w-56 rounded-full bg-secondary-container/40 blur-[80px]" />
 
-      <div className="relative z-10 container mx-auto max-w-screen-2xl px-6 md:px-10">
+      <div className="relative z-10 container mx-auto max-w-screen-2xl px-5 sm:px-6 md:px-10 xl:px-12">
         {/* Header */}
         <div className="mx-auto mb-10 max-w-3xl text-center md:mb-14">
           <p className="mb-3 font-label text-[10px] font-black uppercase tracking-[0.28em] text-primary md:text-xs">
@@ -153,7 +153,7 @@ export default function HomeShopSection() {
             </div>
             <Link
               href={`${SHOP_APPLIANCES_HREF}/ac`}
-              className="inline-flex h-11 shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-primary px-6 font-label text-xs font-black uppercase tracking-widest text-on-primary shadow-md shadow-primary/20 transition-all hover:brightness-110 active:scale-[0.98] md:self-center"
+              className="inline-flex h-12 w-full shrink-0 items-center justify-center gap-2 self-stretch rounded-xl bg-primary px-5 font-label text-[11px] font-black uppercase tracking-[0.14em] text-on-primary shadow-md shadow-primary/20 transition-all hover:-translate-y-0.5 hover:brightness-110 hover:shadow-lg hover:shadow-primary/25 active:translate-y-0 active:scale-[0.98] md:h-11 md:w-auto md:self-center md:px-6 md:text-xs md:tracking-widest"
             >
               View AC range
               <span className="material-symbols-outlined text-base">arrow_forward</span>

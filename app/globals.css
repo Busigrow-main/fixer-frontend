@@ -224,7 +224,7 @@ body {
 
   body {
     /* Prevent content from sitting under the fixed mobile top bar */
-    padding-top: 60px;
+    padding-top: 56px;
   }
 
   .mobile-bottom-cta {
