@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -338,7 +339,7 @@ function TrustPill({
     <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-[9px] font-bold text-white/70">
       <span className="text-primary">
         {React.cloneElement(
-          icon as React.ReactElement,
+          icon as React.ReactElement<{ className?: string }>,
           {
             className: "h-3.5 w-3.5",
           },
