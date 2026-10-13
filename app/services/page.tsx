@@ -5,6 +5,8 @@ import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 import ServicesClient from "./ServicesClient";
 
+export const dynamic = "force-dynamic";
+
 export default async function ServicesPage() {
   let services = [];
   try {
