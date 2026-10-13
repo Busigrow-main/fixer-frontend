@@ -3,6 +3,16 @@
 import { useState, useEffect } from "react";
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/v1";
 
+/** Catalog `price` is stored in paise. */
+function catalogRupees(price: unknown): number {
+  const paise = typeof price === "number" ? price : Number(price) || 0;
+  return Math.round(paise) / 100;
+}
+
+function formatRupees(rupees: number): string {
+  return rupees.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 export default function AddPartModal({ bookingId, technicianId, token, onClose, onAdded, originalParts = [] }: { bookingId: string, technicianId?: string, token: string, onClose: () => void, onAdded: () => void, originalParts?: any[] }) {
   const [visits, setVisits] = useState<any[]>([]);
   const [spareParts, setSpareParts] = useState<any[]>([]);
@@ -74,7 +84,7 @@ export default function AddPartModal({ bookingId, technicianId, token, onClose, 
           visitOrder: 1,
           jobDescription: "Automated Service Visit for Parts Logging",
           scheduledDate: new Date().toISOString(),
-          status: "COMPLETED"
+          status: "SCHEDULED"
         };
         const vRes = await fetch(`${API}/admin/visits`, {
           method: "POST",
@@ -99,10 +109,20 @@ export default function AddPartModal({ bookingId, technicianId, token, onClose, 
         return;
       }
 
+      const available = Math.max(0, Number(selectedSpare?.stock ?? selectedSpare?.stockQuantity) || 0);
+      const quantity = Math.max(1, Math.floor(Number(partData.quantity) || 1));
+      if (!partData.isThirdParty && available > 0 && quantity > available) {
+        alert(`Quantity cannot exceed available stock (${available}).`);
+        setSaving(false);
+        return;
+      }
+
       const body: any = {
         isThirdParty: partData.isThirdParty,
-        quantity: partData.quantity,
-        cost: partData.cost,
+        quantity,
+        cost: partData.isThirdParty
+          ? partData.cost
+          : (Number(partData.cost) > 0 ? Number(partData.cost) : catalogRupees(selectedSpare?.price)),
         serialNumber: partData.serialNumber.trim() || undefined,
         installedAt: partData.installedAt
           ? new Date(partData.installedAt).toISOString()
@@ -139,6 +159,14 @@ export default function AddPartModal({ bookingId, technicianId, token, onClose, 
         const errData = await res.json();
         alert(`Failed to add part: ${errData.message || "Unknown error"}`);
       } else {
+        // Complete after the line exists so stock drops by this quantity only.
+        if (!partData.visitId) {
+          await fetch(`${API}/admin/visits/${targetVisitId}/status`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ status: "COMPLETED" }),
+          });
+        }
         onAdded();
         onClose();
       }
@@ -239,12 +267,25 @@ export default function AddPartModal({ bookingId, technicianId, token, onClose, 
                       required 
                       className="admin-input admin-select" 
                       value={partData.sparePartId}
-                      onChange={e => setPartData({...partData, sparePartId: e.target.value})}
+                      onChange={e => {
+                        const spare = spareParts.find((sp) => sp._id === e.target.value);
+                        const stock = Math.max(0, Number(spare?.stock ?? spare?.stockQuantity) || 0);
+                        setPartData({
+                          ...partData,
+                          sparePartId: e.target.value,
+                          quantity: 1,
+                          cost: spare ? catalogRupees(spare.price) : 0,
+                          warrantyMonths: spare?.warrantyMonths != null ? spare.warrantyMonths : partData.warrantyMonths,
+                        });
+                        if (spare && stock < 1) {
+                          alert("This part is out of stock.");
+                        }
+                      }}
                     >
                       <option value="">-- select part --</option>
                       {spareParts.map(sp => (
                         <option key={sp._id} value={sp._id}>
-                          {sp.name} [₹{sp.price}] (Stock: {sp.stock ?? sp.stockQuantity})
+                          {sp.name} [₹{formatRupees(catalogRupees(sp.price))}] · {sp.stock ?? sp.stockQuantity ?? 0} in stock
                           {sp.warrantyMonths ? ` · ${sp.warrantyMonths}mo` : ''}
                         </option>
                       ))}
@@ -266,11 +307,39 @@ export default function AddPartModal({ bookingId, technicianId, token, onClose, 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                   <div>
                     <label className="admin-label">Quantity</label>
-                    <input required type="number" min="1" className="admin-input" value={partData.quantity} onChange={e => setPartData({...partData, quantity: +e.target.value})} />
+                    <input
+                      required
+                      type="number"
+                      min={1}
+                      max={!partData.isThirdParty && selectedSpare ? Math.max(1, Number(selectedSpare.stock ?? selectedSpare.stockQuantity) || 1) : undefined}
+                      className="admin-input"
+                      value={partData.quantity}
+                      onChange={e => {
+                        const stock = Number(selectedSpare?.stock ?? selectedSpare?.stockQuantity);
+                        let next = Math.floor(Number(e.target.value));
+                        if (!Number.isFinite(next) || next < 1) next = 1;
+                        if (!partData.isThirdParty && Number.isFinite(stock) && stock > 0 && next > stock) next = stock;
+                        setPartData({ ...partData, quantity: next });
+                      }}
+                    />
+                    {!partData.isThirdParty && selectedSpare ? (
+                      <div style={{ fontSize: 12, color: "var(--admin-text-dim)", marginTop: 6 }}>
+                        Uses {partData.quantity} of {selectedSpare.stock ?? selectedSpare.stockQuantity ?? 0} in stock.
+                      </div>
+                    ) : null}
                   </div>
                   <div>
                     <label className="admin-label">Cost (per unit)</label>
-                    <input required type="number" className="admin-input" placeholder="₹" onChange={e => setPartData({...partData, cost: +e.target.value})} />
+                    <input
+                      required
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      className="admin-input"
+                      placeholder="₹"
+                      value={partData.cost}
+                      onChange={e => setPartData({...partData, cost: Number(e.target.value)})}
+                    />
                   </div>
                 </div>
 

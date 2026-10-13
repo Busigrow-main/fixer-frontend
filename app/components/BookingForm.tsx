@@ -141,10 +141,12 @@ function StepTitle({ title, sub }: { title: string; sub: string }) {
   );
 }
 
-/* ---------- main ---------- */
-
-export default function BookingForm({ initialServiceSlug, onSuccess, className = "" }: BookingFormProps) {
-  const { user, token, continueWithPhone } = useAuth();
+export default function BookingForm({
+  initialServiceSlug,
+  onSuccess,
+  className = "",
+}: BookingFormProps) {
+  const { user, token, continueWithPhone, refreshUser } = useAuth();
   const router = useRouter();
   const { resumeDraft, clearResumeDraft } = useBooking();
 
@@ -344,6 +346,10 @@ export default function BookingForm({ initialServiceSlug, onSuccess, className =
       if (!res.ok) {
         const err = await res.json();
         throw new Error(err.message || "Failed to book service");
+      }
+
+      if (user) {
+        await refreshUser();
       }
 
       setIsSuccess(true);

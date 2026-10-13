@@ -1335,6 +1335,20 @@ function RepairBookingCard({
             )}
           </MetaRow>
 
+          {booking.fixxerCode && booking.status !== "COMPLETED" && !booking.jobClosed ? (
+            <div className="rounded-xl bg-primary-container px-3 py-2">
+              <p className="text-[10px] uppercase tracking-widest font-black text-primary">
+                FIXXER CODE
+              </p>
+              <p className="mt-1 font-headline text-2xl tracking-[0.28em] text-on-surface">
+                {booking.fixxerCode}
+              </p>
+              <p className="mt-1 text-[11px] text-on-surface-variant">
+                Give this code to your technician when the job is finished.
+              </p>
+            </div>
+          ) : null}
+
           <MetaRow icon="schedule">
             {scheduleLabel || (
               <span className="text-zinc-500">

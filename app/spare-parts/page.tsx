@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import SparePartsClient from "@/app/components/spare-parts/SparePartsClient";
 
 const API =
@@ -72,10 +73,12 @@ export default async function SparePartsPage() {
     ]);
 
   return (
-    <SparePartsClient
-      initialCategories={categories}
-      initialPopularParts={popularParts}
-      apiUrl={API}
-    />
+    <Suspense fallback={null}>
+      <SparePartsClient
+        initialCategories={categories}
+        initialPopularParts={popularParts}
+        apiUrl={API}
+      />
+    </Suspense>
   );
 }
