@@ -7,6 +7,7 @@ import { useAuth } from "@/app/context/AuthContext";
 import ManageVisitsModal from "../ManageVisitsModal";
 import AddPartModal from "../AddPartModal";
 import { openJobSheet } from "@/app/admin/utils/jobsheet";
+import { buildJobSheetDefaults, partsFromVisits } from "@/app/lib/job-sheet-defaults";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/v1";
 const STATUSES = ["ALL", "PENDING", "CONFIRMED", "ASSIGNED", "IN_PROGRESS", "COMPLETED", "RESCHEDULED", "CANCELLED"];
@@ -20,6 +21,7 @@ export default function BookingDetailPage() {
   const [technicians, setTechnicians] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [fixxerCode, setFixxerCode] = useState("");
   
   const [visitModalVisible, setVisitModalVisible] = useState(false);
   const [addPartModalVisible, setAddPartModalVisible] = useState(false);
@@ -56,30 +58,55 @@ export default function BookingDetailPage() {
   const [serialLookup, setSerialLookup] = useState("");
   const [serialLookupResult, setSerialLookupResult] = useState<any>(null);
   const jobSheetRevisionRef = useRef<number>(-1);
+  const serverJobRef = useRef<Record<string, string>>({});
+  const sheetWriteChain = useRef<Promise<void>>(Promise.resolve());
+  const lastSheetPatchRef = useRef("");
 
-  const applyBookingData = useCallback((data: any) => {
-    setBooking(data);
-    if (data.visits) {
-      setVisits(data.visits);
+  const applyBookingData = useCallback((data: any, opts?: { keepJobEdits?: boolean }) => {
+    const sheetPatch = buildJobSheetDefaults({
+      bookingId: String(data?._id || id || ""),
+      createdAt: data?.createdAt,
+      serviceType: data?.serviceType,
+      jobDetails: data?.jobDetails,
+      parts: partsFromVisits(data?.visits),
+    });
+    const jobDetailsFilled = { ...(data?.jobDetails || {}), ...sheetPatch };
+    const filled = { ...data, jobDetails: jobDetailsFilled };
+    setBooking(filled);
+    if (filled.visits) {
+      setVisits(filled.visits);
     }
 
-    setJobDetails({
-      diagnosis: data.jobDetails?.diagnosis || "",
-      workDone: data.jobDetails?.workDone || "",
-      recommendations: data.jobDetails?.recommendations || "",
-      warrantyPeriod: data.jobDetails?.warrantyPeriod || "60 Days",
-      asset: data.jobDetails?.asset || "",
-      warrantyCode: data.jobDetails?.warrantyCode || "",
-      warrantyDesc: data.jobDetails?.warrantyDesc || "",
-      assetSaleDate: data.jobDetails?.assetSaleDate || "",
-      assetExpiryDate: data.jobDetails?.assetExpiryDate || "",
-      contractCode: data.jobDetails?.contractCode || "",
-      contractDesc: data.jobDetails?.contractDesc || "",
-      contractStartDate: data.jobDetails?.contractStartDate || "",
-      contractExpiryDate: data.jobDetails?.contractExpiryDate || "",
-      visitCategory: data.jobDetails?.visitCategory || "",
-      invoiceNumber: data.jobDetails?.invoiceNumber || ""
-    });
+    const nextSheet = {
+      diagnosis: jobDetailsFilled.diagnosis || "",
+      workDone: jobDetailsFilled.workDone || "",
+      recommendations: jobDetailsFilled.recommendations || "",
+      warrantyPeriod: jobDetailsFilled.warrantyPeriod || "60 Days",
+      asset: jobDetailsFilled.asset || "",
+      warrantyCode: jobDetailsFilled.warrantyCode || "",
+      warrantyDesc: jobDetailsFilled.warrantyDesc || "",
+      assetSaleDate: jobDetailsFilled.assetSaleDate || "",
+      assetExpiryDate: jobDetailsFilled.assetExpiryDate || "",
+      contractCode: jobDetailsFilled.contractCode || "",
+      contractDesc: jobDetailsFilled.contractDesc || "",
+      contractStartDate: jobDetailsFilled.contractStartDate || "",
+      contractExpiryDate: jobDetailsFilled.contractExpiryDate || "",
+      visitCategory: jobDetailsFilled.visitCategory || "",
+      invoiceNumber: jobDetailsFilled.invoiceNumber || ""
+    };
+    if (opts?.keepJobEdits) {
+      const previousServer = serverJobRef.current;
+      setJobDetails((prev) => {
+        const next = { ...prev };
+        for (const key of Object.keys(nextSheet) as Array<keyof typeof nextSheet>) {
+          const oldServer = String(previousServer[key] || "");
+          if (String(prev[key] || "") === oldServer) next[key] = nextSheet[key];
+        }
+        return next;
+      });
+    } else {
+      setJobDetails(nextSheet);
+    }
 
     setProductDetails({
       brand: data.productDetails?.brand || "",
@@ -96,7 +123,28 @@ export default function BookingDetailPage() {
       paymentStatus: data.paymentStatus || "UNPAID"
     });
     jobSheetRevisionRef.current = data.jobSheetRevision ?? 0;
-  }, []);
+  }, [id]);
+
+  const enqueueSheetWrite = useCallback((fields: Record<string, string>) => {
+    const run = sheetWriteChain.current.then(async () => {
+      const res = await fetch(`${API}/admin/bookings/${id}/job-details`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify(fields),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Failed to save details.");
+      }
+      const saved = await res.json().catch(() => null);
+      if (saved?.jobDetails) serverJobRef.current = saved.jobDetails;
+      if (typeof saved?.jobSheetRevision === "number") {
+        jobSheetRevisionRef.current = saved.jobSheetRevision;
+      }
+    });
+    sheetWriteChain.current = run.catch(() => undefined);
+    return run;
+  }, [token, id]);
 
   const fetchBookingInfo = useCallback(async (opts?: { silent?: boolean }) => {
     try {
@@ -104,16 +152,54 @@ export default function BookingDetailPage() {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
+      const sheetPatch = buildJobSheetDefaults({
+        bookingId: String(data?._id || id || ""),
+        createdAt: data?.createdAt,
+        serviceType: data?.serviceType,
+        jobDetails: data?.jobDetails,
+        parts: partsFromVisits(data?.visits),
+      });
+      const filled = {
+        ...data,
+        jobDetails: { ...(data?.jobDetails || {}), ...sheetPatch },
+      };
       if (!opts?.silent) {
-        applyBookingData(data);
+        serverJobRef.current = data?.jobDetails || {};
+        applyBookingData(filled);
+        const patchKey = JSON.stringify(sheetPatch);
+        if (patchKey !== "{}" && lastSheetPatchRef.current !== patchKey) {
+          lastSheetPatchRef.current = patchKey;
+          void enqueueSheetWrite(sheetPatch);
+        }
         return;
       }
       const nextRev = data.jobSheetRevision ?? 0;
       if (nextRev !== jobSheetRevisionRef.current) {
-        applyBookingData(data);
+        applyBookingData(filled, { keepJobEdits: true });
+        serverJobRef.current = data?.jobDetails || {};
       } else {
-        setBooking(data);
-        if (data.visits) setVisits(data.visits);
+        setBooking(filled);
+        if (filled.visits) setVisits(filled.visits);
+        setJobDetails((prev) => {
+          const next = { ...prev };
+          let changed = false;
+          for (const [key, value] of Object.entries(filled.jobDetails || {})) {
+            const serverValue = String(data?.jobDetails?.[key] || "");
+            const formValue = String((prev as Record<string, string>)[key] || "");
+            if (formValue === serverValue && formValue !== String(value || "")) {
+              (next as Record<string, string>)[key] = String(value || "");
+              changed = true;
+            }
+          }
+          return changed ? next : prev;
+        });
+      }
+      if (Object.keys(sheetPatch).length) {
+        const patchKey = JSON.stringify(sheetPatch);
+        if (lastSheetPatchRef.current !== patchKey) {
+          lastSheetPatchRef.current = patchKey;
+          void enqueueSheetWrite(sheetPatch);
+        }
       }
       void fetchWarranties();
     } catch (err) {
@@ -121,7 +207,7 @@ export default function BookingDetailPage() {
     } finally {
       if (!opts?.silent) setLoading(false);
     }
-  }, [token, id, applyBookingData]);
+  }, [token, id, applyBookingData, enqueueSheetWrite]);
 
   const fetchWarranties = useCallback(async () => {
     if (!token || !id) return;
@@ -177,13 +263,25 @@ export default function BookingDetailPage() {
   };
 
   const handleStatusChange = async (newStatus: string) => {
+    if (newStatus === "COMPLETED" && !/^\d{6}$/.test(fixxerCode.replace(/\D/g, ""))) {
+      alert("Enter the customer's 6-digit FIXXER CODE before closing the job.");
+      return;
+    }
     setUpdating(true);
     try {
-      await fetch(`${API}/admin/bookings/${id}/status`, {
+      const res = await fetch(`${API}/admin/bookings/${id}/status`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({
+          status: newStatus,
+          ...(newStatus === "COMPLETED" ? { fixxerCode: fixxerCode.replace(/\D/g, "") } : {}),
+        }),
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data.message || "Could not update the status.");
+        return;
+      }
       fetchBookingInfo();
     } catch (err) {
       console.error(err);
@@ -209,8 +307,8 @@ export default function BookingDetailPage() {
   };
 
   const handleUpdateJobDetails = async () => {
-    // Build diff: only send fields that differ from server state
-    const serverJob = booking?.jobDetails || {};
+    // Diff against the last saved sheet so auto-filled defaults are persisted.
+    const serverJob = serverJobRef.current || {};
     const changedFields: Record<string, string> = {};
     for (const [key, value] of Object.entries(jobDetails)) {
       if ((value || "") !== (serverJob[key] || "")) {
@@ -223,16 +321,7 @@ export default function BookingDetailPage() {
     }
     setUpdating(true);
     try {
-      const res = await fetch(`${API}/admin/bookings/${id}/job-details`, {
-        method: "PUT",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify(changedFields),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        alert(err.message || "Failed to save details.");
-        return;
-      }
+      await enqueueSheetWrite(changedFields);
       fetchBookingInfo();
       alert("Job Sheet details saved successfully.");
     } catch (err) {
@@ -259,13 +348,24 @@ export default function BookingDetailPage() {
   };
 
   const handleFinalizeInvoice = async () => {
+    const code = fixxerCode.replace(/\D/g, "");
+    if (!/^\d{6}$/.test(code)) {
+      alert("Enter the customer's 6-digit FIXXER CODE before closing the bill.");
+      return;
+    }
     if (!confirm("Are you sure you want to finalize this bill? This will lock the invoice and notify the customer.")) return;
     setUpdating(true);
     try {
-      await fetch(`${API}/admin/bookings/${id}/finalize-invoice`, {
+      const res = await fetch(`${API}/admin/bookings/${id}/finalize-invoice`, {
         method: "PUT",
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ fixxerCode: code }),
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data.message || "Failed to finalize.");
+        return;
+      }
       fetchBookingInfo();
       alert("Service Completed and Bill Sent to User.");
     } catch (err) {
@@ -1053,6 +1153,22 @@ export default function BookingDetailPage() {
             </div>
 
             {!booking.isBilled && (
+              <div style={{ marginBottom: 16 }}>
+                <label className="admin-label">FIXXER CODE</label>
+                <input
+                  className="admin-input"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  maxLength={6}
+                  placeholder="Code from the customer"
+                  value={fixxerCode}
+                  onChange={(e) => setFixxerCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  disabled={updating}
+                />
+              </div>
+            )}
+
+            {!booking.isBilled && (
               <button 
                 className="admin-btn admin-btn-primary w-full" 
                 style={{ width: '100%', justifyContent: 'center', height: 48, fontSize: 14, fontWeight: 700 }}
@@ -1190,45 +1306,45 @@ export default function BookingDetailPage() {
               </div>
 
               {booking.technicianSettlement && (
-                <div style={{ marginTop: 16, padding: 12, background: 'var(--admin-surface-muted, #f6f6f6)', borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13 }}>
-                  <div style={{ fontWeight: 700, fontSize: 11, letterSpacing: 0.8, textTransform: 'uppercase', color: 'var(--admin-text-muted)' }}>
+                <div style={{ marginTop: 16, padding: 12, background: 'var(--admin-surface-2)', border: '1px solid var(--admin-border)', borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13, color: 'var(--admin-text)' }}>
+                  <div style={{ fontWeight: 700, fontSize: 11, letterSpacing: 0.8, textTransform: 'uppercase', color: 'var(--admin-text-dim)' }}>
                     This collection — Fixxer vs technician
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>Customer billed</span>
-                    <span>₹{booking.technicianSettlement.customerTotal ?? booking.invoiceData?.totalAmount ?? 0}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                    <span style={{ color: 'var(--admin-text-dim)' }}>Customer billed</span>
+                    <span style={{ fontWeight: 600 }}>₹{booking.technicianSettlement.customerTotal ?? booking.invoiceData?.totalAmount ?? 0}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>Base service charge (to technician)</span>
-                    <span>₹{(Number(booking.technicianSettlement.labour) || 0) - (Number(booking.technicianSettlement.additionalTotal) || 0)}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                    <span style={{ color: 'var(--admin-text-dim)' }}>Base service charge (to technician)</span>
+                    <span style={{ fontWeight: 600 }}>₹{(Number(booking.technicianSettlement.labour) || 0) - (Number(booking.technicianSettlement.additionalTotal) || 0)}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>Other charges (to technician)</span>
-                    <span>₹{booking.technicianSettlement.additionalTotal || 0}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                    <span style={{ color: 'var(--admin-text-dim)' }}>Other charges (to technician)</span>
+                    <span style={{ fontWeight: 600 }}>₹{booking.technicianSettlement.additionalTotal || 0}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>Inventory parts (10% commission)</span>
-                    <span>₹{booking.technicianSettlement.inventoryCommission}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                    <span style={{ color: 'var(--admin-text-dim)' }}>Inventory parts (10% commission)</span>
+                    <span style={{ fontWeight: 600 }}>₹{booking.technicianSettlement.inventoryCommission}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>Inventory parts (90% to Fixxer)</span>
-                    <span>₹{booking.technicianSettlement.inventoryToFixxer}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                    <span style={{ color: 'var(--admin-text-dim)' }}>Inventory parts (90% to Fixxer)</span>
+                    <span style={{ fontWeight: 600 }}>₹{booking.technicianSettlement.inventoryToFixxer}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>Outside parts (technician keeps sale)</span>
-                    <span>₹{booking.technicianSettlement.selfPartsTotal}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                    <span style={{ color: 'var(--admin-text-dim)' }}>Outside parts (technician keeps sale)</span>
+                    <span style={{ fontWeight: 600 }}>₹{booking.technicianSettlement.selfPartsTotal}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>Outside-parts fee (₹100 × {booking.technicianSettlement.selfPartCount})</span>
-                    <span>₹{booking.technicianSettlement.selfPartFee}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                    <span style={{ color: 'var(--admin-text-dim)' }}>Outside-parts fee (₹100 × {booking.technicianSettlement.selfPartCount})</span>
+                    <span style={{ fontWeight: 600 }}>₹{booking.technicianSettlement.selfPartFee}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, borderTop: '1px solid var(--admin-border)', paddingTop: 8, marginTop: 4 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontWeight: 700, borderTop: '1px solid var(--admin-border)', paddingTop: 8, marginTop: 4 }}>
                     <span>Technician keeps</span>
-                    <span>₹{booking.technicianSettlement.technicianNet}</span>
+                    <span style={{ color: 'var(--admin-success)' }}>₹{booking.technicianSettlement.technicianNet}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontWeight: 700 }}>
                     <span>Fixxer share</span>
-                    <span>₹{booking.technicianSettlement.fixxerNet}</span>
+                    <span style={{ color: 'var(--admin-accent)' }}>₹{booking.technicianSettlement.fixxerNet}</span>
                   </div>
                 </div>
               )}
