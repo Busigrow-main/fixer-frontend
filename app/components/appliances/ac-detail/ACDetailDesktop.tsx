@@ -1,302 +1,505 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
-import { ACImageGallery } from "../ACImageGallery";
-import { ACProductOverview } from "./ACProductOverview";
-import { ACTechnicalDescription, hasLegacySpecs, hasTechnicalDescription } from "./ACTechnicalDescription";
-import type { ACProduct } from "../types";
-import { getDiscount } from "../types";
+import {
+  ArrowRight,
+  CheckCircle2,
+  ChevronRight,
+  ShieldCheck,
+  Star,
+  Wrench,
+} from "lucide-react";
 
-function StarRating({ rating }: { rating: number }) {
-  return (
-    <div className="flex items-center gap-1.5 flex-wrap">
-      <div className="flex items-center gap-0.5">
-        {Array(5)
-          .fill(0)
-          .map((_, i) => (
-            <span
-              key={i}
-              className={`material-symbols-outlined text-base ${
-                i < rating ? "icon-filled text-amber-400" : "text-gray-300"
-              }`}
-            >
-              star
-            </span>
-          ))}
-      </div>
-      <span className="text-sm font-semibold text-gray-700">{rating} / 5</span>
-      <span className="text-xs text-gray-400">BEE Rating</span>
-    </div>
-  );
+export interface ACProduct {
+  id: string;
+  slug: string;
+  name: string;
+  brand: string;
+  modelNumber: string;
+  price: number;
+  originalPrice?: number;
+  capacityTon: number;
+  starRating: number;
+  acType: string;
+  isInverter: boolean;
+  shortDescription?: string;
+  description?: string;
+  images: string[];
+  inStock: boolean;
+  installationIncluded: boolean;
+  warrantyYears: number;
+  specifications?: Record<string, string | number>;
 }
 
 interface ACDetailDesktopProps {
   product: ACProduct;
 }
 
-export function ACDetailDesktop({ product }: ACDetailDesktopProps) {
-  const [activeTab, setActiveTab] = useState<"description" | "specs" | "installation">("description");
-  const { discountPercent, savings } = getDiscount(product);
+export function ACDetailDesktop({
+  product,
+}: ACDetailDesktopProps) {
+  const enquiryHref = `/spare-parts/enquiry?product=${encodeURIComponent(
+    product.slug,
+  )}&type=appliance`;
+
+  const hasDiscount =
+    typeof product.originalPrice === "number" &&
+    product.originalPrice > product.price;
+
+  const discountPercent = hasDiscount
+    ? Math.round(
+        ((product.originalPrice! -
+          product.price) /
+          product.originalPrice!) *
+          100,
+      )
+    : 0;
 
   return (
-    <div className="hidden md:block pb-16">
-      <nav
-        aria-label="Breadcrumb"
-        className="max-w-7xl mx-auto px-6 lg:px-10 pt-24 pb-4 flex items-center gap-1.5 text-xs text-gray-500 flex-wrap"
-      >
-        {[
-          { href: "/", label: "Home" },
-          { href: "/spare-parts", label: "Spare Parts" },
-          { href: "/spare-parts/appliances", label: "Appliances" },
-          { href: "/spare-parts/appliances/ac", label: "Air Conditioners" },
-        ].map(({ href, label }) => (
-          <span key={href} className="flex items-center gap-1.5">
-            <Link href={href} className="hover:text-[#C8102E] transition-colors">
-              {label}
-            </Link>
-            <span className="material-symbols-outlined text-gray-300" style={{ fontSize: 12 }}>
-              chevron_right
-            </span>
-          </span>
-        ))}
-        <span className="text-gray-800 font-medium truncate max-w-md">{product.name}</span>
-      </nav>
-
-      <section className="max-w-7xl mx-auto px-6 lg:px-10 pb-10">
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,480px)_minmax(0,1fr)] gap-8 xl:gap-12 items-start">
-          <div className="lg:sticky lg:top-24 space-y-4">
-            <div className="relative">
-              <ACImageGallery images={product.images} productName={product.name} />
-              {discountPercent > 0 && (
-                <span className="absolute top-4 left-4 z-20 bg-[#C8102E] text-white text-xs font-bold px-2.5 py-1.5 rounded-lg shadow-md pointer-events-none">
-                  {discountPercent}% OFF
-                </span>
-              )}
-            </div>
-
-            <div className="grid grid-cols-3 divide-x divide-gray-100 border border-gray-100 rounded-xl bg-white overflow-hidden text-center shadow-sm">
-              {[
-                { icon: "verified", label: "Genuine Product" },
-                { icon: "local_shipping", label: "Fast Delivery" },
-                { icon: "support_agent", label: "Expert Support" },
-              ].map(({ icon, label }) => (
-                <div key={label} className="py-3.5 px-2 flex flex-col items-center gap-1">
-                  <span className="material-symbols-outlined text-[#C8102E] text-lg">{icon}</span>
-                  <span className="text-[10px] font-semibold text-gray-700 leading-tight">{label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 lg:p-8 flex flex-col gap-6">
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">
-                {product.brand}
-              </span>
-              {product.inStock ? (
-                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
-                  <span className="material-symbols-outlined icon-filled text-sm">check_circle</span>
-                  In Stock · Ready to Ship
-                </span>
+    <div className="mx-auto hidden w-full max-w-7xl px-6 pb-12 pt-7 md:block lg:px-8">
+      <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(420px,0.95fr)] xl:gap-12">
+        {/* LEFT — Product media */}
+        <section className="min-w-0">
+          <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
+            <div className="relative aspect-square bg-slate-50">
+              {product.images?.length > 0 ? (
+                <Image
+                  src={product.images[0]}
+                  alt={product.name}
+                  fill
+                  unoptimized
+                  priority
+                  sizes="(max-width: 1279px) 55vw, 600px"
+                  className="object-contain p-10 transition-transform duration-500 hover:scale-[1.025] xl:p-14"
+                />
               ) : (
-                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-700 bg-red-50 border border-red-200 px-3 py-1 rounded-full">
-                  <span className="material-symbols-outlined text-sm">cancel</span>
-                  Out of Stock
-                </span>
+                <div className="flex h-full items-center justify-center">
+                  <Wrench className="h-14 w-14 text-slate-300" />
+                </div>
               )}
-            </div>
 
-            <div>
-              <p className="text-xs text-gray-400 font-mono mb-1.5">Model: {product.modelNumber}</p>
-              <h1 className="font-headline text-2xl lg:text-[1.75rem] font-bold text-gray-900 leading-snug">
-                {product.name}
-              </h1>
-              <div className="mt-3">
-                <StarRating rating={product.starRating} />
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-br from-[#FFF5F5] to-white border border-[#FBCFCF] rounded-xl p-5">
-              <div className="flex items-baseline gap-3 flex-wrap">
-                <span className="text-3xl lg:text-4xl font-black text-gray-900 tracking-tight">
-                  ₹{product.price.toLocaleString("en-IN")}
+              {/* Product badges */}
+              <div className="absolute left-5 top-5 flex flex-wrap gap-2">
+                <span className="rounded-xl bg-slate-950/90 px-3 py-2 text-[10px] font-black uppercase tracking-wide text-white">
+                  {product.brand}
                 </span>
-                {product.originalPrice && (
-                  <>
-                    <span className="text-lg text-gray-400 line-through">
-                      ₹{product.originalPrice.toLocaleString("en-IN")}
-                    </span>
-                    <span className="bg-[#C8102E] text-white text-xs font-bold px-2 py-0.5 rounded-md">
-                      {discountPercent}% OFF
-                    </span>
-                  </>
+
+                {product.isInverter ? (
+                  <span className="rounded-xl bg-white px-3 py-2 text-[10px] font-black text-slate-800 shadow-sm">
+                    Inverter
+                  </span>
+                ) : null}
+              </div>
+
+              {/* Availability */}
+              <div className="absolute right-5 top-5">
+                {product.inStock ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-[10px] font-black text-white shadow-sm">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    In stock
+                  </span>
+                ) : (
+                  <span className="rounded-xl bg-slate-950/90 px-3 py-2 text-[10px] font-black text-white">
+                    Check availability
+                  </span>
                 )}
               </div>
-              {savings > 0 && (
-                <p className="text-sm text-[#C8102E] font-semibold mt-1.5">
-                  You save ₹{savings.toLocaleString("en-IN")} on this purchase
-                </p>
-              )}
-              <p className="text-xs text-gray-500 mt-1.5">
-                Inclusive of all taxes · Installation included
+
+              {discountPercent > 0 ? (
+                <span className="absolute bottom-5 left-5 rounded-xl bg-primary px-3 py-2 text-[10px] font-black text-white shadow-sm">
+                  {discountPercent}% OFF
+                </span>
+              ) : null}
+            </div>
+          </div>
+
+          {/* Service reassurance */}
+          <div className="mt-4 grid grid-cols-3 gap-3">
+            <ServiceCard
+              icon={<Wrench />}
+              title="Installation"
+              value={
+                product.installationIncluded
+                  ? "Included"
+                  : "Confirm with Fixxer"
+              }
+              positive={
+                product.installationIncluded
+              }
+            />
+
+            <ServiceCard
+              icon={<ShieldCheck />}
+              title="Warranty"
+              value={`${product.warrantyYears} year${
+                product.warrantyYears === 1
+                  ? ""
+                  : "s"
+              }`}
+              positive
+            />
+
+            <ServiceCard
+              icon={<CheckCircle2 />}
+              title="Availability"
+              value={
+                product.inStock
+                  ? "In stock"
+                  : "Check with Fixxer"
+              }
+              positive={product.inStock}
+            />
+          </div>
+        </section>
+
+        {/* RIGHT — Product information */}
+        <section className="min-w-0 lg:sticky lg:top-[88px]">
+          <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm xl:p-7">
+            {/* Brand / model */}
+            <div className="flex items-center gap-2">
+              <span className="rounded-lg bg-primary/[0.07] px-2 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-primary">
+                {product.brand}
+              </span>
+
+              <span className="text-[9px] font-bold text-slate-400">
+                {product.modelNumber}
+              </span>
+            </div>
+
+            {/* Title */}
+            <h1 className="mt-3 text-2xl font-black leading-8 tracking-[-0.035em] text-slate-950 xl:text-3xl">
+              {product.name}
+            </h1>
+
+            {product.shortDescription ? (
+              <p className="mt-2.5 max-w-xl text-sm leading-6 text-slate-500">
+                {product.shortDescription}
               </p>
+            ) : null}
+
+            {/* Key specs */}
+            <div className="mt-5 flex flex-wrap gap-2">
+              <SpecPill>
+                {product.capacityTon} Ton
+              </SpecPill>
+
+              <SpecPill icon={<Star />}>
+                {product.starRating} Star
+              </SpecPill>
+
+              <SpecPill>
+                {formatAcType(product.acType)}
+              </SpecPill>
+
+              {product.isInverter ? (
+                <SpecPill highlighted>
+                  Inverter
+                </SpecPill>
+              ) : null}
             </div>
 
-            <div>
-              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3">
-                At a Glance
-              </p>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                {[
-                  { icon: "air", label: "Capacity", value: `${product.capacityTon} Ton` },
-                  {
-                    icon: "category",
-                    label: "Type",
-                    value: product.acType.charAt(0).toUpperCase() + product.acType.slice(1),
-                  },
-                  { icon: "star", label: "Star Rating", value: `${product.starRating} ★` },
-                  { icon: "speed", label: "Inverter", value: product.isInverter ? "Yes" : "No" },
-                ].map(({ icon, label, value }) => (
-                  <div
-                    key={label}
-                    className="bg-[#F8F8F9] border border-gray-100 rounded-xl p-3 flex flex-col gap-1"
-                  >
-                    <span className="material-symbols-outlined text-[#C8102E] text-base">{icon}</span>
-                    <p className="text-[10px] text-gray-400 font-semibold uppercase">{label}</p>
-                    <p className="text-sm font-bold text-gray-900">{value}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {product.highlights && product.highlights.length > 0 && (
-              <div className="border-t border-gray-100 pt-5">
-                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3">
-                  Key Highlights
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {product.highlights.map((h, i) => (
-                    <div key={i} className="flex items-start gap-2.5">
-                      <div className="w-9 h-9 rounded-lg bg-[#FDE7E9] flex items-center justify-center flex-shrink-0">
-                        <span className="material-symbols-outlined text-[#C8102E] text-sm">{h.icon}</span>
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold text-gray-900 leading-tight">{h.title}</p>
-                        <p className="text-[11px] text-gray-500 leading-snug mt-0.5">{h.description}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="flex flex-col sm:flex-row gap-3 pt-1">
-              <Link
-                href={`/spare-parts/enquiry?product=${product.slug}&type=appliance`}
-                className="flex-1 bg-[#C8102E] hover:bg-[#A00826] active:scale-[0.98] text-white font-bold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 shadow-md shadow-[#C8102E]/20"
-              >
-                <span className="material-symbols-outlined text-xl">mail</span>
-                Enquire Now
-              </Link>
-              <a
-                href={`https://wa.me/917004771388?text=${encodeURIComponent(`Hi Fixxer! I'm interested in the ${product.name}.`)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 bg-[#25D366] hover:bg-[#1ebe5a] active:scale-[0.98] text-white font-bold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 shadow-md shadow-[#25D366]/20"
-              >
-                <span className="material-symbols-outlined text-xl">chat</span>
-                WhatsApp Us
-              </a>
-            </div>
-
-            <div className="flex flex-col gap-2 text-sm border-t border-gray-100 pt-5">
-              <div className="flex items-start gap-3 rounded-xl bg-[#F8F8F9] px-4 py-3">
-                <span className="material-symbols-outlined text-emerald-600 flex-shrink-0">local_shipping</span>
+            {/* Price */}
+            <div className="mt-6 rounded-2xl bg-slate-50 p-5">
+              <div className="flex items-end justify-between gap-4">
                 <div>
-                  <span className="font-semibold text-gray-800">Delivery across Patna &amp; Bihar</span>
-                  <p className="text-xs text-gray-500 mt-0.5">Estimated delivery in 2–4 working days</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3 rounded-xl bg-[#F8F8F9] px-4 py-3">
-                <span className="material-symbols-outlined text-[#C8102E] flex-shrink-0">handyman</span>
-                <div>
-                  <span className="font-semibold text-gray-800">Professional Installation Included</span>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    Certified Fixxer technicians · 60-day free service
+                  <p className="text-[9px] font-black uppercase tracking-[0.14em] text-slate-400">
+                    Product price
                   </p>
+
+                  <div className="mt-1.5 flex flex-wrap items-baseline gap-2.5">
+                    <span className="text-3xl font-black tracking-tight text-slate-950">
+                      ₹
+                      {Number(
+                        product.price || 0,
+                      ).toLocaleString("en-IN")}
+                    </span>
+
+                    {hasDiscount ? (
+                      <span className="text-sm font-semibold text-slate-400 line-through">
+                        ₹
+                        {product.originalPrice!.toLocaleString(
+                          "en-IN",
+                        )}
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
+
+                {discountPercent > 0 ? (
+                  <span className="rounded-lg bg-primary/[0.07] px-2.5 py-1.5 text-[10px] font-black text-primary">
+                    Save {discountPercent}%
+                  </span>
+                ) : null}
               </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      <section className="max-w-7xl mx-auto px-6 lg:px-10 mt-4">
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="flex border-b border-gray-100 overflow-x-auto">
-            {(
-              [
-                { id: "description" as const, label: "Product Overview", icon: "info" },
-                { id: "specs" as const, label: "Specifications", icon: "tune" },
-                { id: "installation" as const, label: "Installation", icon: "handyman" },
-              ] as const
-            ).map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex-shrink-0 px-6 lg:px-8 py-4 font-bold text-sm transition-colors border-b-2 flex items-center gap-2 whitespace-nowrap ${
-                  activeTab === tab.id
-                    ? "border-[#C8102E] text-[#C8102E] bg-[#FFF5F5]/50"
-                    : "border-transparent text-gray-400 hover:text-gray-800 hover:bg-gray-50"
-                }`}
-              >
-                <span className="material-symbols-outlined text-[18px]">{tab.icon}</span>
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          {activeTab === "description" && (
-            <div className="py-6 lg:py-8">
-              <ACProductOverview product={product} />
-            </div>
-          )}
-
-          {activeTab === "specs" &&
-            (hasTechnicalDescription(product) || hasLegacySpecs(product)) && (
-              <div className="p-6 lg:p-8">
-                <ACTechnicalDescription product={product} />
-              </div>
-            )}
-
-          {activeTab === "installation" && (
-            <div className="p-6 lg:p-8">
-              <h2 className="font-headline text-xl font-bold text-gray-900 mb-2">
-                Professional Installation — Included Free
-              </h2>
-              <p className="text-gray-600 text-sm mb-6">
-                Every Fixxer appliance purchase includes end-to-end installation by certified
-                technicians.
+              <p className="mt-3 text-[10px] leading-4 text-slate-400">
+                Final availability, delivery and installation
+                details are confirmed by Fixxer after your enquiry.
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {[
-                  { icon: "schedule", title: "2–3 Day Turnaround", sub: "Installation within 2–3 working days" },
-                  { icon: "support_agent", title: "60-Day Free Service", sub: "Post-install support at zero cost" },
-                  { icon: "calendar_month", title: "Flexible Slots", sub: "8 AM to 8 PM, 7 days a week" },
-                ].map(({ icon, title, sub }) => (
-                  <div key={title} className="rounded-xl border border-gray-100 p-5 bg-[#F8F8F9]">
-                    <span className="material-symbols-outlined text-[#C8102E] text-xl">{icon}</span>
-                    <p className="font-bold text-gray-900 text-sm mt-2">{title}</p>
-                    <p className="text-xs text-gray-500 mt-1">{sub}</p>
+            </div>
+
+            {/* Main CTA */}
+            <div className="mt-5">
+              <Link
+                href={enquiryHref}
+                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 text-xs font-black text-white shadow-lg shadow-primary/15 transition-all hover:bg-primary/90 hover:shadow-xl hover:shadow-primary/20"
+              >
+                Enquire about this AC
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+
+              <p className="mt-2 text-center text-[9px] font-semibold text-slate-400">
+                No payment required to send an enquiry
+              </p>
+            </div>
+
+            {/* Decision-support cards */}
+            <div className="mt-6 border-t border-slate-100 pt-5">
+              <h2 className="text-xs font-black text-slate-950">
+                Why consider this model?
+              </h2>
+
+              <div className="mt-4 grid grid-cols-2 gap-2.5">
+                <DecisionCard
+                  icon={<Wrench />}
+                  title="Installation"
+                  value={
+                    product.installationIncluded
+                      ? "Included"
+                      : "Ask Fixxer"
+                  }
+                />
+
+                <DecisionCard
+                  icon={<ShieldCheck />}
+                  title="Warranty"
+                  value={`${product.warrantyYears} year${
+                    product.warrantyYears === 1
+                      ? ""
+                      : "s"
+                  }`}
+                />
+
+                <DecisionCard
+                  icon={<Star />}
+                  title="Efficiency"
+                  value={`${product.starRating} Star`}
+                />
+
+                <DecisionCard
+                  icon={<CheckCircle2 />}
+                  title="Availability"
+                  value={
+                    product.inStock
+                      ? "In stock"
+                      : "Check"
+                  }
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Description */}
+          {product.description ? (
+            <section className="mt-4 rounded-[24px] border border-slate-200 bg-white p-6">
+              <SectionHeading>
+                About this AC
+              </SectionHeading>
+
+              <p className="mt-3 max-w-3xl whitespace-pre-line text-xs leading-6 text-slate-600">
+                {product.description}
+              </p>
+            </section>
+          ) : null}
+
+          {/* Specifications */}
+          {product.specifications &&
+          Object.keys(product.specifications).length >
+            0 ? (
+            <section className="mt-4 rounded-[24px] border border-slate-200 bg-white p-6">
+              <SectionHeading>
+                Specifications
+              </SectionHeading>
+
+              <div className="mt-4 grid grid-cols-2 gap-x-8 border-t border-slate-100">
+                {Object.entries(
+                  product.specifications,
+                ).map(([key, value]) => (
+                  <div
+                    key={key}
+                    className="flex items-start justify-between gap-4 border-b border-slate-100 py-3"
+                  >
+                    <span className="text-[10px] font-semibold text-slate-400">
+                      {formatSpecificationKey(
+                        key,
+                      )}
+                    </span>
+
+                    <span className="text-right text-[10px] font-black text-slate-700">
+                      {String(value)}
+                    </span>
                   </div>
                 ))}
               </div>
+            </section>
+          ) : null}
+
+          {/* Help banner */}
+          <section className="mt-4 rounded-[24px] bg-slate-950 p-6 text-white">
+            <div className="flex items-start justify-between gap-6">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-[0.14em] text-white/45">
+                  Need help choosing?
+                </p>
+
+                <h2 className="mt-2 text-lg font-black">
+                  Not sure which AC is right for you?
+                </h2>
+
+                <p className="mt-1.5 max-w-lg text-[10px] leading-5 text-white/60">
+                  Send an enquiry and the Fixxer team can
+                  confirm availability, installation and the
+                  next steps.
+                </p>
+              </div>
+
+              <Link
+                href={enquiryHref}
+                className="hidden shrink-0 items-center gap-1.5 rounded-xl bg-white px-4 py-2.5 text-[10px] font-black text-slate-950 transition-colors hover:bg-slate-100 sm:inline-flex"
+              >
+                Ask Fixxer
+                <ChevronRight className="h-3.5 w-3.5" />
+              </Link>
             </div>
-          )}
-        </div>
-      </section>
+          </section>
+        </section>
+      </div>
     </div>
   );
+}
+
+function ServiceCard({
+  icon,
+  title,
+  value,
+  positive = false,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  value: string;
+  positive?: boolean;
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-4">
+      <span
+        className={`flex h-8 w-8 items-center justify-center rounded-lg ${
+          positive
+            ? "bg-primary/[0.07] text-primary"
+            : "bg-slate-100 text-slate-500"
+        }`}
+      >
+        {icon}
+      </span>
+
+      <p className="mt-3 text-[9px] font-black uppercase tracking-wide text-slate-400">
+        {title}
+      </p>
+
+      <p className="mt-1 text-[10px] font-black text-slate-700">
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function DecisionCard({
+  icon,
+  title,
+  value,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-slate-50 p-3">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-primary shadow-sm">
+        {icon}
+      </span>
+
+      <div className="min-w-0">
+        <p className="text-[8px] font-black uppercase tracking-wide text-slate-400">
+          {title}
+        </p>
+
+        <p className="mt-0.5 truncate text-[10px] font-black text-slate-700">
+          {value}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function SpecPill({
+  children,
+  icon,
+  highlighted = false,
+}: {
+  children: React.ReactNode;
+  icon?: React.ReactNode;
+  highlighted?: boolean;
+}) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[9px] font-black ${
+        highlighted
+          ? "bg-primary/[0.07] text-primary"
+          : "bg-slate-100 text-slate-600"
+      }`}
+    >
+      {icon ? (
+        <span className="text-amber-500">
+          {icon}
+        </span>
+      ) : null}
+
+      {children}
+    </span>
+  );
+}
+
+function SectionHeading({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <h2 className="text-sm font-black tracking-tight text-slate-950">
+      {children}
+    </h2>
+  );
+}
+
+function formatAcType(value: string) {
+  if (!value) {
+    return "AC";
+  }
+
+  return value
+    .replace(/[-_]/g, " ")
+    .replace(/\b\w/g, (letter) =>
+      letter.toUpperCase(),
+    );
+}
+
+function formatSpecificationKey(
+  key: string,
+) {
+  return key
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/[-_]/g, " ")
+    .replace(/\b\w/g, (letter) =>
+      letter.toUpperCase(),
+    );
 }

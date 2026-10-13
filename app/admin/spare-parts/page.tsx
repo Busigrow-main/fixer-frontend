@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useAuth } from "@/app/context/AuthContext";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/v1";
@@ -131,6 +132,14 @@ export default function AdminSparePartsPage() {
           <p style={{ fontSize: 13, color: "var(--admin-text-dim)", marginTop: 4 }}>{total} total parts</p>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
+          <Link href="/admin/part-help" className="admin-btn admin-btn-secondary admin-btn-sm">
+            <span className="material-symbols-outlined" style={{ fontSize: 16 }}>support_agent</span>
+            Part Help Requests
+          </Link>
+          <Link href="/admin/orders" className="admin-btn admin-btn-secondary admin-btn-sm">
+            <span className="material-symbols-outlined" style={{ fontSize: 16 }}>package_2</span>
+            Part Orders
+          </Link>
           <button className="admin-btn admin-btn-secondary admin-btn-sm" onClick={exportCsv}>
             <span className="material-symbols-outlined" style={{ fontSize: 16 }}>download</span>
             Export

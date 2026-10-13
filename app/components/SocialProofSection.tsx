@@ -8,8 +8,8 @@ const SERVICE_VAN_IMG =
 
 export default function SocialProofSection() {
   return (
-    <section className="pt-8 pb-10 md:py-20 bg-surface-dim border-y border-outline-variant overflow-hidden">
-      <div className="container mx-auto px-4 md:px-10 max-w-screen-2xl">
+    <section className="overflow-hidden border-y border-outline-variant bg-surface-dim py-12 md:py-20">
+      <div className="container mx-auto max-w-screen-2xl px-5 sm:px-6 md:px-10 xl:px-12">
         <div className="bg-surface-container-lowest rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-12 xl:p-16 shadow-xl shadow-black/[0.03] relative overflow-hidden flex flex-col lg:flex-row items-center gap-10 md:gap-14">
           
           {/* ── Left: Testimonial ── */}
