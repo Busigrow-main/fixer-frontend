@@ -73,13 +73,12 @@ export default function BookingModal() {
               <span className="material-symbols-outlined icon-filled text-[21px]">home_repair_service</span>
             </span>
             <div className="min-w-0 leading-tight">
-              <h2 className="font-headline text-[18px] tracking-tight text-zinc-900">Book a repair</h2>
-              <p className="mt-0.5 flex items-center gap-1.5 text-[12px] text-zinc-500">
+              <h2 className="font-headline text-[18px] tracking-tight text-zinc-900">Book a repair</h2><p className="mt-0.5 flex items-center gap-1.5 text-[12px] text-zinc-500">
                 <span className="relative flex h-1.5 w-1.5">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-70" />
                   <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
                 </span>
-                Technicians online · assigned right away
+                Technicians assigned right away
               </p>
             </div>
           </div>

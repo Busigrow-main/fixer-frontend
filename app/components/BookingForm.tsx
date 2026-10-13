@@ -942,7 +942,7 @@ export default function BookingForm({ initialServiceSlug, onSuccess, className =
           <span className="material-symbols-outlined text-[13px]">lock</span>
           {isLast && !user
             ? "We use your mobile number to save and manage this booking."
-            : "No payment now · 60-day warranty on every repair"}
+            : "60 days service warranty"}
         </p>
       </div>
     </form>
