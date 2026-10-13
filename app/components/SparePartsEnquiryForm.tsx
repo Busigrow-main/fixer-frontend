@@ -478,6 +478,14 @@ export default function SparePartsEnquiryForm({
         return;
       }
 
+      if (!resolvedAppliance) {
+        setError(
+          "Product could not be loaded. Please return to the product page and try again.",
+        );
+        setIsSubmitting(false);
+        return;
+      }
+
       const response = await fetch(
         `${API_URL}/part-orders`,
         {
@@ -1092,7 +1100,7 @@ function Field({
       <label className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">
         <span className="text-slate-400">
           {React.cloneElement(
-            icon as React.ReactElement,
+            icon as React.ReactElement<{ className?: string }>,
             {
               className: "h-3.5 w-3.5",
             },
