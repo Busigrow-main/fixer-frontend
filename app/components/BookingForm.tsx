@@ -595,7 +595,7 @@ export default function BookingForm({
 
             {selectedService && (
               <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                <Label>What's the issue?</Label>
+                <Label>Your appliance type</Label>
                 <div className="space-y-2">
                   {selectedService.subCategories?.map((sc: any) => {
                     const active = formData.subCategoryId === sc._id;
