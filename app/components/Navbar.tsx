@@ -7,11 +7,7 @@ import { useBooking } from "@/app/context/BookingContext";
 import { useAuth } from "@/app/context/AuthContext";
 import { SERVICES } from "@/app/lib/services";
 import {
-  isAppliancesShopRoute,
   isShopRoute,
-  isSparePartsShopRoute,
-  SHOP_APPLIANCES_HREF,
-  SHOP_SPARE_PARTS_HREF,
 } from "@/app/lib/shop-routes";
 import { MobileBottomNav } from "@/app/components/MobileBottomNav";
 
@@ -21,28 +17,9 @@ const NAV_LINKS = [
   { label: "My Bookings", href: "/my-bookings" },
 ] as const;
 
-const SHOP_DRAWER_OPTIONS = [
-  {
-    label: "Spare Parts",
-    description: "OEM catalog & verified parts",
-    icon: "build_circle",
-    href: SHOP_SPARE_PARTS_HREF,
-    isActive: isSparePartsShopRoute,
-  },
-  {
-    label: "Appliances",
-    description: "Air conditioners & more",
-    icon: "ac_unit",
-    href: SHOP_APPLIANCES_HREF,
-    isActive: isAppliancesShopRoute,
-  },
-] as const;
-
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [globalSearchQuery, setGlobalSearchQuery] = useState("");
-  const [shopDrawerOpen, setShopDrawerOpen] = useState(false);
-  const [desktopShopOpen, setDesktopShopOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const { openBooking, isOpen: isBookingOpen } = useBooking();
@@ -93,11 +70,6 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  useEffect(() => {
-    setShopDrawerOpen(false);
-    setDesktopShopOpen(false);
-  }, [pathname]);
-
   const handleGlobalSearchSubmit = (event: React.FormEvent) => {
     event.preventDefault();
 
@@ -141,61 +113,17 @@ export default function Navbar() {
                   </Link>
                 </li>
               ))}
-              <li className="relative">
-                <button
-                  type="button"
-                  onClick={() => setDesktopShopOpen((open) => !open)}
+              <li>
+                <Link
+                  href="/shop"
                   className={`relative font-label text-sm uppercase tracking-wider font-medium transition-colors ${
                     isShopRoute(pathname)
                       ? "text-zinc-900"
                       : "text-zinc-500 hover:text-zinc-900"
                   }`}
-                  aria-expanded={desktopShopOpen}
-                  aria-haspopup="true"
                 >
                   Shop
-                  <span
-                    className={`material-symbols-outlined text-base align-middle ml-1 transition-transform ${
-                      desktopShopOpen ? "rotate-180" : ""
-                    }`}
-                  >
-                    expand_more
-                  </span>
-                </button>
-                {desktopShopOpen && (
-                  <>
-                    <button
-                      type="button"
-                      className="fixed inset-0 z-40 cursor-default"
-                      aria-label="Close shop menu"
-                      onClick={() => setDesktopShopOpen(false)}
-                    />
-                    <div className="absolute left-0 top-full mt-3 z-50 w-64 rounded-2xl border border-outline bg-white shadow-xl p-2 overflow-hidden">
-                      {SHOP_DRAWER_OPTIONS.map((option) => (
-                        <Link
-                          key={option.label}
-                          href={option.href}
-                          onClick={() => setDesktopShopOpen(false)}
-                          className={`flex items-start gap-3 rounded-xl px-3 py-3 transition-colors ${
-                            option.isActive(pathname)
-                              ? "bg-primary-container text-on-primary-container"
-                              : "hover:bg-surface-container"
-                          }`}
-                        >
-                          <span className="material-symbols-outlined text-xl mt-0.5">
-                            {option.icon}
-                          </span>
-                          <span>
-                            <span className="block text-sm font-bold">{option.label}</span>
-                            <span className="block text-xs text-on-surface-variant mt-0.5">
-                              {option.description}
-                            </span>
-                          </span>
-                        </Link>
-                      ))}
-                    </div>
-                  </>
-                )}
+                </Link>
               </li>
             </ul>
           </div>
@@ -394,8 +322,6 @@ export default function Navbar() {
 
       <MobileBottomNav
         activeTab={activeTab}
-        shopOpen={shopDrawerOpen}
-        onShopOpenChange={setShopDrawerOpen}
         onBook={() => openBooking()}
       />
     </>

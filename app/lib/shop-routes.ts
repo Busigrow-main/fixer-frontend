@@ -17,5 +17,5 @@ export function isSparePartsShopRoute(pathname: string) {
 }
 
 export function isShopRoute(pathname: string) {
-  return matchesRoute(pathname, SHOP_SPARE_PARTS_HREF);
+  return pathname === "/shop" || matchesRoute(pathname, SHOP_SPARE_PARTS_HREF);
 }
