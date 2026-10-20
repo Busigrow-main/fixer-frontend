@@ -5,12 +5,13 @@ import refrigerator from "../../public/images/shop/products/refrigerator.png";
 import washingMachine from "../../public/images/shop/products/washing-machine.png";
 import airConditioner from "../../public/images/shop/products/air-conditioner.png";
 import microwave from "../../public/images/shop/products/microwave.png";
+import { SHOP_APPLIANCES_HREF } from "@/app/lib/shop-routes";
 
 const categories = [
-  { label: "Refrigerators", image: refrigerator, href: "/spare-parts/appliances" },
-  { label: "Washing Machines", image: washingMachine, href: "/spare-parts/appliances" },
-  { label: "Air Conditioners", image: airConditioner, href: "/spare-parts/appliances/ac" },
-  { label: "Microwaves", image: microwave, href: "/spare-parts/appliances" },
+  { label: "Refrigerators", image: refrigerator, href: SHOP_APPLIANCES_HREF },
+  { label: "Washing Machines", image: washingMachine, href: SHOP_APPLIANCES_HREF },
+  { label: "Air Conditioners", image: airConditioner, href: SHOP_APPLIANCES_HREF },
+  { label: "Microwaves", image: microwave, href: SHOP_APPLIANCES_HREF },
 ];
 
 export default function ShopApplianceCategories() {

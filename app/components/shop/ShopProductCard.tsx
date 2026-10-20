@@ -27,18 +27,20 @@ interface ShopProductCardProps {
     description?: string;
     rating?: string;
     reviews?: number;
+    detailHref?: string;
   };
   onRequest?: () => void;
+  inCart?: boolean;
 }
 
 const ctaClass =
-  "mt-2 flex h-9 w-full items-center justify-center gap-1.5 rounded-lg bg-[#e9002d] px-3 text-[12px] font-bold text-white shadow-sm transition hover:bg-[#d60029] active:scale-[0.98] sm:text-[13px] md:h-10";
+  "mt-2 flex h-9 w-full items-center justify-center gap-1.5 rounded-lg bg-[#e9002d] px-3 text-[12px] font-bold text-white shadow-sm transition hover:bg-[#d60029] active:scale-[0.98] sm:text-[13px] md:mt-3 md:h-11 md:rounded-xl";
 
-export default function ShopProductCard({ part, onRequest }: ShopProductCardProps) {
+export default function ShopProductCard({ part, onRequest, inCart = false }: ShopProductCardProps) {
   const [wished, setWished] = useState(false);
 
   const identifier = part.slug || part.sku || part._id || part.id || "";
-  const detailHref = `/spare-parts/${encodeURIComponent(part.sku || identifier)}`;
+  const detailHref = part.detailHref || `/spare-parts/${encodeURIComponent(part.sku || identifier)}`;
   const enquiryHref = `/spare-parts/enquiry?part=${encodeURIComponent(
     part._id || part.id || identifier,
   )}`;
@@ -58,15 +60,15 @@ export default function ShopProductCard({ part, onRequest }: ShopProductCardProp
 
   const cta = (
     <>
-      <ShoppingCart className="h-3.5 w-3.5" />
-      <span>Add to Cart</span>
+      {inCart ? <CheckCircle2 className="h-3.5 w-3.5" /> : <ShoppingCart className="h-3.5 w-3.5" />}
+      <span>{inCart ? "Added" : "Add to Cart"}</span>
     </>
   );
 
   return (
-    <article className="group flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.05)] transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg sm:rounded-2xl">
+    <article className="group flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.05)] transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg sm:rounded-2xl md:rounded-[18px] md:shadow-[0_2px_8px_rgba(15,23,42,0.04)]">
       {/* Image */}
-      <div className="relative aspect-[1.4] bg-[#f3f3f4] md:aspect-[1.5]">
+      <div className="relative aspect-[1.4] bg-[#f3f3f4] md:aspect-[1.32] md:bg-[#f7f7f8]">
         <Link href={detailHref} aria-label={`View ${part.name}`} className="absolute inset-0">
           <Image
             src={image}
@@ -93,10 +95,10 @@ export default function ShopProductCard({ part, onRequest }: ShopProductCardProp
           aria-label={wished ? "Remove from wishlist" : "Add to wishlist"}
           aria-pressed={wished}
           onClick={() => setWished((w) => !w)}
-          className="absolute right-1.5 top-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-sm transition active:scale-90"
+          className="absolute right-1.5 top-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-sm transition active:scale-90 md:right-3 md:top-3 md:h-9 md:w-9"
         >
           <Heart
-            className={`h-3.5 w-3.5 ${
+            className={`h-3.5 w-3.5 md:h-4 md:w-4 ${
               wished ? "fill-[#e9002d] text-[#e9002d]" : "text-slate-500"
             }`}
           />
@@ -104,7 +106,7 @@ export default function ShopProductCard({ part, onRequest }: ShopProductCardProp
       </div>
 
       {/* Content */}
-      <div className="flex flex-1 flex-col px-2.5 pb-2.5 pt-2 sm:px-3 sm:pb-3">
+      <div className="flex flex-1 flex-col px-2.5 pb-2.5 pt-2 sm:px-3 sm:pb-3 md:px-4 md:pb-4 md:pt-3.5">
         <p className="flex items-center gap-1 text-[10px] font-medium leading-none text-slate-600 sm:text-[11px]">
           <Star className="h-3 w-3 fill-emerald-600 text-emerald-600" />
           <span>{part.rating ?? "4.8"}</span>
@@ -125,6 +127,12 @@ export default function ShopProductCard({ part, onRequest }: ShopProductCardProp
           {part.name}
         </Link>
 
+        {part.description && (
+          <p className="mt-1 hidden min-h-4 line-clamp-1 text-[11px] font-medium text-emerald-700 md:block">
+            {part.description}
+          </p>
+        )}
+
         {(part.partNumber || part.sku) && (
           <p className="mt-0.5 hidden truncate text-[10px] font-medium text-slate-400 lg:block">
             {part.partNumber ? `Part no. ${part.partNumber}` : `SKU ${part.sku}`}
@@ -135,7 +143,7 @@ export default function ShopProductCard({ part, onRequest }: ShopProductCardProp
         <div className="mt-auto pt-1.5">
           {hasPrice ? (
             <div className="flex flex-wrap items-baseline gap-x-1.5 leading-tight">
-              <span className="text-[15px] font-extrabold tracking-tight text-slate-950 md:text-lg">
+              <span className="text-[15px] font-extrabold tracking-tight text-slate-950 md:text-xl">
                 ₹{part.price!.toLocaleString("en-IN")}
               </span>
               {hasMrp && (
@@ -161,7 +169,12 @@ export default function ShopProductCard({ part, onRequest }: ShopProductCardProp
           ) : null}
 
           {onRequest ? (
-            <button type="button" onClick={onRequest} className={ctaClass}>
+            <button
+              type="button"
+              onClick={onRequest}
+              disabled={inCart}
+              className={`${ctaClass} ${inCart ? "bg-emerald-600 hover:bg-emerald-600" : ""}`}
+            >
               {cta}
             </button>
           ) : (

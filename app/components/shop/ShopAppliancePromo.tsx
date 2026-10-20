@@ -3,6 +3,7 @@ import Image from "next/image";
 import { ArrowRight, BadgeCheck, RefreshCw, ShieldCheck } from "lucide-react";
 import refrigerator from "../../public/images/shop/products/refrigerator.png";
 import washingMachine from "../../public/images/shop/products/washing-machine.png";
+import { SHOP_APPLIANCES_HREF } from "@/app/lib/shop-routes";
 
 const trust = [
   { icon: BadgeCheck, label: "40-Point Inspection" },
@@ -24,7 +25,7 @@ export default function ShopAppliancePromo() {
             Top brands. Genuine products. Great prices.
           </p>
           <Link
-            href="/spare-parts/appliances"
+            href={SHOP_APPLIANCES_HREF}
             className="mt-3 inline-flex h-9 items-center gap-1.5 rounded-full bg-[#e9002d] px-4 text-xs font-semibold text-white shadow-sm transition hover:bg-[#d60029] active:scale-95 sm:mt-4 sm:h-10 sm:text-sm md:mt-6 md:h-11 md:px-6 md:text-base lg:mt-8 lg:h-12 lg:px-8"
           >
             Explore Appliances

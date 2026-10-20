@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -10,7 +11,11 @@ import {
   isSparePartsShopRoute,
 } from "@/app/lib/shop-routes";
 
-export default function ShopCategorySwitch() {
+export default function ShopCategorySwitch({
+  showActive = true,
+}: {
+  showActive?: boolean;
+}) {
   const pathname = usePathname();
 
   const categories = [
@@ -18,31 +23,38 @@ export default function ShopCategorySwitch() {
       label: "Appliances",
       href: SHOP_APPLIANCES_HREF,
       icon: Monitor,
-      active: isAppliancesShopRoute(pathname),
+      active: showActive && isAppliancesShopRoute(pathname),
     },
     {
       label: "Spare Parts",
       href: SHOP_SPARE_PARTS_HREF,
       icon: Wrench,
-      active: isSparePartsShopRoute(pathname),
+      active: showActive && isSparePartsShopRoute(pathname),
     },
   ];
 
   return (
-    <nav aria-label="Shop categories" className="grid w-full grid-cols-2 gap-2.5 md:gap-4">
+    <nav
+      aria-label="Shop categories"
+      className="grid w-full grid-cols-2 gap-1.5 sm:gap-2"
+    >
       {categories.map(({ label, href, icon: Icon, active }) => (
         <Link
           key={label}
           href={href}
           aria-current={active ? "page" : undefined}
-          className={`flex h-11 items-center justify-center gap-2 rounded-xl border px-3 text-[13px] font-semibold transition-colors active:scale-[0.98] sm:h-12 sm:text-sm md:h-14 md:rounded-2xl md:text-base ${
+          className={`flex h-[38px] min-w-0 items-center justify-center gap-1.5 rounded-[10px] border px-2 text-[11px] font-semibold transition-colors active:scale-[0.98] sm:h-10 sm:gap-2 sm:rounded-xl sm:text-sm md:h-11 ${
             active
-              ? "border-red-200 bg-red-50 text-[#e9002d]"
-              : "border-slate-200 bg-white text-slate-800 hover:border-red-200 hover:bg-red-50/50"
+              ? "border-[#D8102B] bg-[#D8102B] text-white"
+              : "border-[#E6E7EB] bg-white text-[#303238] hover:border-[#D8102B]/40"
           }`}
         >
-          <Icon strokeWidth={2} className="h-4 w-4 shrink-0 md:h-5 md:w-5" />
-          <span className="whitespace-nowrap">{label}</span>
+          <Icon
+            aria-hidden="true"
+            strokeWidth={2}
+            className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4"
+          />
+          <span className="truncate">{label}</span>
         </Link>
       ))}
     </nav>

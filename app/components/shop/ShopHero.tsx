@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import sparePartMotor from "../../public/images/shop/spare-part-motor.png";
+import { SHOP_SPARE_PARTS_HREF } from "@/app/lib/shop-routes";
 
 export default function ShopHero() {
   return (
@@ -23,7 +24,7 @@ export default function ShopHero() {
             </p>
 
             <Link
-              href="/spare-parts"
+              href={SHOP_SPARE_PARTS_HREF}
               className="mt-3.5 inline-flex h-9 items-center justify-center gap-1.5 rounded-full bg-white px-3.5 text-xs font-bold text-[#171214] shadow-sm transition hover:bg-gray-100 active:scale-95 sm:mt-4 sm:h-10 sm:px-5 sm:text-sm md:mt-6 md:h-11 md:px-6 lg:mt-8 lg:h-12 lg:px-8 lg:text-base"
             >
               Shop Spare Parts
