@@ -4,24 +4,36 @@ import { useState } from "react";
 import ShopNavbar from "@/app/components/shop/ShopNavbar";
 import ShopHero from "@/app/components/shop/ShopHero";
 import ShopCategorySwitch from "@/app/components/shop/ShopCategorySwitch";
-import ShopApplianceCategories from "@/app/components/shop/ShopApplianceCategories";
-import ShopAppliancePromo from "@/app/components/shop/ShopAppliancePromo";
-import ShopDealsSection from "@/app/components/shop/ShopDealsSection";
+import ShopLandingSections from "@/app/components/shop/ShopLandingSections";
+import SearchBar from "@/app/components/shop/spare-parts/SearchBar";
+import { useShopHome } from "@/app/lib/use-shop-home";
 
 export default function ShopHomePage() {
   const [search, setSearch] = useState("");
+  const { shopData, loading, error, loadShopHome } = useShopHome();
 
   return (
     <div className="-mt-14 min-h-screen bg-[#f4f4f6] md:mt-0">
-      <ShopNavbar flowOnMobile searchValue={search} onSearchChange={setSearch} />
-      <main className="mx-auto flex w-full max-w-[560px] flex-col gap-3 px-3 pb-28 pt-3 sm:max-w-[720px] sm:px-4 md:max-w-[1480px] md:gap-5 md:px-8 md:pb-16 md:pt-8 lg:px-12">
-        <ShopHero />
-        <div className="md:max-w-sm">
-          <ShopCategorySwitch showActive={false} />
+      <ShopNavbar searchValue={search} onSearchChange={setSearch} />
+      <main className="mx-auto flex w-full max-w-[560px] flex-col gap-3 px-3 pb-28 pt-3 sm:max-w-[720px] sm:px-4 md:max-w-[1440px] md:gap-8 md:px-8 md:pb-16 md:pt-10 lg:gap-10 lg:px-12 lg:pt-12">
+        <div className="sticky top-14 z-40 -mx-3 bg-[#f4f4f6] px-3 py-2 md:hidden">
+          <SearchBar
+            value={search}
+            onChange={setSearch}
+            placeholder="Search appliances, spare parts, brands, or models"
+          />
         </div>
-        <ShopApplianceCategories />
-        <ShopAppliancePromo />
-        <ShopDealsSection searchValue={search} />
+        {!search.trim() && <ShopHero />}
+        {!search.trim() && <div className="w-full md:mx-auto md:max-w-xl">
+          <ShopCategorySwitch showActive={false} />
+        </div>}
+        <ShopLandingSections
+          searchValue={search}
+          shopData={shopData}
+          loading={loading}
+          error={error}
+          onRetry={loadShopHome}
+        />
       </main>
     </div>
   );

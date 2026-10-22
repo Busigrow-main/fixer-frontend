@@ -2,7 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { SERVICES } from "@/app/lib/services";
+import { getServiceImage } from "@/app/lib/services";
+import { getServices, type ApiService } from "@/app/lib/services-api";
+import { useCallback, useEffect, useState } from "react";
 
 const PROMPTS: Record<string, string> = {
   refrigerator: "Not cooling?",
@@ -22,24 +24,43 @@ const SERVICE_ORDER = [
   "microwave",
 ] as const;
 
-const SERVICE_CARDS = SERVICE_ORDER.map((id) => {
-  const service = SERVICES.find((item) => item.id === id);
-
-  if (!service) return null;
-
-  return {
-    id: service.id,
-    slug: service.slug,
-    name: SHORT_NAMES[service.id] ?? service.name,
-    prompt: PROMPTS[service.id] ?? "Need repair?",
-    image: service.image,
-    mostBooked: service.id === "washing-machine",
-  };
-}).filter(
-  (item): item is NonNullable<typeof item> => item !== null
-);
-
 export default function ServicePickerSection() {
+  const [services, setServices] = useState<ApiService[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  const loadServices = useCallback(() => {
+    getServices()
+      .then(setServices)
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    loadServices();
+  }, [loadServices]);
+
+  const retryServices = () => {
+    setLoading(true);
+    setError(false);
+    loadServices();
+  };
+
+  const servicesBySlug = new Map(services.map((service) => [service.slug, service]));
+  const serviceCards = SERVICE_ORDER.flatMap((slug) => {
+    const service = servicesBySlug.get(slug);
+    if (!service) return [];
+
+    return [{
+      id: service._id,
+      slug: service.slug,
+      name: SHORT_NAMES[slug] ?? service.name,
+      prompt: PROMPTS[slug] ?? "Need repair?",
+      image: getServiceImage(slug) || service.image,
+      mostBooked: slug === "washing-machine",
+    }];
+  });
+
   return (
     <section
       id="service-picker"
@@ -84,9 +105,31 @@ export default function ServicePickerSection() {
         {/* Service Cards */}
         <div
           aria-label="Repair service categories"
+          aria-busy={loading}
+          aria-live="polite"
           className="flex gap-2 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-2 pr-0 sm:gap-3 md:grid md:grid-cols-2 md:gap-5 md:overflow-visible md:pb-0 lg:grid-cols-4 lg:gap-5 xl:gap-6"
         >
-          {SERVICE_CARDS.map((item) => (
+          {loading ? (
+            SERVICE_ORDER.map((slug) => (
+              <div
+                key={slug}
+                aria-hidden="true"
+                className="basis-[calc((100%-40px)/3)] min-w-0 shrink-0 overflow-hidden rounded-xl border border-outline/40 bg-surface-container-low animate-pulse sm:basis-[calc((100%-48px)/3)] sm:rounded-2xl md:basis-auto md:rounded-3xl"
+              >
+                <div className="aspect-[0.9] bg-surface-container sm:aspect-[5/4] md:aspect-[4/3] lg:aspect-[5/4]" />
+                <div className="space-y-2 p-3"><div className="h-3 w-2/3 rounded bg-surface-container" /><div className="h-2 w-1/2 rounded bg-surface-container" /></div>
+              </div>
+            ))
+          ) : error ? (
+            <div className="w-full rounded-2xl border border-outline/60 bg-surface-container-low p-6 text-center md:col-span-2 lg:col-span-4">
+              <p className="text-sm text-on-surface-variant">Repair services are temporarily unavailable.</p>
+              <button type="button" onClick={retryServices} className="mt-3 text-sm font-bold text-primary hover:underline">Try again</button>
+            </div>
+          ) : serviceCards.length === 0 ? (
+            <p className="w-full rounded-2xl border border-outline/60 bg-surface-container-low p-6 text-center text-sm text-on-surface-variant md:col-span-2 lg:col-span-4">
+              No repair services are available right now.
+            </p>
+          ) : serviceCards.map((item) => (
             <Link
               key={item.id}
               href={`/services/${item.slug}`}

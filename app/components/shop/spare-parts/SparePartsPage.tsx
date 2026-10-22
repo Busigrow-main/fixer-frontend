@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useBooking } from "@/app/context/BookingContext";
 import ShopNavbar from "@/app/components/shop/ShopNavbar";
@@ -13,15 +13,11 @@ import FitmentBanner from "./FitmentBanner";
 import ProductGrid from "./ProductGrid";
 import ServicePromoBanner from "./ServicePromoBanner";
 import type { SparePart } from "./ProductGrid";
-import compressorImage from "../../../public/images/shop/products/compressor.png";
-import circuitBoardImage from "../../../public/images/shop/products/circuit-board.png";
-import copperCompressorImage from "../../../public/images/shop/products/copper-compressor.png";
-import drainPumpImage from "../../../public/images/shop/spare-part-motor.png";
+import { getSparePartCatalog } from "@/app/lib/catalog-api";
+import type { SparePartCatalogItem } from "@/app/lib/catalog-api";
 import technicianImage from "../../../public/images/shop/technician-banner-square.png";
 
-/* ---------- static data (swap for your API later) ---------- */
-
-type Part = SparePart & { category: string; brand: string; capacity: string };
+type Part = SparePart & { category: string; brand: string; capacity: string; applianceTypeSlug?: string };
 type SortKey = "relevance" | "price-asc" | "price-desc" | "rating";
 type Filters = { brands: Set<string>; capacities: Set<string>; inStock: boolean };
 
@@ -33,25 +29,57 @@ const SORTS: { key: SortKey; label: string }[] = [
 ];
 
 const CATEGORIES: Category[] = [
-  { key: "all", label: "All Parts", count: "120+" },
+  { key: "all", label: "All Parts" },
   { key: "fridge", label: "Refrigerators" },
   { key: "washer", label: "Washing Machines" },
   { key: "ac", label: "Air Conditioners" },
+  { key: "microwave", label: "Microwaves" },
 ];
 
-const PARTS: Part[] = [
-  { id: "1", name: "Samsung Inv Compressor", image: compressorImage.src, price: 4199, mrp: 5600, rating: 4.8, reviews: 420, highlight: "10 Yr Warranty", category: "fridge", brand: "Samsung", capacity: "1.5 Ton" },
-  { id: "2", name: "Daikin Inverter AC Main PCB", image: circuitBoardImage.src, price: 3450, mrp: 4800, rating: 4.9, reviews: 812, badge: "BESTSELLER", highlight: "Pre-Programmed", category: "ac", brand: "Daikin", capacity: "1.5 Ton" },
-  { id: "3", name: "LG Front Load Drain Pump", image: drainPumpImage.src, price: 1299, mrp: 1850, rating: 4.7, reviews: 350, highlight: "Fits 30+ Models", category: "washer", brand: "LG", capacity: "7 kg" },
-  { id: "4", name: "Whirlpool Copper Coil", image: copperCompressorImage.src, price: 890, mrp: 1250, rating: 4.8, reviews: 190, highlight: "Anti-Corrosive", category: "fridge", brand: "Whirlpool", capacity: "1 Ton" },
-  { id: "5", name: "LG Inverter Compressor", image: compressorImage.src, price: 4650, mrp: 6200, rating: 4.6, reviews: 268, highlight: "5 Yr Warranty", category: "fridge", brand: "LG", capacity: "1 Ton" },
-  { id: "6", name: "Samsung Washer Main PCB", image: circuitBoardImage.src, price: 2799, mrp: 3900, rating: 4.7, reviews: 301, highlight: "Pre-Programmed", category: "washer", brand: "Samsung", capacity: "7 kg" },
-  { id: "7", name: "Whirlpool Washer Drain Pump", image: drainPumpImage.src, price: 1149, mrp: 1600, rating: 4.5, reviews: 144, highlight: "Fits 20+ Models", category: "washer", brand: "Whirlpool", capacity: "7 kg" },
-  { id: "8", name: "Daikin AC Condenser Coil", image: copperCompressorImage.src, price: 2350, mrp: 3100, rating: 4.8, reviews: 207, highlight: "Anti-Corrosive", category: "ac", brand: "Daikin", capacity: "1.5 Ton" },
-];
+const CATEGORY_API_TYPE: Record<string, string> = {
+  fridge: "refrigerator",
+  washer: "washing-machine",
+  ac: "air-conditioner",
+  microwave: "microwave-oven",
+};
 
-const BRANDS = ["Samsung", "LG", "Whirlpool", "Daikin"];
-const CAPACITIES = ["1 Ton", "1.5 Ton", "7 kg"];
+function toPart(item: SparePartCatalogItem): Part {
+  const applianceCategory = item.applianceTypeSlug ?? "";
+  const raw = item as SparePartCatalogItem & { bestseller?: unknown; bestSeller?: unknown; badge?: unknown };
+  const backendBestseller = item.isBestseller ?? item.isBestSeller ?? raw.bestSeller ?? raw.bestseller;
+  const bestSeller = backendBestseller === undefined
+    ? Boolean(item.isFeatured || Number(item.soldCount || 0) >= 10 || /best\s*seller/i.test(String(raw.badge ?? "")))
+    : backendBestseller === true || backendBestseller === 1 || backendBestseller === "true";
+  return {
+    id: item._id,
+    sku: item.sku,
+    brand: item.brandSlug ? item.brandSlug.replaceAll("-", " ").replace(/\b\w/g, (letter) => letter.toUpperCase()) : "",
+    name: item.name,
+    image: item.imageUrls?.[0] ?? "",
+    price: Number(item.price || 0) / 100,
+    mrp: item.mrp ? Number(item.mrp) / 100 : undefined,
+    rating: item.rating?.average,
+    reviews: item.rating?.count,
+    bestSeller,
+    badge: bestSeller ? "BESTSELLER" : undefined,
+    highlight: item.description,
+    stock: item.stock,
+    isInStock: item.isInStock ?? Number(item.stock || 0) > 0,
+    warrantyMonths: item.warrantyMonths,
+    detailHref: `/shop/spare-parts/${encodeURIComponent(item.sku)}`,
+    category: applianceCategory === "refrigerator"
+      ? "fridge"
+      : applianceCategory === "washing-machine"
+        ? "washer"
+        : applianceCategory === "air-conditioner" || applianceCategory === "ac"
+          ? "ac"
+          : applianceCategory === "microwave-oven" || applianceCategory === "microwave"
+            ? "microwave"
+            : applianceCategory,
+    applianceTypeSlug: applianceCategory,
+    capacity: item.partCategory ?? "",
+  };
+}
 
 function FilterOptions({
   title,
@@ -103,58 +131,93 @@ export default function SparePartsPage() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
   const [sort, setSort] = useState<SortKey>("relevance");
-  const [filters, setFilters] = useState<Filters>({ brands: new Set(), capacities: new Set(), inStock: true });
+  const [filters, setFilters] = useState<Filters>({ brands: new Set(), capacities: new Set(), inStock: false });
   const [sheet, setSheet] = useState(false);
   const [cart, setCart] = useState<Set<string>>(new Set());
+  const [parts, setParts] = useState<Part[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [retry, setRetry] = useState(0);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      getSparePartCatalog({
+        query,
+        applianceType: CATEGORY_API_TYPE[category],
+        sort: sort === "price-asc" ? "price_asc" : sort === "price-desc" ? "price_desc" : sort === "rating" ? "popular" : "relevance",
+        signal: controller.signal,
+      })
+        .then((response) => {
+          setParts(response.data.map(toPart));
+          setLoadError(false);
+        })
+        .catch((error: unknown) => {
+          if (!(error instanceof Error && error.name === "AbortError")) setLoadError(true);
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setLoading(false);
+        });
+    }, 250);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [query, category, sort, retry]);
+
+  const brands = useMemo(() => [...new Set(parts.map((part) => part.brand).filter(Boolean))].sort(), [parts]);
+  const capacities = useMemo(() => [...new Set(parts.map((part) => part.capacity).filter(Boolean))].sort(), [parts]);
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const list = PARTS.filter(
+    return parts.filter(
       (p) =>
-        (!q || p.name.toLowerCase().includes(q)) &&
+        (!q || `${p.name} ${p.sku ?? ""} ${p.brand}`.toLowerCase().includes(q)) &&
         (category === "all" || p.category === category) &&
         (filters.brands.size === 0 || filters.brands.has(p.brand)) &&
-        (filters.capacities.size === 0 || filters.capacities.has(p.capacity)),
+        (filters.capacities.size === 0 || filters.capacities.has(p.capacity)) &&
+        (!filters.inStock || p.isInStock !== false),
     );
-    const by = {
-      relevance: () => 0,
-      "price-asc": (a: Part, b: Part) => a.price - b.price,
-      "price-desc": (a: Part, b: Part) => b.price - a.price,
-      rating: (a: Part, b: Part) => (b.rating ?? 0) - (a.rating ?? 0),
-    }[sort];
-    return [...list].sort(by);
-  }, [query, category, filters, sort]);
+  }, [parts, query, category, filters]);
 
   const activeFilterCount = filters.brands.size + filters.capacities.size + (filters.inStock ? 1 : 0);
+  const changeCategory = (value: string) => {
+    setLoading(true);
+    setCategory(value);
+    setFilters((current) => ({ ...current, brands: new Set(), capacities: new Set() }));
+  };
+  const changeSort = (value: SortKey) => { setLoading(true); setSort(value); };
+  const changeQuery = (value: string) => { setLoading(true); setQuery(value); };
+  const retryCatalog = () => { setLoading(true); setRetry((value) => value + 1); };
   const clearAll = () => {
     setFilters({ brands: new Set(), capacities: new Set(), inStock: false });
-    setCategory("all");
-    setSort("relevance");
+    changeCategory("all");
+    changeSort("relevance");
+    retryCatalog();
   };
 
   const addToCart = (id: string) => setCart((prev) => new Set(prev).add(id));
 
   const brandLabel = filters.brands.size ? [...filters.brands].join(", ") : "Brand";
-  const capacityLabel = filters.capacities.size ? [...filters.capacities].join(", ") : "Capacity";
+  const capacityLabel = filters.capacities.size ? [...filters.capacities].join(", ") : "Part type";
 
   return (
     <div className="min-h-screen bg-[#f4f4f6]">
-      <ShopNavbar hideMobileHeader searchValue={query} onSearchChange={setQuery} />
+      <ShopNavbar hideMobileHeader searchValue={query} onSearchChange={changeQuery} />
 
       {/* Phone header (screenshot). Remove if ShopNavbar already shows a top bar. */}
-      <div className="-mt-14 md:hidden">
-        <SpareHeader location="Patna - 800001" onBack={() => router.back()} />
+      <div className="md:hidden">
+        <SpareHeader location="Patna - 800001" onBack={() => router.push("/shop")} />
       </div>
 
-      <main className="mx-auto flex w-full max-w-[560px] flex-col gap-3 px-3 pb-28 pt-3 sm:max-w-[720px] sm:px-4 md:max-w-[1480px] md:gap-5 md:px-8 md:pb-16 md:pt-8 lg:px-12">
-        <div className="md:hidden">
-          <SearchBar value={query} onChange={setQuery} onVoice={() => {}} />
-        </div>
+      <main className="mx-auto flex w-full max-w-[560px] flex-col gap-4 px-8 pb-28 pt-3 sm:max-w-[720px] sm:gap-5 sm:px-4 md:max-w-[1280px] md:gap-8 md:px-8 md:pb-16 md:pt-8 lg:gap-10 lg:px-12">
+      <div className="sticky top-14 z-40 -mx-3 bg-[#f4f4f6] px-3 pb-2 md:hidden">
+  <SearchBar value={query} onChange={changeQuery} onVoice={() => {}} />
+</div>
 
-        <div className="md:max-w-sm">
+        <div className="w-full md:mx-auto md:max-w-[520px]">
           <ShopCategorySwitch />
         </div>
-
         <section className="hidden md:block">
           <div className="border-b border-slate-200 pb-5">
             <div className="min-w-0">
@@ -164,7 +227,7 @@ export default function SparePartsPage() {
             </div>
           </div>
           <div className="mt-4 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-3.5">
-            <CategoryChips items={CATEGORIES} selected={category} onSelect={setCategory} className="mx-0 px-0 md:gap-2.5" />
+            <CategoryChips items={CATEGORIES} selected={category} onSelect={changeCategory} className="mx-0 px-0 md:gap-2.5" />
             <div className="w-full max-w-[410px] lg:w-[410px]"><FitmentBanner onCheck={() => {}} /></div>
           </div>
         </section>
@@ -181,7 +244,7 @@ export default function SparePartsPage() {
             <fieldset className="border-b border-slate-100 py-4">
               <legend className="text-sm font-semibold text-slate-900">Brand</legend>
               <div className="mt-2 space-y-2">
-                {BRANDS.map((brand) => (
+                {brands.map((brand) => (
                   <label key={brand} className="flex cursor-pointer items-center gap-2.5 text-sm text-slate-600">
                     <input type="checkbox" checked={filters.brands.has(brand)} onChange={() => { const next = new Set(filters.brands); next.has(brand) ? next.delete(brand) : next.add(brand); setFilters({ ...filters, brands: next }); }} className="h-4 w-4 rounded accent-primary" />{brand}
                   </label>
@@ -189,9 +252,9 @@ export default function SparePartsPage() {
               </div>
             </fieldset>
             <fieldset className="border-b border-slate-100 py-4">
-              <legend className="text-sm font-semibold text-slate-900">Capacity</legend>
+                  <legend className="text-sm font-semibold text-slate-900">Part category</legend>
               <div className="mt-2 space-y-2">
-                {CAPACITIES.map((capacity) => (
+                {capacities.map((capacity) => (
                   <label key={capacity} className="flex cursor-pointer items-center gap-2.5 text-sm text-slate-600">
                     <input type="checkbox" checked={filters.capacities.has(capacity)} onChange={() => { const next = new Set(filters.capacities); next.has(capacity) ? next.delete(capacity) : next.add(capacity); setFilters({ ...filters, capacities: next }); }} className="h-4 w-4 rounded accent-primary" />{capacity}
                   </label>
@@ -206,18 +269,18 @@ export default function SparePartsPage() {
 
           <div className="min-w-0">
             <div className="mb-3 flex flex-col gap-3 md:hidden">
-              <CategoryChips items={CATEGORIES} selected={category} onSelect={setCategory} />
+              <CategoryChips items={CATEGORIES} selected={category} onSelect={changeCategory} />
               <FilterBar activeFilterCount={activeFilterCount} brandLabel={brandLabel} capacityLabel={capacityLabel} onSort={() => setSheet(true)} onFilter={() => setSheet(true)} onBrand={() => setSheet(true)} onCapacity={() => setSheet(true)} />
               <FitmentBanner onCheck={() => {}} />
             </div>
             <section className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3.5 shadow-[0_1px_3px_rgba(15,23,42,0.025)]">
               <div>
                 <h2 className="text-sm font-bold text-slate-900">Spare parts</h2>
-                <p className="mt-0.5 text-xs text-slate-500">{visible.length} parts available</p>
+                <p className="mt-0.5 text-xs text-slate-500">{loading ? "Loading products…" : `${visible.length} parts available`}</p>
               </div>
               <label className="flex shrink-0 items-center gap-2 text-xs font-medium text-slate-500">
                 Sort by
-                <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} className="h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-sm font-semibold text-slate-800 outline-none focus:border-primary">
+                <select value={sort} onChange={(e) => changeSort(e.target.value as SortKey)} className="h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-sm font-semibold text-slate-800 outline-none focus:border-primary">
                   {SORTS.map((option) => <option key={option.key} value={option.key}>{option.label}</option>)}
                 </select>
               </label>
@@ -238,7 +301,7 @@ export default function SparePartsPage() {
                 <button type="button" onClick={clearAll} className="ml-1 text-xs font-semibold text-primary hover:underline">Clear</button>
               </div>
             )}
-            <ProductGrid parts={visible} cartIds={cart} onAddToCart={addToCart} />
+            <ProductGrid parts={visible} loading={loading} error={loadError ? "Products could not be loaded" : undefined} onRetry={retryCatalog} cartIds={cart} onAddToCart={addToCart} />
           </div>
         </div>
         <ServicePromoBanner image={technicianImage.src} onBook={() => openBooking()} />
@@ -266,7 +329,7 @@ export default function SparePartsPage() {
                           name="mobile-sort"
                           value={option.key}
                           checked={sort === option.key}
-                          onChange={() => setSort(option.key)}
+                          onChange={() => changeSort(option.key)}
                           className="h-4 w-4 accent-primary"
                         />
                         {option.label}
@@ -277,13 +340,13 @@ export default function SparePartsPage() {
 
                 <FilterOptions
                   title="Brand"
-                  options={BRANDS}
+                  options={brands}
                   selected={filters.brands}
                   onChange={(brands) => setFilters({ ...filters, brands })}
                 />
                 <FilterOptions
-                  title="Capacity"
-                  options={CAPACITIES}
+                  title="Part category"
+                  options={capacities}
                   selected={filters.capacities}
                   onChange={(capacities) => setFilters({ ...filters, capacities })}
                 />

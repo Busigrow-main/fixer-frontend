@@ -243,3 +243,46 @@ body {
     padding-bottom: calc(var(--mobile-cta-total) + 1.5rem);
   }
 }
+
+/* Product cards scale to their grid column, so the same card looks consistent across shop routes. */
+.shop-product-card {
+  container-name: shop-product-card;
+  container-type: inline-size;
+}
+
+@container shop-product-card (max-width: 220px) {
+  .shop-product-card__image-wrap { aspect-ratio: 1.25; margin: 7px; border-radius: 13px; }
+  .shop-product-card__image { padding: 7px; }
+  .shop-product-card__content { padding: 1px 9px 9px; }
+  .shop-product-card__rating { font-size: 11px; }
+  .shop-product-card__title { min-height: 2.35em; margin-top: 5px; font-size: 13px; line-height: 1.2; }
+  .shop-product-card__price { font-size: 17px; }
+  .shop-product-card__mrp, .shop-product-card__discount { font-size: 10px; }
+  .shop-product-card__pricing { padding-top: 3px; }
+  .shop-product-card__warranty { margin-top: 4px; font-size: 10px; }
+  .shop-product-card__cta { height: 38px; margin-top: 7px; border-radius: 14px; font-size: 12px; }
+  .shop-product-card__wishlist { width: 32px; height: 32px; }
+  .shop-product-card__badge { padding: 4px 7px; font-size: 8px; }
+}
+
+@container shop-product-card (min-width: 221px) and (max-width: 279px) {
+  .shop-product-card__image-wrap { margin: 10px; border-radius: 17px; }
+  .shop-product-card__content { padding: 3px 13px 13px; }
+  .shop-product-card__rating { font-size: 13px; }
+  .shop-product-card__title { font-size: 16px; }
+  .shop-product-card__price { font-size: 21px; }
+  .shop-product-card__cta { height: 50px; font-size: 14px; }
+}
+
+@container shop-product-card (min-width: 280px) {
+  .shop-product-card__image-wrap { margin: 16px 20px 10px; border-radius: 22px; }
+  .shop-product-card__content { padding: 8px 20px 20px; }
+  .shop-product-card__rating { font-size: 16px; }
+  .shop-product-card__title { margin-top: 10px; font-size: 24px; }
+  .shop-product-card__price { font-size: 28px; }
+  .shop-product-card__mrp, .shop-product-card__discount { font-size: 16px; }
+  .shop-product-card__warranty { font-size: 13px; }
+  .shop-product-card__cta { height: 64px; margin-top: 18px; border-radius: 24px; font-size: 22px; }
+  .shop-product-card__wishlist { top: 16px; right: 16px; width: 54px; height: 54px; }
+  .shop-product-card__badge { top: 16px; left: 16px; padding: 10px 16px; font-size: 16px; }
+}

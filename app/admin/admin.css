@@ -136,9 +136,8 @@ html[data-admin-theme="dark"] {
   color: var(--admin-text);
 }
 
-.admin-sidebar-brand h1 span {
-  color: var(--admin-accent);
-}
+.admin-sidebar-brand h1 .fixxer-logo-word { color: var(--admin-text); }
+.admin-sidebar-brand h1 .fixxer-logo-accent { color: var(--admin-accent); }
 
 .admin-sidebar-brand p {
   font-size: 11px;

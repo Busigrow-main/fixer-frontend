@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
 import "./admin.css";
+import FixxerLogo from "@/app/components/FixxerLogo";
 
 const NAV_ITEMS = [
   { href: "/admin", icon: "dashboard", label: "Dashboard", exact: true },
@@ -192,9 +193,7 @@ export default function AdminLayout({
         aria-label="Admin navigation"
       >
         <div className="admin-sidebar-brand">
-          <h1>
-            Fixxer<span>.</span>
-          </h1>
+          <h1><FixxerLogo wordClassName="text-[var(--admin-text)]" accentClassName="text-[var(--admin-accent)]" /></h1>
           <p>Admin Console</p>
         </div>
 

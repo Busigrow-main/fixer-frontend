@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useBooking } from "@/app/context/BookingContext";
+import FixxerLogo from "@/app/components/FixxerLogo";
 
 const EXPLORE_LINKS = [
   { label: "Services", href: "/services" },
@@ -71,7 +72,7 @@ export default function Footer() {
               href="/"
               className="text-2xl font-black tracking-tighter text-zinc-900 select-none"
             >
-              Fixx<span className="text-primary">er</span>
+              <FixxerLogo className="text-2xl" />
             </Link>
 
             <p className="text-zinc-500 text-sm leading-relaxed max-w-xs opacity-90 text-balance">

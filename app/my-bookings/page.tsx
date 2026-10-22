@@ -1,15 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 import { useAuth } from "@/app/context/AuthContext";
 import { API_URL } from "@/app/config";
 import { openRetailInvoice } from "@/app/admin/utils/jobsheet";
-import { openOrderInvoice } from "@/app/admin/utils/order-invoice";
-import { SHOP_APPLIANCES_HREF } from "@/app/lib/shop-routes";
 import {
   buildCustomerPricingSummary,
   formatInr,
@@ -18,50 +16,12 @@ import {
   statusToneClasses,
 } from "@/app/lib/customer-booking";
 
-type TabType = "repairs" | "parts" | "help" | "appliances";
+type TabType = "repairs";
 
 type CancellationFeedback = {
   tone: "success" | "error";
   message: string;
 } | null;
-
-type PartOrderHistoryItem = {
-  _id: string;
-  orderType?: "part" | "appliance" | string;
-  applianceItem?: unknown;
-  items?: unknown[];
-  [key: string]: unknown;
-};
-
-function isPartOrder(order: PartOrderHistoryItem) {
-  return order.orderType?.toLowerCase() === "part";
-}
-
-function isApplianceOrder(order: PartOrderHistoryItem) {
-  return order.orderType?.toLowerCase() === "appliance";
-}
-
-function normalizePartOrdersResponse(
-  payload: unknown,
-): PartOrderHistoryItem[] {
-  if (Array.isArray(payload)) {
-    return payload as PartOrderHistoryItem[];
-  }
-
-  if (payload && typeof payload === "object") {
-    const response = payload as { data?: unknown; orders?: unknown };
-
-    if (Array.isArray(response.data)) {
-      return response.data as PartOrderHistoryItem[];
-    }
-
-    if (Array.isArray(response.orders)) {
-      return response.orders as PartOrderHistoryItem[];
-    }
-  }
-
-  throw new Error("Unexpected /user/part-orders response shape.");
-}
 
 /* =====================================================================
    PRESENTATION HELPERS
@@ -78,27 +38,6 @@ const softBtn =
 
 const darkBtn =
   "inline-flex h-10 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-zinc-900 px-3.5 text-[13px] font-semibold text-white transition hover:bg-black active:scale-[0.98] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-zinc-300 sm:flex-none";
-
-function orderTone(status: string) {
-  if (status === "CANCELLED") {
-    return {
-      dot: "bg-red-500",
-      pill: "border-red-200 bg-red-50 text-red-700",
-    };
-  }
-
-  if (status === "PENDING") {
-    return {
-      dot: "bg-amber-500",
-      pill: "border-amber-200 bg-amber-50 text-amber-800",
-    };
-  }
-
-  return {
-    dot: "bg-green-500",
-    pill: "border-green-200 bg-green-50 text-green-800",
-  };
-}
 
 function formatDate(value?: string) {
   if (!value) return "";
@@ -205,20 +144,12 @@ function MyBookingsContent() {
     searchParams.get("success") === "true",
   );
 
-  const tabParam = searchParams.get("tab");
-
   const [activeTab, setActiveTab] = useState<TabType>("repairs");
-  const [orders, setOrders] = useState<PartOrderHistoryItem[]>([]);
-  const [helpRequests, setHelpRequests] = useState<any[]>([]);
   const [bookings, setBookings] = useState<any[]>([]);
-  const [appliances, setAppliances] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const [cancelTarget, setCancelTarget] = useState<{
-    type: "booking" | "order";
-    id: string;
-  } | null>(null);
+  const [cancelTarget, setCancelTarget] = useState<{ id: string } | null>(null);
 
   const [cancellationReason, setCancellationReason] = useState("");
   const [cancelling, setCancelling] = useState(false);
@@ -257,18 +188,6 @@ function MyBookingsContent() {
     };
   }, [cancelTarget]);
 
-  const partOrders = useMemo(
-    () => orders.filter(isPartOrder),
-    [orders],
-  );
-
-  const applianceOrders = useMemo(
-    () => orders.filter(isApplianceOrder),
-    [orders],
-  );
-
-  const hasApplianceBookings = applianceOrders.length > 0;
-
   useEffect(() => {
     if (token) {
       fetchAllHistory();
@@ -277,97 +196,28 @@ function MyBookingsContent() {
     }
   }, [token, authLoading]);
 
-  useEffect(() => {
-    if (loading) return;
-
-    if (tabParam === "appliances" && hasApplianceBookings) {
-      setActiveTab("appliances");
-    } else if (tabParam === "parts") {
-      setActiveTab("parts");
-    } else if (tabParam === "help") {
-      setActiveTab("help");
-    } else if (tabParam === "repairs") {
-      setActiveTab("repairs");
-    }
-  }, [loading, hasApplianceBookings, tabParam]);
-
   const fetchAllHistory = async () => {
     setLoading(true);
 
     try {
-      const [ordersRes, bookingsRes, appliancesRes, helpRes] =
-        await Promise.all([
-          fetch(`${API_URL}/user/part-orders`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          fetch(`${API_URL}/user/bookings`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          fetch(`${API_URL}/user/appliances`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          fetch(`${API_URL}/user/part-help`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-        ]);
+      const response = await fetch(`${API_URL}/user/bookings`, {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+      });
 
-      if (ordersRes.ok) {
-        const payload = await ordersRes.json();
-        setOrders(normalizePartOrdersResponse(payload));
-      } else {
-        setError("Could not load spare part orders.");
-      }
+      if (!response.ok) throw new Error("Could not load technician bookings.");
 
-      if (bookingsRes.ok) {
-        setBookings(await bookingsRes.json());
-      }
-
-      if (appliancesRes.ok) {
-        const data = await appliancesRes.json();
-        setAppliances(Array.isArray(data) ? data : []);
-      }
-
-      if (helpRes.ok) {
-        const data = await helpRes.json();
-        setHelpRequests(Array.isArray(data) ? data : []);
-      }
-    } catch {
-      setError("Network error. Could not load history.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateHelpRequest = async (
-    id: string,
-    action: "accept" | "decline",
-  ) => {
-    if (!token) return;
-
-    try {
-      const response = await fetch(
-        `${API_URL}/user/part-help/${id}/${action}`,
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
-
-      const result = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        throw new Error(
-          result.message || "Could not update this request.",
-        );
-      }
-
-      await fetchAllHistory();
+      const data = await response.json();
+      setBookings(Array.isArray(data) ? data : []);
+      setError("");
     } catch (requestError) {
       setError(
         requestError instanceof Error
           ? requestError.message
-          : "Could not update this request.",
+          : "Network error. Could not load technician bookings.",
       );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -460,60 +310,8 @@ function MyBookingsContent() {
     return false;
   };
 
-  const handleCancelOrder = async (
-    orderId: string,
-    reason: string,
-  ): Promise<boolean> => {
-    if (!token) return false;
-
-    try {
-      const res = await fetch(
-        `${API_URL}/user/part-orders/${orderId}/cancel`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ reason }),
-        },
-      );
-
-      if (res.ok) {
-        setCancellationFeedback({
-          tone: "success",
-          message: "Your order has been cancelled successfully.",
-        });
-
-        await fetchAllHistory();
-        return true;
-      }
-
-      const data = await res.json().catch(() => ({}));
-
-      const message = Array.isArray(data.message)
-        ? data.message.join(" ")
-        : data.message;
-
-      setCancellationFeedback({
-        tone: "error",
-        message: message || "Could not cancel order. Please try again.",
-      });
-    } catch {
-      setCancellationFeedback({
-        tone: "error",
-        message: "Network error. Your order was not cancelled.",
-      });
-    }
-
-    return false;
-  };
-
-  const openCancellationModal = (
-    type: "booking" | "order",
-    id: string,
-  ) => {
-    setCancelTarget({ type, id });
+  const openCancellationModal = (id: string) => {
+    setCancelTarget({ id });
     setCancellationReason("");
   };
 
@@ -548,10 +346,7 @@ function MyBookingsContent() {
     setCancelling(true);
 
     try {
-      const cancelled =
-        cancelTarget.type === "booking"
-          ? await handleCancelBooking(cancelTarget.id, reason)
-          : await handleCancelOrder(cancelTarget.id, reason);
+      const cancelled = await handleCancelBooking(cancelTarget.id, reason);
 
       if (cancelled) {
         setCancelTarget(null);
@@ -591,44 +386,14 @@ function MyBookingsContent() {
     return { label: `Active (${diffDays} Days Left)`, isActive: true };
   };
 
-  const activeCount =
-    activeTab === "repairs"
-      ? bookings.length
-      : activeTab === "appliances"
-        ? applianceOrders.length
-        : activeTab === "help"
-          ? helpRequests.length
-          : partOrders.length;
+  const activeCount = bookings.length;
 
   const emptyCopy = {
-    repairs: {
-      icon: "construction",
-      title: "No repairs found",
-      body: "You haven't booked any master technician visits yet. Schedule one from the services page.",
-      href: "/services",
-      cta: "Browse Services",
-    },
-    parts: {
-      icon: "shopping_basket",
-      title: "No spare part orders found",
-      body: "Your spare part enquiries will appear here once you place them.",
-      href: "/spare-parts",
-      cta: "Browse Spare Parts",
-    },
-    help: {
-      icon: "support_agent",
-      title: "No part-help requests found",
-      body: "Not sure which part you need? Ask a Fixxer expert to identify it for you.",
-      href: "/spare-parts/help",
-      cta: "Ask an Expert",
-    },
-    appliances: {
-      icon: "ac_unit",
-      title: "No appliance enquiries found",
-      body: "Your AC and appliance enquiries will appear here after you submit one from the shop.",
-      href: SHOP_APPLIANCES_HREF,
-      cta: "Browse Appliances",
-    },
+    icon: "construction",
+    title: "No technician bookings yet",
+    body: "You haven't booked a technician visit yet. Schedule one from the services page.",
+    href: "/services",
+    cta: "Browse Services",
   } as const;
 
   const tabs: {
@@ -639,32 +404,10 @@ function MyBookingsContent() {
   }[] = [
     {
       key: "repairs",
-      label: "Repairs",
+      label: "Technician visits",
       icon: "home_repair_service",
       count: bookings.length,
     },
-    {
-      key: "help",
-      label: "Part help",
-      icon: "support_agent",
-      count: helpRequests.length,
-    },
-    {
-      key: "parts",
-      label: "Parts",
-      icon: "package_2",
-      count: partOrders.length,
-    },
-    ...(hasApplianceBookings
-      ? [
-          {
-            key: "appliances" as TabType,
-            label: "Appliances",
-            icon: "ac_unit",
-            count: applianceOrders.length,
-          },
-        ]
-      : []),
   ];
 
   return (
@@ -733,17 +476,10 @@ function MyBookingsContent() {
           <div className="mx-auto w-full max-w-[720px] px-4 pb-1 pt-6 md:max-w-[960px] md:px-6 md:pb-4 md:pt-10 xl:max-w-[1040px] xl:px-8">
             {showSuccess && (
               <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-green-200 bg-green-50 p-3.5 animate-in fade-in slide-in-from-top-4 duration-500">
-                <span className="material-symbols-outlined icon-filled text-[22px] text-green-600">
-                  check_circle
-                </span>
-
+                <span className="material-symbols-outlined icon-filled text-[22px] text-green-600">check_circle</span>
                 <div>
-                  <h3 className="text-sm font-semibold text-green-900">
-                    Request successful
-                  </h3>
-                  <p className="text-[13px] text-green-800/80">
-                    Your request has been received. Track its live status below.
-                  </p>
+                  <h3 className="text-sm font-semibold text-green-900">Booking request received</h3>
+                  <p className="text-[13px] text-green-800/80">Your technician booking request is being processed.</p>
                 </div>
               </div>
             )}
@@ -762,13 +498,11 @@ function MyBookingsContent() {
 
             <header className="mb-4 md:mb-5">
               <h1 className="font-headline text-[1.75rem] leading-tight tracking-tight text-zinc-900 sm:text-3xl md:text-[2rem]">
-                My activity
+                My Bookings
               </h1>
 
               <p className="mt-1 text-[13px] leading-relaxed text-zinc-500 sm:text-sm">
-                Repairs, spare parts, part help
-                {hasApplianceBookings ? " and appliance enquiries" : ""} in one
-                place.
+                Technician service visits, updates, and warranty details.
               </p>
             </header>
           </div>
@@ -840,41 +574,6 @@ function MyBookingsContent() {
             </div>
           </div>
 
-          {/* Registered appliances */}
-          {appliances.length > 0 && (
-            <div className={`${cardCls} mb-4 p-3.5 md:p-5`}>
-              <div className="flex items-start gap-2.5">
-                <IconTile icon="qr_code_2" />
-
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-zinc-900">
-                    Your registered appliances
-                  </p>
-                  <p className="text-xs text-zinc-500">
-                    Linked to your phone by serial number.
-                  </p>
-                </div>
-              </div>
-
-              <div className="no-scrollbar -mx-3.5 mt-3 flex gap-2 overflow-x-auto px-3.5 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
-                {appliances.map((a) => (
-                  <div
-                    key={a._id || a.serialNumber}
-                    className="shrink-0 rounded-xl border border-primary/15 bg-primary/[0.04] px-3 py-2"
-                  >
-                    <p className="break-all text-[13px] font-semibold text-zinc-900">
-                      {a.serialNumber}
-                    </p>
-                    <p className="text-xs text-zinc-500">
-                      {[a.brand, a.modelNumber].filter(Boolean).join(" · ") ||
-                        "Appliance"}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Content */}
           {!token && !authLoading ? (
             <div className={`${cardCls} px-5 py-10 text-center md:py-14`}>
@@ -889,7 +588,7 @@ function MyBookingsContent() {
               </p>
 
               <p className="mx-auto mt-1 max-w-xs text-[13px] text-zinc-500">
-                Enter your mobile number to view order history and tracking.
+                Enter your mobile number to view your technician bookings.
               </p>
 
               <a
@@ -925,23 +624,23 @@ function MyBookingsContent() {
             <div className={`${cardCls} px-5 py-10 text-center md:py-14`}>
               <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
                 <span className="material-symbols-outlined text-[28px]">
-                  {emptyCopy[activeTab].icon}
+                  {emptyCopy.icon}
                 </span>
               </span>
 
               <p className="mt-3 text-base font-semibold text-zinc-900">
-                {emptyCopy[activeTab].title}
+                {emptyCopy.title}
               </p>
 
               <p className="mx-auto mt-1 max-w-xs text-[13px] leading-relaxed text-zinc-500">
-                {emptyCopy[activeTab].body}
+                {emptyCopy.body}
               </p>
 
               <a
-                href={emptyCopy[activeTab].href}
+                href={emptyCopy.href}
                 className="mt-5 inline-flex h-11 w-full items-center justify-center rounded-xl bg-primary px-6 text-sm font-semibold text-on-primary shadow-[0_8px_18px_-8px_rgba(200,16,46,0.6)] transition active:scale-[0.98] sm:w-auto"
               >
-                {emptyCopy[activeTab].cta}
+                {emptyCopy.cta}
               </a>
             </div>
           ) : (
@@ -954,110 +653,11 @@ function MyBookingsContent() {
                     getWarrantyStatus={getWarrantyStatus}
                     onClaimWarranty={handleClaimWarranty}
                     onCancelBooking={(id) =>
-                      openCancellationModal("booking", id)
+                      openCancellationModal(id)
                     }
                   />
                 ))}
 
-              {activeTab === "parts" &&
-                partOrders.map((order) => (
-                  <PartOrderCard
-                    key={order._id}
-                    order={order}
-                    onCancelOrder={(id) =>
-                      openCancellationModal("order", id)
-                    }
-                  />
-                ))}
-
-              {activeTab === "help" &&
-                helpRequests.map((request) => (
-                  <article key={request._id} className={cardCls}>
-                    <div className="p-4 md:p-5">
-                      <div className="flex items-start gap-3">
-                        <IconTile icon="support_agent" />
-
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-start justify-between gap-3">
-                            <h2 className="text-[15px] font-semibold leading-snug text-zinc-900">
-                              {request.applianceType}
-                              {request.applianceBrand
-                                ? ` · ${request.applianceBrand}`
-                                : ""}
-                            </h2>
-
-                            <StatusPill
-                              dot="bg-primary"
-                              pill="border-primary/20 bg-primary/10 text-primary"
-                              label={request.status}
-                            />
-                          </div>
-
-                          <p className="mt-0.5 text-xs text-zinc-500">
-                            Part help #
-                            {String(request._id).slice(-6).toUpperCase()}
-                          </p>
-                        </div>
-                      </div>
-
-                      <p className="mt-3 text-[13px] leading-relaxed text-zinc-600">
-                        {request.partDescription}
-                      </p>
-
-                      {request.adminResponse && (
-                        <div className="mt-3 rounded-xl border border-primary/15 bg-primary/[0.05] p-3">
-                          <p className="text-xs font-bold text-primary">
-                            Fixxer&apos;s response
-                          </p>
-
-                          <p className="mt-1 text-[13px] leading-relaxed text-zinc-800">
-                            {request.adminResponse}
-                          </p>
-
-                          {request.quotedPrice != null && (
-                            <p className="mt-2 text-xl font-bold text-primary">
-                              {formatInr(request.quotedPrice)}
-                              <span className="ml-2 text-xs font-medium text-zinc-500">
-                                {request.isAvailable
-                                  ? "Available"
-                                  : "Currently unavailable"}
-                              </span>
-                            </p>
-                          )}
-                        </div>
-                      )}
-                    </div>
-
-                    {request.status === "QUOTED" && (
-                      <div className="grid grid-cols-2 gap-2 border-t border-zinc-100 bg-zinc-50/60 p-3">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            updateHelpRequest(request._id, "decline")
-                          }
-                          className="h-11 rounded-xl border border-zinc-200 bg-white text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 active:scale-[0.98]"
-                        >
-                          Decline
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            updateHelpRequest(request._id, "accept")
-                          }
-                          className="h-11 rounded-xl bg-primary text-sm font-semibold text-on-primary shadow-[0_8px_18px_-8px_rgba(200,16,46,0.6)] transition active:scale-[0.98]"
-                        >
-                          Accept quote
-                        </button>
-                      </div>
-                    )}
-                  </article>
-                ))}
-
-              {activeTab === "appliances" &&
-                applianceOrders.map((order) => (
-                  <ApplianceEnquiryCard key={order._id} order={order} />
-                ))}
             </div>
           )}
         </section>
@@ -1091,12 +691,12 @@ function MyBookingsContent() {
                     className="font-headline text-xl font-bold leading-tight text-zinc-900"
                   >
                     Cancel{" "}
-                    {cancelTarget.type === "booking" ? "booking" : "order"}?
+                    booking?
                   </h2>
 
                   <p className="mt-1 text-[13px] leading-snug text-zinc-500">
                     Tell us why. This is saved with your{" "}
-                    {cancelTarget.type === "booking" ? "booking" : "order"}.
+                    booking.
                   </p>
                 </div>
               </div>
@@ -1164,7 +764,7 @@ function MyBookingsContent() {
                 disabled={cancelling}
                 className="order-2 h-11 rounded-xl border border-zinc-200 bg-white text-sm font-semibold text-zinc-800 transition hover:bg-zinc-50 disabled:opacity-50 sm:order-1"
               >
-                Keep {cancelTarget.type === "booking" ? "booking" : "order"}
+                Keep booking
               </button>
             </div>
           </div>
@@ -1627,311 +1227,3 @@ function RepairBookingCard({
 /* =====================================================================
    PART ORDER CARD
    ===================================================================== */
-
-function PartOrderCard({
-  order,
-  onCancelOrder,
-}: {
-  order: any;
-  onCancelOrder: (id: string) => void;
-}) {
-  return (
-    <article className={cardCls}>
-      <OrderCardHeader
-        order={order}
-        label={`Order #${order._id.slice(-8).toUpperCase()}`}
-        icon="package_2"
-      />
-
-      <div className="space-y-4 px-4 pb-4 md:px-5 md:pb-5 lg:px-6">
-        <ItemsBlock order={order} showInvoice />
-        <ContactBlock
-          order={order}
-          title="Shipping to"
-          icon="local_shipping"
-        />
-      </div>
-
-      {["PENDING", "PROCESSING"].includes(order.status) && (
-        <div className="border-t border-primary/10 bg-primary/[0.04] px-4 py-3 md:px-5 lg:px-6">
-          <button
-            type="button"
-            onClick={() => onCancelOrder(order._id)}
-            className={`${outlineBtn} w-full !border-red-200 !text-red-700 hover:!bg-red-50 sm:w-auto`}
-          >
-            Cancel order
-          </button>
-        </div>
-      )}
-    </article>
-  );
-}
-
-/* =====================================================================
-   APPLIANCE ENQUIRY CARD
-   ===================================================================== */
-
-function ApplianceEnquiryCard({ order }: { order: any }) {
-  const item = order.applianceItem;
-
-  const productHref = item?.slug
-    ? `${SHOP_APPLIANCES_HREF}/ac/${item.slug}`
-    : SHOP_APPLIANCES_HREF;
-
-  return (
-    <article className={cardCls}>
-      <OrderCardHeader
-        order={order}
-        label={`Enquiry #${order._id.slice(-8).toUpperCase()}`}
-        badge="Appliance"
-        icon="ac_unit"
-      />
-
-      <div className="space-y-4 px-4 pb-4 md:px-5 md:pb-5 lg:px-6">
-        {item && (
-          <div className="rounded-xl border border-primary/15 bg-primary/[0.04] p-3.5 md:p-4">
-            <Label icon="ac_unit">Product enquired</Label>
-
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <h3 className="text-[15px] font-semibold leading-snug text-zinc-900">
-                  {item.name}
-                </h3>
-
-                <p className="mt-0.5 text-[13px] text-zinc-500">
-                  {item.brand}
-                  {item.modelNumber ? ` · Model ${item.modelNumber}` : ""}
-                </p>
-
-                <p className="mt-1 text-[13px] text-zinc-500">
-                  Quantity: {item.quantity}
-                </p>
-              </div>
-
-              <p className="shrink-0 text-lg font-bold text-primary">
-                {item.price
-                  ? `₹${Number(item.price).toLocaleString("en-IN")}`
-                  : "Price on request"}
-              </p>
-            </div>
-
-            <Link
-              href={productHref}
-              className="mt-2.5 inline-flex items-center gap-1 text-[13px] font-semibold text-primary hover:underline"
-            >
-              View product
-              <span className="material-symbols-outlined text-[16px]">
-                arrow_forward
-              </span>
-            </Link>
-          </div>
-        )}
-
-        <ContactBlock
-          order={order}
-          title="Your details & visit"
-          icon="person"
-        />
-
-        <div>
-          <Label icon="support_agent">What happens next</Label>
-
-          <ul className="space-y-1.5 text-[13px] text-zinc-600">
-            {[
-              "Our team confirms stock and final pricing",
-              "We call you to schedule delivery or installation",
-              "Status updates appear here as your enquiry progresses",
-            ].map((text) => (
-              <li key={text} className="flex items-start gap-2">
-                <span className="material-symbols-outlined mt-px text-[16px] text-primary">
-                  check_circle
-                </span>
-                <span className="leading-snug">{text}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-
-      {order.isBilled && (
-        <div className="border-t border-primary/10 bg-primary/[0.04] px-4 py-3 md:px-5 lg:px-6">
-          <button
-            type="button"
-            onClick={() => openOrderInvoice(order)}
-            className={`${darkBtn} w-full sm:w-auto`}
-          >
-            <span className="material-symbols-outlined text-[17px]">
-              receipt_long
-            </span>
-            Download Invoice
-          </button>
-        </div>
-      )}
-    </article>
-  );
-}
-
-/* =====================================================================
-   SHARED ORDER PIECES
-   ===================================================================== */
-
-function OrderCardHeader({
-  order,
-  label,
-  badge,
-  icon,
-}: {
-  order: any;
-  label: string;
-  badge?: string;
-  icon: string;
-}) {
-  const tone = orderTone(order.status);
-
-  return (
-    <div className="flex items-start gap-3 p-4 pb-3 md:px-5 md:pt-5 lg:px-6">
-      <IconTile icon={icon} />
-
-      <div className="min-w-0 flex-1">
-        <div className="flex items-start justify-between gap-3">
-          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[15px] font-semibold leading-snug text-zinc-900">
-            {label}
-
-            {badge && (
-              <span className="rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-bold text-primary">
-                {badge}
-              </span>
-            )}
-          </p>
-
-          <StatusPill
-            dot={tone.dot}
-            pill={tone.pill}
-            label={order.status}
-          />
-        </div>
-
-        <p className="mt-0.5 text-xs text-zinc-500">
-          {formatDate(order.createdAt)}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function ContactBlock({
-  order,
-  title,
-  icon,
-}: {
-  order: any;
-  title: string;
-  icon: string;
-}) {
-  return (
-    <div>
-      <Label icon={icon}>{title}</Label>
-
-      <h3 className="text-[13px] font-semibold text-zinc-900">
-        {order.contactData.name}
-      </h3>
-
-      <p className="mt-0.5 text-[13px] leading-relaxed text-zinc-600">
-        {order.contactData.address}
-        <br />
-        Phone: {order.contactData.phone}
-
-        {order.contactData.email && (
-          <>
-            <br />
-            Email: {order.contactData.email}
-          </>
-        )}
-
-        {order.contactData.preferredDate && (
-          <>
-            <br />
-            Preferred visit: {order.contactData.preferredDate}
-            {order.contactData.preferredTime
-              ? ` at ${order.contactData.preferredTime}`
-              : ""}
-          </>
-        )}
-
-        {order.contactData.notes && (
-          <>
-            <br />
-            Notes: {order.contactData.notes}
-          </>
-        )}
-      </p>
-    </div>
-  );
-}
-
-function ItemsBlock({
-  order,
-  showInvoice,
-}: {
-  order: any;
-  showInvoice?: boolean;
-}) {
-  return (
-    <div>
-      <Label icon="inventory_2">Items</Label>
-
-      <div className="divide-y divide-zinc-100 rounded-xl border border-zinc-200 bg-zinc-50/60">
-        {(order.items ?? []).map((item: any, idx: number) => (
-          <div
-            key={idx}
-            className="flex items-center justify-between gap-3 px-3 py-2.5 text-[13px]"
-          >
-            <div className="flex min-w-0 items-center gap-2.5">
-              <span className="shrink-0 rounded-md bg-primary/10 px-1.5 py-0.5 text-xs font-bold text-primary">
-                {item.quantity}×
-              </span>
-
-              <span className="truncate font-medium text-zinc-900">
-                {item.partId?.name || "Genuine Component"}
-              </span>
-            </div>
-
-            <span className="shrink-0 font-semibold text-zinc-900">
-              {item.partId?.price || "TBD"}
-            </span>
-          </div>
-        ))}
-      </div>
-
-      {order.courierTracking && (
-        <div className="mt-2.5 flex items-start gap-2 rounded-xl border border-primary/15 bg-primary/[0.05] p-3 text-[13px]">
-          <span className="material-symbols-outlined text-[18px] text-primary">
-            local_shipping
-          </span>
-
-          <div className="min-w-0">
-            <p className="text-xs font-bold text-primary">Live tracking</p>
-
-            <p className="break-all font-semibold text-zinc-900">
-              {order.courierTracking.courierName}:{" "}
-              {order.courierTracking.trackingNumber}
-            </p>
-          </div>
-        </div>
-      )}
-
-      {showInvoice && order.isBilled && (
-        <button
-          type="button"
-          onClick={() => openOrderInvoice(order)}
-          className={`${darkBtn} mt-2.5 w-full`}
-        >
-          <span className="material-symbols-outlined text-[17px]">
-            receipt_long
-          </span>
-          Download Invoice
-        </button>
-      )}
-    </div>
-  );
-}

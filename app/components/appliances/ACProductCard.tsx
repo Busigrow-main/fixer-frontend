@@ -137,7 +137,7 @@ export function ACProductCard({
 
         {/* Description */}
         {product.shortDescription ? (
-          <p className="mt-1.5 line-clamp-2 text-[10px] leading-4 text-slate-500 sm:text-xs">
+          <p className="mt-1.5 line-clamp-1 min-w-0 text-[10px] leading-4 text-slate-500 sm:text-xs" title={product.shortDescription}>
             {product.shortDescription}
           </p>
         ) : null}

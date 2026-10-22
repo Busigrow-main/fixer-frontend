@@ -10,6 +10,7 @@ import {
   isShopRoute,
 } from "@/app/lib/shop-routes";
 import { MobileBottomNav } from "@/app/components/MobileBottomNav";
+import FixxerLogo from "@/app/components/FixxerLogo";
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
@@ -98,7 +99,7 @@ export default function Navbar() {
               href="/"
               className="text-2xl font-black tracking-tighter text-zinc-900 select-none"
             >
-              Fixx<span className="text-primary">er</span>
+              <FixxerLogo className="text-2xl" />
             </Link>
 
             <ul className="flex gap-8 items-center">
@@ -222,7 +223,7 @@ export default function Navbar() {
               href="/"
               className="text-xl font-black tracking-tighter text-zinc-900 select-none"
             >
-              Fixx<span className="text-primary">er</span>
+              <FixxerLogo className="text-xl" />
             </Link>
           )}
 

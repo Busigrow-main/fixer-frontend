@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
+import FixxerLogo from "@/app/components/FixxerLogo";
 import "../admin.css";
 
 export default function AdminLoginPage() {
@@ -53,8 +54,8 @@ export default function AdminLoginPage() {
         }}
       >
         <div style={{ textAlign: "center", marginBottom: 40 }}>
-          <h1 style={{ fontSize: 28, fontWeight: 800, color: "var(--admin-text)", letterSpacing: -0.5 }}>
-            Fixxer<span style={{ color: "var(--admin-accent)" }}>.</span>
+          <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: -0.5 }}>
+            <FixxerLogo wordClassName="text-[var(--admin-text)]" accentClassName="text-[var(--admin-accent)]" />
           </h1>
           <p
             style={{

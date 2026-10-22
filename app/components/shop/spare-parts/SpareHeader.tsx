@@ -15,7 +15,7 @@ export default function SpareHeader({
   onLocationClick,
 }: Props) {
   return (
-    <header className="sticky top-0 z-40 flex h-[52px] w-full items-center gap-2 border-b border-[#E8E8EB] bg-white px-3 sm:h-14 sm:px-5 md:hidden">
+    <header className="fixed inset-x-0 top-0 z-50 flex h-[52px] w-full items-center gap-2 border-b border-[#E8E8EB] bg-white px-3 sm:h-14 sm:px-5 md:hidden">
       {/* Back button */}
       <button
         type="button"

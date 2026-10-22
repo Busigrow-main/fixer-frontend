@@ -313,7 +313,7 @@ export default function ShopPartHelpForm() {
             type="button"
             onClick={() =>
               router.push(
-                "/my-bookings?tab=parts",
+                "/shop/requests",
               )
             }
             className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-black text-white shadow-sm transition hover:brightness-95 active:scale-[0.99]"

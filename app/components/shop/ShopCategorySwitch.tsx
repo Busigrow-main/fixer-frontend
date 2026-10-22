@@ -36,14 +36,14 @@ export default function ShopCategorySwitch({
   return (
     <nav
       aria-label="Shop categories"
-      className="grid w-full grid-cols-2 gap-1.5 sm:gap-2"
+      className="mx-auto grid w-full max-w-[520px] grid-cols-2 gap-2 sm:gap-3"
     >
       {categories.map(({ label, href, icon: Icon, active }) => (
         <Link
           key={label}
           href={href}
           aria-current={active ? "page" : undefined}
-          className={`flex h-[38px] min-w-0 items-center justify-center gap-1.5 rounded-[10px] border px-2 text-[11px] font-semibold transition-colors active:scale-[0.98] sm:h-10 sm:gap-2 sm:rounded-xl sm:text-sm md:h-11 ${
+          className={`flex h-10 min-w-0 items-center justify-center gap-2 rounded-xl border px-3 text-xs font-semibold transition-colors active:scale-[0.98] sm:h-11 sm:text-sm md:h-12 ${
             active
               ? "border-[#D8102B] bg-[#D8102B] text-white"
               : "border-[#E6E7EB] bg-white text-[#303238] hover:border-[#D8102B]/40"
@@ -52,7 +52,7 @@ export default function ShopCategorySwitch({
           <Icon
             aria-hidden="true"
             strokeWidth={2}
-            className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4"
+            className="h-4 w-4 shrink-0 sm:h-[18px] sm:w-[18px]"
           />
           <span className="truncate">{label}</span>
         </Link>

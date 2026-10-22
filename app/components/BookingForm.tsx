@@ -5,6 +5,7 @@ import { useAuth } from "@/app/context/AuthContext";
 import { useBooking } from "@/app/context/BookingContext";
 import { useRouter } from "next/navigation";
 import { API_URL } from "@/app/config";
+import { getServices, type ApiService } from "@/app/lib/services-api";
 import { isValidPhone } from "@/app/lib/auth";
 import { APPLIANCE_BRANDS, OTHER_BRAND } from "@/app/lib/appliance-brands";
 
@@ -150,7 +151,7 @@ export default function BookingForm({
   const router = useRouter();
   const { resumeDraft, clearResumeDraft } = useBooking();
 
-  const [services, setServices] = useState<any[]>([]);
+  const [services, setServices] = useState<ApiService[]>([]);
   const [step, setStep] = useState(0);
   const [pickingDate, setPickingDate] = useState(false);
   const [showAllBrands, setShowAllBrands] = useState(false);
@@ -194,14 +195,11 @@ export default function BookingForm({
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const res = await fetch(`${API_URL}/services`);
-        if (res.ok) {
-          const data = await res.json();
-          setServices(data);
-          if (initialServiceSlug) {
-            const matched = data.find((s: any) => s.slug === initialServiceSlug);
-            if (matched) setFormData((p) => ({ ...p, serviceId: matched._id, subCategoryId: "" }));
-          }
+        const data = await getServices();
+        setServices(data);
+        if (initialServiceSlug) {
+          const matched = data.find((s) => s.slug === initialServiceSlug);
+          if (matched) setFormData((p) => ({ ...p, serviceId: matched._id, subCategoryId: "" }));
         }
       } catch (err) {
         console.error("Failed to load services:", err);
@@ -255,7 +253,7 @@ export default function BookingForm({
 
   /* ---------- derived ---------- */
   const selectedService = services.find((s) => s._id === formData.serviceId);
-  const selectedSub = selectedService?.subCategories?.find((sc: any) => sc._id === formData.subCategoryId);
+  const selectedSub = selectedService?.subCategories?.find((sc) => sc._id === formData.subCategoryId);
   const isServiceLocked = Boolean(initialServiceSlug) && Boolean(selectedService);
   const resolvedBrand = formData.brand === OTHER_BRAND ? formData.brandOther.trim() : formData.brand.trim();
 
@@ -559,9 +557,9 @@ export default function BookingForm({
               {isServiceLocked ? (
                 <div className="flex items-center gap-3 rounded-2xl border border-primary/30 bg-primary/[0.05] p-3.5">
                   <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-white">
-                    <span className="material-symbols-outlined text-[24px]">{iconFor(selectedService.name)}</span>
+                    <span className="material-symbols-outlined text-[24px]">{iconFor(selectedService?.name ?? "")}</span>
                   </span>
-                  <span className="flex-1 text-[15px] font-semibold text-zinc-900">{selectedService.name}</span>
+                  <span className="flex-1 text-[15px] font-semibold text-zinc-900">{selectedService?.name}</span>
                   <span className="material-symbols-outlined text-[18px] text-primary">lock</span>
                 </div>
               ) : (
@@ -597,7 +595,7 @@ export default function BookingForm({
               <div className="animate-in fade-in slide-in-from-top-2 duration-300">
                 <Label>Your appliance type</Label>
                 <div className="space-y-2">
-                  {selectedService.subCategories?.map((sc: any) => {
+                  {selectedService.subCategories?.map((sc) => {
                     const active = formData.subCategoryId === sc._id;
                     return (
                       <Choice

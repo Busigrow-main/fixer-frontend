@@ -2,18 +2,27 @@
 "use client";
 
 import ShopProductCard from "../ShopProductCard";
+import ShopProductGridSkeleton from "../ShopProductGridSkeleton";
 import { SearchX } from "lucide-react";
 
 export type SparePart = {
   id: string;
   name: string;
   image: string;
+  sku?: string;
+  brand?: string;
   price: number;
   mrp?: number;
   rating?: number;
   reviews?: number;
   badge?: string;
+  bestSeller?: boolean;
   highlight?: string;
+  stock?: number;
+  isInStock?: boolean;
+  warrantyMonths?: number;
+  detailHref?: string;
+  cartProductType?: "part" | "appliance";
 };
 
 type Props = {
@@ -22,19 +31,11 @@ type Props = {
   cartIds: Set<string>;
   onAddToCart: (id: string) => void;
   promo?: React.ReactNode;
+  error?: string;
+  onRetry?: () => void;
+  emptyTitle?: string;
+  emptyDescription?: string;
 };
-
-function Skeleton() {
-  return (
-    <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white p-2 sm:rounded-2xl sm:p-3">
-      <div className="aspect-square animate-pulse rounded-lg bg-zinc-100" />
-      <div className="mt-2.5 h-2.5 w-1/3 animate-pulse rounded bg-zinc-100 sm:mt-3 sm:h-3" />
-      <div className="mt-2 h-3 w-full animate-pulse rounded bg-zinc-100" />
-      <div className="mt-1.5 h-3 w-3/4 animate-pulse rounded bg-zinc-100" />
-      <div className="mt-3 h-8 animate-pulse rounded-lg bg-zinc-100 sm:h-10" />
-    </div>
-  );
-}
 
 export default function ProductGrid({
   parts,
@@ -42,16 +43,23 @@ export default function ProductGrid({
   cartIds,
   onAddToCart,
   promo,
+  error,
+  onRetry,
+  emptyTitle = "No parts found",
+  emptyDescription = "Try another part name or model number, or clear your filters.",
 }: Props) {
   const gridClass =
     "grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 lg:gap-5";
 
   if (loading) {
+    return <ShopProductGridSkeleton className={gridClass} />;
+  }
+
+  if (error) {
     return (
-      <div className={gridClass} aria-busy="true" aria-label="Loading spare parts">
-        {Array.from({ length: 8 }, (_, i) => (
-          <Skeleton key={i} />
-        ))}
+      <div role="alert" className="rounded-xl border border-zinc-200 bg-white px-4 py-10 text-center sm:rounded-2xl sm:px-6 sm:py-14">
+        <p className="text-sm font-semibold text-zinc-900">Products could not be loaded.</p>
+        {onRetry && <button type="button" onClick={onRetry} className="mt-3 text-sm font-bold text-primary hover:underline">Try again</button>}
       </div>
     );
   }
@@ -64,11 +72,11 @@ export default function ProductGrid({
         </span>
 
         <p className="mt-3 text-sm font-semibold text-zinc-900 sm:text-base">
-          No parts found
+          {emptyTitle}
         </p>
 
         <p className="mx-auto mt-1 max-w-xs text-xs leading-5 text-zinc-500 sm:text-[13px]">
-          Try another part name or model number, or clear your filters.
+          {emptyDescription}
         </p>
       </div>
     );
@@ -81,6 +89,8 @@ export default function ProductGrid({
           <ShopProductCard
             part={{
               id: part.id,
+              sku: part.sku,
+              brand: part.brand,
               name: part.name,
               imageUrl: part.image,
               description: part.highlight,
@@ -88,8 +98,13 @@ export default function ProductGrid({
               mrp: part.mrp,
               rating: part.rating?.toString(),
               reviews: part.reviews,
-              bestSeller: part.badge?.toLowerCase() === "bestseller",
-              isInStock: true,
+              bestSeller: part.bestSeller ?? /best\s*seller/i.test(part.badge ?? ""),
+              isInStock: part.isInStock,
+              stock: part.stock,
+              warrantyMonths: part.warrantyMonths,
+              detailHref: part.detailHref,
+              cartProductId: part.id,
+              cartProductType: part.cartProductType ?? "part",
             }}
             onRequest={() => onAddToCart(part.id)}
             inCart={cartIds.has(part.id)}

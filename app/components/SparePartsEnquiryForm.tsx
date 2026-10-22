@@ -472,7 +472,7 @@ export default function SparePartsEnquiryForm({
         }
 
         router.push(
-          "/my-bookings?success=true&tab=parts",
+          "/orders?success=true",
         );
 
         return;
@@ -530,7 +530,7 @@ export default function SparePartsEnquiryForm({
       }
 
       router.push(
-        "/my-bookings?success=true&tab=appliances",
+        "/orders?success=true",
       );
     } catch (submissionError) {
       console.error(
@@ -664,7 +664,7 @@ export default function SparePartsEnquiryForm({
 
             {estimatedPartTotal > 0 ? (
               <span className="text-xs font-black text-slate-900">
-                ₹
+                â‚¹
                 {estimatedPartTotal.toLocaleString(
                   "en-IN",
                 )}
@@ -909,14 +909,14 @@ export default function SparePartsEnquiryForm({
                   </p>
 
                   <p className="mt-1 text-[10px] font-semibold text-slate-400">
-                    Quantity ×{" "}
+                    Quantity Ã—{" "}
                     {applianceQuantity}
                   </p>
                 </div>
 
                 {applianceTotal > 0 ? (
                   <span className="shrink-0 text-sm font-black text-primary">
-                    ₹
+                    â‚¹
                     {applianceTotal.toLocaleString(
                       "en-IN",
                     )}
@@ -947,7 +947,7 @@ export default function SparePartsEnquiryForm({
                       </p>
 
                       <p className="mt-0.5 text-[10px] font-semibold text-slate-400">
-                        Qty ×{" "}
+                        Qty Ã—{" "}
                         {item.quantity}
                       </p>
                     </div>
@@ -955,7 +955,7 @@ export default function SparePartsEnquiryForm({
                     {part &&
                     Number(part.price) > 0 ? (
                       <span className="shrink-0 text-xs font-black text-slate-900">
-                        ₹
+                        â‚¹
                         {(
                           Number(
                             part.price,
@@ -1219,7 +1219,7 @@ function PartRow({
                     ? ` (${part.brandSlug})`
                     : ""}
                   {hasPrice
-                    ? ` — ₹${price.toLocaleString(
+                    ? ` â€” â‚¹${price.toLocaleString(
                         "en-IN",
                       )}`
                     : ""}
@@ -1287,7 +1287,7 @@ function PartRow({
 
           {Number(selectedPart.price) > 0 ? (
             <span className="shrink-0 text-[10px] font-black text-slate-800">
-              ₹
+              â‚¹
               {(
                 Number(
                   selectedPart.price,
@@ -1359,16 +1359,16 @@ function ApplianceSummary({
           <p className="mt-1 text-[10px] font-semibold text-slate-500">
             {appliance.brand}
             {appliance.capacityTon
-              ? ` · ${appliance.capacityTon} Ton`
+              ? ` Â· ${appliance.capacityTon} Ton`
               : ""}
             {appliance.starRating
-              ? ` · ${appliance.starRating}-Star`
+              ? ` Â· ${appliance.starRating}-Star`
               : ""}
           </p>
 
           {price > 0 ? (
             <p className="mt-2 text-sm font-black text-primary">
-              ₹
+              â‚¹
               {price.toLocaleString(
                 "en-IN",
               )}

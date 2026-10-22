@@ -425,7 +425,7 @@ export function openOrderInvoice(order: any) {
 
   <div class="page">
     <div class="top-bar">
-      <div class="brand">Fixxer<span>.</span></div>
+      <div class="brand">Fixx<span>er</span></div>
       <div class="doc-title">
         <h1>Tax Invoice</h1>
         <div class="sub">Original for Recipient</div>

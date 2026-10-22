@@ -111,7 +111,7 @@ export function openJobSheet(booking: any) {
     font-weight: 800;
     letter-spacing: -0.5px;
   }
-  .logo-text b { color: #e0133a; }
+  .logo-text span { color: #e0133a; }
 
   .flex-row {
     display: flex;
@@ -140,7 +140,7 @@ export function openJobSheet(booking: any) {
     <table>
       <tr>
         <td style="width:25%; text-align:center; vertical-align:middle; padding:10px;">
-          <div class="logo-text">Fixxer<b>.</b></div>
+          <div class="logo-text">Fixx<span>er</span></div>
         </td>
         <td style="width:50%; text-align:center; padding:8px;">
           <strong style="font-size: 12px; letter-spacing: 0.5px;">AUTHORIZED SERVICE PROVIDER</strong><br>
@@ -343,7 +343,7 @@ export function openJobSheet(booking: any) {
             <div><span class="lbl">Service Request No:</span> <strong style="font-size:11px;">${requestNo}</strong></div>
             <div style="display:flex; align-items:center; gap:8px;">
               <span class="lbl">Job is done :</span> Yes / No
-              <div class="logo-text" style="font-size:14px; margin-left:6px;">Fixxer<b>.</b></div>
+              <div class="logo-text" style="font-size:14px; margin-left:6px;">Fixx<span>er</span></div>
             </div>
           </div>
           <div class="flex-row">
@@ -452,7 +452,7 @@ export function openRetailInvoice(booking: any) {
   body { font-family: 'Inter', system-ui, sans-serif; padding: 40px; color: #1a1a1a; line-height: 1.5; font-size: 13px; }
   .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; border-bottom: 4px solid #f4f4f5; padding-bottom: 30px; }
   .logo { font-size: 32px; font-weight: 800; letter-spacing: -1px; }
-  .logo b { color: #e0133a; }
+  .logo span { color: #e0133a; }
   .invoice-label { text-align: right; }
   .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px; }
   .section-title { font-weight: 800; text-transform: uppercase; font-size: 11px; color: #71717a; letter-spacing: 1px; margin-bottom: 12px; }
@@ -473,7 +473,7 @@ export function openRetailInvoice(booking: any) {
 
   <div class="header">
     <div>
-      <div class="logo">Fixxer<b>.</b></div>
+      <div class="logo">Fixx<span>er</span></div>
       <p style="margin-top: 8px; color: #71717a;">Reliable Repairs, Master Technicians.</p>
     </div>
     <div class="invoice-label">
