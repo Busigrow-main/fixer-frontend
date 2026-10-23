@@ -76,35 +76,35 @@ export default function HeroOffersCarousel({
 
   const visibleIndex = offers.length > 0 ? activeIndex % offers.length : 0;
 
-  if (offers.length === 0) {
-    return (
-      <div
-        className={`relative aspect-4/3 overflow-hidden bg-surface-container-low ${className}`}
-        aria-label={loadError ? "Offers are temporarily unavailable" : "Fixxer service promotion"}
-        aria-busy={loading}
-      >
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url("${FALLBACK_IMAGE}")` }}
-        />
-        <div className="absolute inset-x-4 bottom-4 text-white sm:inset-x-6 sm:bottom-6">
-          <p role="status" className="text-sm font-semibold drop-shadow">
-            {loading ? "Loading current offers…" : loadError ? "Offers are temporarily unavailable." : "No current offers."}
-          </p>
-          {!loading && (
-            <button
-              type="button"
-              onClick={retryOffers}
-              className="mt-2 rounded-lg bg-white/90 px-3 py-2 text-xs font-bold text-zinc-900 hover:bg-white"
-            >
-              {loadError ? "Try again" : "Refresh offers"}
-            </button>
-          )}
-          {loading && <span className="sr-only">Please wait while current offers load.</span>}
-        </div>
-      </div>
-    );
-  }
+  // if (offers.length === 0) {
+  //   return (
+  //     <div
+  //       className={`relative aspect-4/3 overflow-hidden bg-surface-container-low ${className}`}
+  //       aria-label={loadError ? "Offers are temporarily unavailable" : "Fixxer service promotion"}
+  //       aria-busy={loading}
+  //     >
+  //       <div
+  //         className="absolute inset-0 bg-cover bg-center"
+  //         style={{ backgroundImage: `url("${FALLBACK_IMAGE}")` }}
+  //       />
+  //       <div className="absolute inset-x-4 bottom-4 text-white sm:inset-x-6 sm:bottom-6">
+  //         <p role="status" className="text-sm font-semibold drop-shadow">
+  //           {loading ? "Loading current offers…" : loadError ? "Offers are temporarily unavailable." : "No current offers."}
+  //         </p>
+  //         {!loading && (
+  //           <button
+  //             type="button"
+  //             onClick={retryOffers}
+  //             className="mt-2 rounded-lg bg-white/90 px-3 py-2 text-xs font-bold text-zinc-900 hover:bg-white"
+  //           >
+  //             {loadError ? "Try again" : "Refresh offers"}
+  //           </button>
+  //         )}
+  //         {loading && <span className="sr-only">Please wait while current offers load.</span>}
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div
@@ -134,8 +134,8 @@ export default function HeroOffersCarousel({
               backgroundImage: `url("${offer.imageUrl || FALLBACK_IMAGE}")`,
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
-          <div className="absolute inset-x-4 bottom-10 flex items-end justify-between gap-3 text-left text-white sm:inset-x-6 sm:bottom-11 md:inset-x-8">
+          {/* <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" /> */}
+          {/* <div className="absolute inset-x-4 bottom-10 flex items-end justify-between gap-3 text-left text-white sm:inset-x-6 sm:bottom-11 md:inset-x-8">
             <span className="min-w-0">
               <span className="block truncate font-headline text-lg font-bold sm:text-2xl md:text-3xl">{offer.title}</span>
               {offer.discountText && <span className="mt-1 block truncate text-xs font-semibold sm:text-sm">{offer.discountText}</span>}
@@ -143,7 +143,7 @@ export default function HeroOffersCarousel({
             <span className="shrink-0 rounded-lg bg-primary px-3 py-2 text-[9px] font-black uppercase tracking-wide text-on-primary shadow-lg sm:px-4 sm:text-[10px]">
               {offer.ctaLabel?.trim() || "Explore offer"}
             </span>
-          </div>
+          </div> */}
         </Link>
       ))}
 
