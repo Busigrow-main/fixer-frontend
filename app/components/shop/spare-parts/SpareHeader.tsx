@@ -40,7 +40,7 @@ export default function SpareHeader({
         aria-label={`Delivery location: ${location}. Tap to change`}
         className="inline-flex h-[30px] max-w-[48%] shrink-0 items-center gap-1 rounded-full border border-[#E7E7EA] bg-[#F7F7F8] px-2 text-[10px] font-medium text-[#55565B] transition-colors hover:bg-[#F0F0F2] active:scale-[0.98] sm:h-8 sm:gap-1.5 sm:px-2.5 sm:text-xs"
       >
-        <span className="material-symbols-outlined icon-filled text-[13px] text-[#D8102B] sm:text-[15px]">
+        <span className="material-symbols-outlined icon-filled text-[13px] text-primary sm:text-[15px]">
           location_on
         </span>
 

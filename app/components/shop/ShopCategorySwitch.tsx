@@ -45,8 +45,8 @@ export default function ShopCategorySwitch({
           aria-current={active ? "page" : undefined}
           className={`flex h-10 min-w-0 items-center justify-center gap-2 rounded-xl border px-3 text-xs font-semibold transition-colors active:scale-[0.98] sm:h-11 sm:text-sm md:h-12 ${
             active
-              ? "border-[#D8102B] bg-[#D8102B] text-white"
-              : "border-[#E6E7EB] bg-white text-[#303238] hover:border-[#D8102B]/40"
+              ? "border-primary bg-primary text-white"
+              : "border-zinc-200 bg-white text-zinc-700 hover:border-primary/40"
           }`}
         >
           <Icon

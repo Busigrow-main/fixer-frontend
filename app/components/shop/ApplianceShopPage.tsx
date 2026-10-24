@@ -12,6 +12,7 @@ import FilterBar from "@/app/components/shop/spare-parts/FilterBar";
 import ProductGrid, { type SparePart } from "@/app/components/shop/spare-parts/ProductGrid";
 import ServicePromoBanner from "@/app/components/shop/spare-parts/ServicePromoBanner";
 import { getApplianceCatalog, type ApplianceCatalogItem } from "@/app/lib/catalog-api";
+import { matchesApplianceCategory } from "@/app/lib/shop-copy";
 import technician from "../../public/images/shop/technician-banner-square.png";
 
 type SortKey = "relevance" | "price-asc" | "price-desc" | "rating";
@@ -92,12 +93,13 @@ export default function ApplianceShopPage({ initialCategory = "all" }: { initial
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
     return products.filter((item) =>
+      matchesApplianceCategory(item.applianceCategory, category) &&
       (!q || `${item.name} ${item.brand ?? ""} ${item.modelNumber ?? ""}`.toLowerCase().includes(q)) &&
       (!filters.brands.size || filters.brands.has(item.brand ?? "")) &&
       (!filters.capacities.size || filters.capacities.has(item.capacityTon ? `${item.capacityTon} Ton` : "")) &&
       (!filters.inStock || item.inStock !== false),
     );
-  }, [query, products, filters]);
+  }, [query, products, filters, category]);
   const gridProducts: SparePart[] = visible.map((product) => ({
     id: product.id,
     cartProductType: "appliance" as const,
@@ -136,12 +138,12 @@ export default function ApplianceShopPage({ initialCategory = "all" }: { initial
   };
 
   return (
-    <div className="min-h-screen bg-[#f4f4f6]">
-      <ShopNavbar hideMobileHeader searchValue={query} onSearchChange={setQuery} />
+    <div className="shop-shell min-h-screen bg-[#f6f6f6]">
+      <ShopNavbar searchValue={query} onSearchChange={setQuery} />
       <div className="md:hidden"><SpareHeader title="Appliances" location="Patna - 800001" onBack={() => router.push("/shop")} /></div>
 
       <main className="mx-auto flex w-full max-w-[560px] flex-col gap-3 px-3 pb-28 pt-[52px] sm:max-w-[720px] sm:px-4 sm:pt-14 md:max-w-[1480px] md:gap-5 md:px-8 md:pb-16 md:pt-8 lg:px-12">
-        <div className="sticky top-[52px] z-40 -mx-3 bg-[#f4f4f6] px-3 pt-0 pb-2 sm:top-14 md:hidden"><SearchBar value={query} onChange={setQuery} onVoice={() => {}} placeholder="Search for appliances, brands, or models..." /></div>
+        <div className="sticky top-[52px] z-40 -mx-3 bg-[#f6f6f6] px-3 pt-0 pb-2 sm:top-14 lg:hidden"><SearchBar value={query} onChange={setQuery} onVoice={() => {}} placeholder="Search for appliances, brands, or models..." /></div>
         <div className="w-full md:mx-auto md:max-w-[520px]"><ShopCategorySwitch /></div>
         <section className="hidden border-b border-slate-200 pb-5 md:block">
           <div>
@@ -151,8 +153,8 @@ export default function ApplianceShopPage({ initialCategory = "all" }: { initial
           </div>
         </section>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-[230px_minmax(0,1fr)] md:gap-6">
-          <aside className="hidden self-start rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_2px_8px_rgba(15,23,42,0.03)] md:sticky md:top-[92px] md:block">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[230px_minmax(0,1fr)] lg:gap-6">
+          <aside className="hidden self-start rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_2px_8px_rgba(15,23,42,0.03)] lg:sticky lg:top-6 lg:block">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div><h2 className="text-base font-bold text-slate-900">Categories</h2><p className="mt-0.5 text-xs text-slate-500">Shop by appliance</p></div>
               <button type="button" onClick={clearAll} className="text-xs font-semibold text-primary hover:underline">Clear</button>
@@ -173,7 +175,7 @@ export default function ApplianceShopPage({ initialCategory = "all" }: { initial
           </aside>
 
           <div className="min-w-0">
-            <div className="mb-3 flex flex-col gap-2.5 md:hidden">
+            <div className="mb-3 flex flex-col gap-2.5 lg:hidden">
               <CategoryChips items={CATEGORIES.slice(1)} selected={category === "all" ? "fridge" : category} onSelect={changeCategory} />
               <FilterBar activeFilterCount={activeFilterCount} brandLabel={brandsLabel} capacityLabel={capacityLabel} onSort={() => setSheet(true)} onFilter={() => setSheet(true)} onBrand={() => setSheet(true)} onCapacity={() => setSheet(true)} />
             </div>
@@ -186,12 +188,13 @@ export default function ApplianceShopPage({ initialCategory = "all" }: { initial
               loading={loading}
               error={loadError ? "Products could not be loaded" : undefined}
               onRetry={retryCatalog}
-              emptyTitle="No appliances found"
+              emptyTitle={category === "all" ? "No appliances found" : `No ${CATEGORIES.find((item) => item.key === category)?.label.toLowerCase() || "appliances"} match these filters`}
               emptyDescription={products.length === 0
-                ? "The appliance catalog returned no products. Check the backend database or catalog sync."
-                : "Try another category or clear your filters."}
+                ? "No appliances are listed right now. Browse spare parts or try again later."
+                : "Clear your filters to see more products."}
               cartIds={cart}
               onAddToCart={(id) => setCart((prev) => new Set(prev).add(id))}
+              onClearFilters={clearAll}
             />
           </div>
         </div>
@@ -199,7 +202,7 @@ export default function ApplianceShopPage({ initialCategory = "all" }: { initial
         <ServicePromoBanner image={technician.src} onBook={() => openBooking()} />
       </main>
 
-      {sheet && <div className="fixed inset-0 z-[60] flex items-end bg-black/40 md:items-center md:justify-center md:p-6" onMouseDown={(e) => e.target === e.currentTarget && setSheet(false)}>
+      {sheet && <div className="fixed inset-0 z-[60] flex items-end bg-black/40 lg:items-center lg:justify-center lg:p-6" onMouseDown={(e) => e.target === e.currentTarget && setSheet(false)}>
         <div role="dialog" aria-modal="true" aria-label="Sort and filter appliances" className="flex max-h-[85dvh] w-full flex-col rounded-t-3xl bg-white shadow-2xl md:max-w-xl md:rounded-3xl">
           <div className="flex items-center justify-between px-5 pb-3 pt-4"><h2 className="text-xl font-bold text-zinc-900">Sort &amp; Filter</h2><button type="button" aria-label="Close" onClick={() => setSheet(false)} className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-100 text-zinc-600"><span className="material-symbols-outlined text-[20px]">close</span></button></div>
           <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 pb-4">

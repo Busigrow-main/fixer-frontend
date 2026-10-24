@@ -138,6 +138,12 @@ export default function SparePartsPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [retry, setRetry] = useState(0);
+  const [fitmentResult, setFitmentResult] = useState("");
+
+  useEffect(() => {
+    const initial = new URLSearchParams(window.location.search).get("q");
+    if (initial) setQuery(initial);
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -172,7 +178,7 @@ export default function SparePartsPage() {
     const q = query.trim().toLowerCase();
     return parts.filter(
       (p) =>
-        (!q || `${p.name} ${p.sku ?? ""} ${p.brand}`.toLowerCase().includes(q)) &&
+        (!q || `${p.name} ${p.sku ?? ""} ${p.brand} ${p.highlight ?? ""}`.toLowerCase().includes(q)) &&
         (category === "all" || p.category === category) &&
         (filters.brands.size === 0 || filters.brands.has(p.brand)) &&
         (filters.capacities.size === 0 || filters.capacities.has(p.capacity)) &&
@@ -197,13 +203,29 @@ export default function SparePartsPage() {
   };
 
   const addToCart = (id: string) => setCart((prev) => new Set(prev).add(id));
+  const checkModel = (model: string) => {
+    if (!model) {
+      setFitmentResult("");
+      return;
+    }
+    changeQuery(model);
+    const needle = model.toLowerCase();
+    const matches = parts.filter((part) =>
+      `${part.name} ${part.sku ?? ""} ${part.brand} ${part.highlight ?? ""}`.toLowerCase().includes(needle),
+    );
+    setFitmentResult(
+      matches.length
+        ? `Showing ${matches.length} part${matches.length === 1 ? "" : "s"} that may fit ${model}.`
+        : `We could not match “${model}”. Request help if you need us to identify it.`,
+    );
+  };
 
   const brandLabel = filters.brands.size ? [...filters.brands].join(", ") : "Brand";
   const capacityLabel = filters.capacities.size ? [...filters.capacities].join(", ") : "Part type";
 
   return (
-    <div className="min-h-screen bg-[#f4f4f6]">
-      <ShopNavbar hideMobileHeader searchValue={query} onSearchChange={changeQuery} />
+    <div className="shop-shell min-h-screen bg-[#f6f6f6]">
+      <ShopNavbar searchValue={query} onSearchChange={changeQuery} />
 
       {/* Phone header (screenshot). Remove if ShopNavbar already shows a top bar. */}
       <div className="md:hidden">
@@ -211,7 +233,7 @@ export default function SparePartsPage() {
       </div>
 
       <main className="mx-auto flex w-full max-w-[560px] flex-col gap-4 px-8 pb-28 pt-3 sm:max-w-[720px] sm:gap-5 sm:px-4 md:max-w-[1280px] md:gap-8 md:px-8 md:pb-16 md:pt-8 lg:gap-10 lg:px-12">
-      <div className="sticky top-14 z-40 -mx-3 bg-[#f4f4f6] px-3 pb-2 md:hidden">
+      <div className="sticky top-14 z-40 -mx-3 bg-[#f6f6f6] px-3 pb-2 lg:hidden">
   <SearchBar value={query} onChange={changeQuery} onVoice={() => {}} />
 </div>
 
@@ -228,12 +250,12 @@ export default function SparePartsPage() {
           </div>
           <div className="mt-4 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-3.5">
             <CategoryChips items={CATEGORIES} selected={category} onSelect={changeCategory} className="mx-0 px-0 md:gap-2.5" />
-            <div className="w-full max-w-[410px] lg:w-[410px]"><FitmentBanner onCheck={() => {}} /></div>
+            <div className="w-full max-w-[520px] lg:w-[520px]"><FitmentBanner onCheck={checkModel} result={fitmentResult} /></div>
           </div>
         </section>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-[230px_minmax(0,1fr)] md:gap-6">
-          <aside className="hidden self-start rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_2px_8px_rgba(15,23,42,0.03)] md:sticky md:top-[92px] md:block">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[230px_minmax(0,1fr)] lg:gap-6">
+          <aside className="hidden self-start rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_2px_8px_rgba(15,23,42,0.03)] lg:sticky lg:top-6 lg:block">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
                 <h2 className="text-base font-bold text-slate-900">Filters</h2>
@@ -246,7 +268,7 @@ export default function SparePartsPage() {
               <div className="mt-2 space-y-2">
                 {brands.map((brand) => (
                   <label key={brand} className="flex cursor-pointer items-center gap-2.5 text-sm text-slate-600">
-                    <input type="checkbox" checked={filters.brands.has(brand)} onChange={() => { const next = new Set(filters.brands); next.has(brand) ? next.delete(brand) : next.add(brand); setFilters({ ...filters, brands: next }); }} className="h-4 w-4 rounded accent-primary" />{brand}
+                    <input type="checkbox" checked={filters.brands.has(brand)} onChange={() => { const next = new Set(filters.brands); next.has(brand) ? next.delete(brand) : next.add(brand); setFilters({ ...filters, brands: next }); }} className="h-4 w-4 rounded accent-primary" />{brand} <span className="text-zinc-400">({parts.filter((part) => part.brand === brand).length})</span>
                   </label>
                 ))}
               </div>
@@ -256,7 +278,7 @@ export default function SparePartsPage() {
               <div className="mt-2 space-y-2">
                 {capacities.map((capacity) => (
                   <label key={capacity} className="flex cursor-pointer items-center gap-2.5 text-sm text-slate-600">
-                    <input type="checkbox" checked={filters.capacities.has(capacity)} onChange={() => { const next = new Set(filters.capacities); next.has(capacity) ? next.delete(capacity) : next.add(capacity); setFilters({ ...filters, capacities: next }); }} className="h-4 w-4 rounded accent-primary" />{capacity}
+                    <input type="checkbox" checked={filters.capacities.has(capacity)} onChange={() => { const next = new Set(filters.capacities); next.has(capacity) ? next.delete(capacity) : next.add(capacity); setFilters({ ...filters, capacities: next }); }} className="h-4 w-4 rounded accent-primary" />{capacity} <span className="text-zinc-400">({parts.filter((part) => part.capacity === capacity).length})</span>
                   </label>
                 ))}
               </div>
@@ -268,10 +290,10 @@ export default function SparePartsPage() {
           </aside>
 
           <div className="min-w-0">
-            <div className="mb-3 flex flex-col gap-3 md:hidden">
+            <div className="mb-3 flex flex-col gap-3 lg:hidden">
               <CategoryChips items={CATEGORIES} selected={category} onSelect={changeCategory} />
               <FilterBar activeFilterCount={activeFilterCount} brandLabel={brandLabel} capacityLabel={capacityLabel} onSort={() => setSheet(true)} onFilter={() => setSheet(true)} onBrand={() => setSheet(true)} onCapacity={() => setSheet(true)} />
-              <FitmentBanner onCheck={() => {}} />
+              <FitmentBanner onCheck={checkModel} result={fitmentResult} />
             </div>
             <section className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3.5 shadow-[0_1px_3px_rgba(15,23,42,0.025)]">
               <div>
@@ -301,7 +323,7 @@ export default function SparePartsPage() {
                 <button type="button" onClick={clearAll} className="ml-1 text-xs font-semibold text-primary hover:underline">Clear</button>
               </div>
             )}
-            <ProductGrid parts={visible} loading={loading} error={loadError ? "Products could not be loaded" : undefined} onRetry={retryCatalog} cartIds={cart} onAddToCart={addToCart} />
+            <ProductGrid parts={visible} loading={loading} error={loadError ? "Products could not be loaded" : undefined} onRetry={retryCatalog} cartIds={cart} onAddToCart={addToCart} onClearFilters={clearAll} />
           </div>
         </div>
         <ServicePromoBanner image={technicianImage.src} onBook={() => openBooking()} />

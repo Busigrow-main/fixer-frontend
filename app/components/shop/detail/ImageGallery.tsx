@@ -38,7 +38,8 @@ export default function ImageGallery({ images, alt }: Props) {
         </button>
         <span className="pointer-events-none absolute bottom-3 right-3 inline-flex items-center gap-1 rounded-full bg-zinc-900/70 px-2.5 py-1 text-[10px] font-medium text-white backdrop-blur">
           <span className="material-symbols-outlined text-[14px]">zoom_in</span>
-          Tap to zoom
+          <span className="lg:hidden">Tap to zoom</span>
+          <span className="hidden lg:inline">Click to enlarge</span>
         </span>
       </div>
 

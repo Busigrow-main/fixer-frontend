@@ -32,7 +32,7 @@ export default function ServicePromoBanner({ image, onBook }: Props) {
       <button
         type="button"
         onClick={onBook}
-        className="inline-flex h-10 shrink-0 items-center gap-1 rounded-full border-[1.5px] border-[#E51D3E] px-2.5 text-[11px] font-semibold text-[#E51D3E] transition hover:bg-[#E51D3E] hover:text-white sm:px-4 sm:text-xs md:h-11 md:gap-1.5 md:px-5 md:text-sm"
+        className="inline-flex h-10 shrink-0 items-center gap-1 rounded-full border-[1.5px] border-primary px-2.5 text-[11px] font-semibold text-primary transition hover:bg-primary hover:text-white sm:px-4 sm:text-xs md:h-11 md:gap-1.5 md:px-5 md:text-sm"
       >
         Book Now
         <ArrowRight size={14} />

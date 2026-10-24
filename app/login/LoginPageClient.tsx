@@ -14,6 +14,7 @@ import {
 } from "@/app/lib/pending-booking";
 import type { PendingBookingDraft } from "@/app/lib/pending-booking";
 import { isValidPhone } from "@/app/lib/auth";
+import { isShopRedirect } from "@/app/lib/shop-copy";
 import GoogleSignInButton from "@/app/components/GoogleSignInButton";
 
 function LoginFormInner() {
@@ -29,6 +30,7 @@ function LoginFormInner() {
   const redirect = safeAppRedirect(searchParams.get("redirect"));
   const source = searchParams.get("source");
   const isBookingFlow = source === BOOKING_FLOW_SOURCE;
+  const isShopFlow = isShopRedirect(redirect);
   const authQuery = searchParams.toString();
 
   const afterAuth = async () => {
@@ -76,14 +78,16 @@ function LoginFormInner() {
     <>
       <Navbar />
       <main className="pt-20 pb-20 bg-surface min-h-screen flex items-center justify-center px-6">
-        <div className="max-w-md w-full bg-white border border-outline rounded-[2rem] p-8 md:p-12 shadow-2xl shadow-black/5 transition-all">
+        <div className={`max-w-md w-full bg-white border border-outline p-8 md:p-12 shadow-2xl shadow-black/5 transition-all ${isShopFlow ? "rounded-2xl" : "rounded-[2rem]"}`}>
           <div className="text-center mb-10">
-            <h1 className="font-headline text-4xl md:text-5xl text-on-surface">
-              {isBookingFlow ? "One more step" : "Continue with phone"}
+            <h1 className={`${isShopFlow ? "font-sans text-3xl font-extrabold" : "font-headline text-4xl md:text-5xl"} text-on-surface`}>
+              {isBookingFlow ? "One more step" : isShopFlow ? "Sign in to add this to your cart" : "Continue with phone"}
             </h1>
             <p className="text-on-surface-variant text-sm mt-3 font-medium">
               {isBookingFlow
                 ? "Enter your mobile number to finish your booking — no password needed."
+                : isShopFlow
+                  ? "Use your mobile number and we will send you back to the product or cart you left."
                 : "Use your mobile number to view bookings and track repairs."}
             </p>
           </div>

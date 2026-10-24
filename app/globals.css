@@ -1,9 +1,11 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
 /* ─── Fixxer Design Tokens ─────────────────────────────────── */
 @theme inline {
   /* Brand / Primary */
   --color-primary:                  #C8102E;
+  --color-primary-foreground:       #FFFFFF;
   --color-primary-container:        #FDE7E9;
   --color-on-primary:               #FFFFFF;
   --color-on-primary-container:     #410007;
@@ -13,6 +15,7 @@
 
   /* Secondary */
   --color-secondary:                #D48F0E;
+  --color-secondary-foreground:     #FFFFFF;
   --color-secondary-container:      #FFDDB3;
   --color-on-secondary:             #FFFFFF;
   --color-on-secondary-container:   #291800;
@@ -40,7 +43,20 @@
 
   /* Background */
   --color-background:               #FAFAFA;
+  --color-foreground:               #1A1A1C;
   --color-on-background:            #1A1A1C;
+  --color-muted:                    #F4F4F6;
+  --color-muted-foreground:         #64646B;
+  --color-accent:                   #FDE7E9;
+  --color-accent-foreground:        #410007;
+  --color-popover:                  #FFFFFF;
+  --color-popover-foreground:       #1A1A1C;
+  --color-card:                     #FFFFFF;
+  --color-card-foreground:          #1A1A1C;
+  --color-border:                   rgba(0,0,0,0.08);
+  --color-input:                    #E8E8EA;
+  --color-ring:                     #C8102E;
+  --color-destructive:              #BA1A1A;
 
   /* Outline */
   --color-outline:                  rgba(0,0,0,0.08);
@@ -214,6 +230,10 @@ body {
 
 /* ─── Mobile bottom chrome (nav + FAB + optional CTA strip) ─── */
 @media (max-width: 767px) {
+  body:has(.shop-shell) {
+    padding-top: 0;
+  }
+
   :root {
     --mobile-nav-h: 3.5rem;
     --mobile-cta-h: 3.25rem;

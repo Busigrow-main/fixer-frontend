@@ -36,8 +36,8 @@ function Chip({
       onClick={onClick}
       className={`inline-flex h-[30px] min-w-0 shrink-0 items-center justify-center gap-1 rounded-[9px] border px-2 text-[10px] font-medium transition-colors active:scale-[0.98] sm:h-9 sm:gap-1.5 sm:rounded-xl sm:px-3 sm:text-xs ${
         active
-          ? "border-[#D8102B] bg-[#FFF5F6] text-[#D8102B]"
-          : "border-[#E5E5E9] bg-white text-[#505158] hover:border-[#D8102B]/40"
+          ? "border-primary bg-[#FFF5F6] text-primary"
+          : "border-[#E5E5E9] bg-white text-[#505158] hover:border-primary/40"
       }`}
     >
       {icon && (
@@ -49,7 +49,7 @@ function Chip({
       <span className="truncate">{children}</span>
 
       {typeof badge === "number" && badge > 0 && (
-        <span className="flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full bg-[#D8102B] px-1 text-[9px] font-bold leading-none text-white">
+        <span className="flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold leading-none text-white">
           {badge}
         </span>
       )}

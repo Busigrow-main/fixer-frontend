@@ -43,7 +43,7 @@ export default function SearchBar({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         aria-label="Search products"
-        className="h-[38px] w-full rounded-[10px] border border-[#E5E5E9] bg-white pl-9 pr-9 text-[11px] font-normal text-[#292929] outline-none transition placeholder:text-[#999AA0] focus:border-[#D8102B] focus:ring-2 focus:ring-[#D8102B]/10 sm:h-10 sm:rounded-xl sm:pl-10 sm:text-sm [&::-webkit-search-cancel-button]:hidden"
+        className="h-[38px] w-full rounded-[10px] border border-[#E5E5E9] bg-white pl-9 pr-9 text-[11px] font-normal text-[#292929] outline-none transition placeholder:text-[#999AA0] focus:border-primary focus:ring-2 focus:ring-primary sm:h-10 sm:rounded-xl sm:pl-10 sm:text-sm [&::-webkit-search-cancel-button]:hidden"
       />
 
       {/* Microphone / clear button */}

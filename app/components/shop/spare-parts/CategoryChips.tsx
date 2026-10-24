@@ -38,8 +38,8 @@ export default function CategoryChips({
             onClick={() => onSelect(category.key)}
             className={`inline-flex h-[30px] shrink-0 snap-start items-center justify-center gap-1 whitespace-nowrap rounded-full border px-3 text-[10px] font-semibold transition-colors active:scale-[0.98] sm:h-9 sm:px-4 sm:text-xs ${
               active
-                ? "border-[#D8102B] bg-[#D8102B] text-white"
-                : "border-[#E5E5E9] bg-white text-[#55565B] hover:border-[#D8102B]/40"
+                ? "border-primary bg-primary text-white"
+                : "border-[#E5E5E9] bg-white text-[#55565B] hover:border-primary/40"
             }`}
           >
             <span>{category.label}</span>

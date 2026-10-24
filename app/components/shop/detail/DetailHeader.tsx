@@ -24,7 +24,7 @@ export default function DetailHeader({ title = "Spare Parts Detail Page", cartCo
   }, [fallbackHref, router]);
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 flex h-12 items-center gap-1 border-b border-zinc-200/80 bg-white/95 px-2 shadow-sm backdrop-blur md:h-16 md:px-4">
+    <header className="fixed inset-x-0 top-0 z-50 flex h-12 items-center gap-1 border-b border-zinc-200/80 bg-white/95 px-2 shadow-sm backdrop-blur md:h-16 md:px-4 lg:hidden">
       <button
         type="button"
         aria-label="Go back"

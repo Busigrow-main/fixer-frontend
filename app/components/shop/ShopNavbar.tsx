@@ -2,23 +2,20 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowLeft, ClipboardList } from "lucide-react";
-import { useBooking } from "@/app/context/BookingContext";
+import { ArrowLeft } from "lucide-react";
 import { useAuth } from "@/app/context/AuthContext";
-import { MobileBottomNav } from "@/app/components/MobileBottomNav";
-import SearchBar from "@/app/components/shop/spare-parts/SearchBar";
 import { API_URL } from "@/app/config";
-import FixxerLogo from "@/app/components/FixxerLogo";
-import CartLink from "@/app/components/shop/CartLink";
+import { Button } from "@/app/components/ui/button";
+import ShopCommand from "@/app/components/shop/ShopCommand";
+import ShopDock from "@/app/components/shop/ShopDock";
 
 export default function ShopNavbar({
-  hideMobileHeader = false,
-  flowOnMobile = false,
   mobileTitle,
   mobileBackHref = "/shop",
-  showMobileBottomNav = true,
   searchValue = "",
-  onSearchChange = () => {},
+  onSearchChange,
+  showDock = true,
+  hideDockOnMobile = false,
 }: {
   hideMobileHeader?: boolean;
   flowOnMobile?: boolean;
@@ -27,9 +24,11 @@ export default function ShopNavbar({
   showMobileBottomNav?: boolean;
   searchValue?: string;
   onSearchChange?: (value: string) => void;
+  showDock?: boolean;
+  hideDockOnMobile?: boolean;
 }) {
   const [cartCount, setCartCount] = useState(0);
-  const { openBooking } = useBooking();
+  const [commandOpen, setCommandOpen] = useState(false);
   const { token } = useAuth();
 
   useEffect(() => {
@@ -61,71 +60,44 @@ export default function ShopNavbar({
       window.removeEventListener("shop-cart-updated", loadCart);
     };
   }, [token]);
-  const visibleCartCount = token ? cartCount : 0;
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setCommandOpen(true);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   return (
     <>
-      {/* Fixed, full-width bar */}
-      <header
-  className={`${hideMobileHeader ? "hidden md:block" : ""} ${
-    flowOnMobile
-      ? "relative md:fixed md:inset-x-0 md:top-0"
-      : "fixed left-0 right-0 top-0"
-  } z-50 h-14 shrink-0 border-b border-slate-200 bg-white md:h-[72px]`}
->
-        {/* Content width matches <main> from sm upwards; full width on phones */}
-        <div
-          className={`mx-auto h-full w-full items-center gap-4 px-3 sm:max-w-[720px] sm:px-4 md:max-w-[1480px] md:gap-4 md:px-8 lg:px-12 ${mobileTitle ? "hidden md:flex md:justify-between" : hideMobileHeader ? "grid" : "flex justify-between"}`}
-          style={hideMobileHeader ? { gridTemplateColumns: "minmax(0, 1fr) minmax(320px, 640px) minmax(0, 1fr)" } : undefined}
-        >
-          {/* Logo + tagline */}
-          <Link href="/" className="flex w-fit min-w-max flex-col leading-none md:justify-self-start" aria-label="Fixxer home">
-            <FixxerLogo className="text-[22px] md:text-[28px]" />
-          </Link>
-
-          <div className={`${hideMobileHeader ? "block w-full md:justify-self-center" : "hidden md:mx-auto md:block md:w-full md:max-w-[640px] md:flex-1"} min-w-0`}>
-            <SearchBar
-              value={searchValue}
-              onChange={onSearchChange}
-              placeholder="Search appliances, spare parts, brands, or models"
-              className="[&_input]:h-11 [&_input]:rounded-xl [&_input]:border-slate-200 [&_input]:bg-slate-50 [&_input]:text-sm [&_input]:focus:bg-white"
-            />
-          </div>
-
-          {/* Actions */}
-          <div className="flex w-fit min-w-max shrink-0 items-center gap-2 md:justify-self-end md:gap-3">
-            <Link href="/orders" aria-label="Your orders" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#E6E7EB] bg-[#F7F7F8] text-slate-900 transition-colors hover:bg-slate-100 active:scale-95 md:w-auto md:gap-2 md:px-3">
-              <ClipboardList className="h-[18px] w-[18px]" />
-              <span className="hidden text-xs font-semibold md:inline">Orders</span>
+      {mobileTitle && (
+        <header className="sticky top-0 z-40 flex h-12 items-center gap-2 border-b border-zinc-200/80 bg-white/90 px-2 backdrop-blur md:hidden">
+          <Button variant="ghost" size="icon" asChild>
+            <Link href={mobileBackHref} aria-label="Go back">
+              <ArrowLeft />
             </Link>
-            <CartLink count={visibleCartCount} />
-          </div>
-        </div>
+          </Button>
+          <p className="min-w-0 flex-1 truncate text-sm font-semibold text-zinc-900">{mobileTitle}</p>
+        </header>
+      )}
 
-        {mobileTitle && (
-          <div className="absolute inset-x-0 top-0 flex h-14 items-center gap-3 px-3 md:hidden">
-            <Link
-              href={mobileBackHref}
-              aria-label="Go back"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-zinc-800 active:bg-zinc-100"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-            <h1 className="text-sm font-extrabold uppercase tracking-tight text-zinc-900">{mobileTitle}</h1>
-            <div className="ml-auto">
-              <CartLink count={visibleCartCount} />
-            </div>
-          </div>
-        )}
-      </header>
-
-      {/* Spacer: same height as the header so content doesn't slide underneath */}
-      <div
-        aria-hidden="true"
-        className={flowOnMobile ? "hidden md:block md:h-[72px]" : hideMobileHeader ? "hidden h-14 md:block md:h-[72px]" : "h-14 md:h-[72px]"}
+      <ShopCommand
+        open={commandOpen}
+        onOpenChange={setCommandOpen}
+        onQuery={onSearchChange}
       />
 
-      {showMobileBottomNav && <MobileBottomNav activeTab="Shop" onBook={openBooking} />}
+      {showDock && (
+        <ShopDock
+          cartCount={token ? cartCount : 0}
+          onSearch={() => setCommandOpen(true)}
+          className={hideDockOnMobile ? "hidden md:flex" : undefined}
+        />
+      )}
     </>
   );
 }

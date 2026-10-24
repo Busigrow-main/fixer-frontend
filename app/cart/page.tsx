@@ -8,7 +8,7 @@ import { ArrowRight, LoaderCircle, MapPin, Minus, Plus, ShieldCheck, ShoppingCar
 import { useAuth } from "@/app/context/AuthContext";
 import { API_URL } from "@/app/config";
 import ShopNavbar from "@/app/components/shop/ShopNavbar";
-import { SHOP_APPLIANCES_HREF } from "@/app/lib/shop-routes";
+import { applianceProductHref } from "@/app/lib/shop-copy";
 
 type CartItem = {
   itemId: string;
@@ -174,9 +174,9 @@ export default function CartPage() {
   const finalTotal = quote?.total ?? cart?.total ?? 0;
 
   return (
-    <div className="min-h-screen bg-[#f5f6f8]">
-      <ShopNavbar mobileTitle="Cart" mobileBackHref="/shop" showMobileBottomNav={false} />
-      <main className="mx-auto w-full max-w-6xl px-3 pb-32 pt-5 sm:px-5 md:pb-16 md:pt-8">
+    <div className="min-h-screen bg-[#f6f6f6]">
+      <ShopNavbar mobileTitle="Cart" mobileBackHref="/shop" hideDockOnMobile />
+      <main className="mx-auto w-full max-w-6xl px-3 pb-32 pt-5 sm:px-5 md:pb-28 md:pt-8">
         <div className="mb-5 flex items-end justify-between gap-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[.14em] text-zinc-500">Fixxer Shop</p>
@@ -195,19 +195,22 @@ export default function CartPage() {
             <ShoppingCart className="h-9 w-9 text-zinc-300" aria-hidden="true" />
             <h2 className="mt-3 text-lg font-bold text-zinc-900">Your cart is empty</h2>
             <p className="mt-1 max-w-sm text-sm text-zinc-500">Browse genuine spare parts and appliances, then add what you need here.</p>
-            <Link href="/shop" className="mt-5 inline-flex h-11 items-center rounded-xl bg-primary px-5 text-sm font-bold text-white">Explore the shop</Link>
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+              <Link href="/shop/spare-parts" className="inline-flex h-11 items-center rounded-xl border border-zinc-200 px-5 text-sm font-bold text-zinc-800">Spare parts</Link>
+              <Link href="/shop/appliances" className="inline-flex h-11 items-center rounded-xl bg-primary px-5 text-sm font-bold text-white">Appliances</Link>
+            </div>
           </div>
         ) : (
           <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-6">
             <section aria-label="Cart items" className="space-y-3">
               {cart.items.map((item) => {
-                const detailHref = item.productType === "part" ? `/shop/spare-parts/${encodeURIComponent(item.sku || item.slug || "")}` : SHOP_APPLIANCES_HREF;
+                const detailHref = item.productType === "part" ? `/shop/spare-parts/${encodeURIComponent(item.sku || item.slug || "")}` : applianceProductHref(item.slug);
                 const busy = busyItem === item.itemId;
                 const isExpanded = expandedInstall === item.itemId;
                 return (
                   <article key={item.itemId} className="rounded-2xl border border-zinc-100 bg-white p-3 shadow-[0_2px_10px_rgba(15,23,42,.04)] sm:p-4">
-                    <div className="grid grid-cols-[56px_minmax(0,1fr)] gap-3 sm:grid-cols-[76px_minmax(0,1fr)] sm:gap-4">
-                      <Link href={detailHref} aria-label={`View ${item.name}`} className="relative aspect-square overflow-hidden rounded-xl bg-zinc-50">
+                    <div className="grid grid-cols-[72px_minmax(0,1fr)] gap-3 sm:grid-cols-[96px_minmax(0,1fr)] sm:gap-4">
+                      <Link href={detailHref} aria-label={`View ${item.name}`} className="relative aspect-square overflow-hidden rounded-xl bg-[#f6f6f6]">
                         {item.image ? <Image src={item.image} alt={item.name} fill unoptimized sizes="96px" className="object-contain p-2" /> : <span className="flex h-full items-center justify-center text-xs text-zinc-400">No image</span>}
                       </Link>
                       <div className="min-w-0">
@@ -244,17 +247,7 @@ export default function CartPage() {
               })}
             </section>
 
-            <section className="rounded-2xl border border-zinc-100 bg-white p-3.5 shadow-sm sm:p-4 lg:col-start-1 lg:row-start-2">
-              <button type="button" onClick={() => setShowCouponEntry((open) => !open)} className="flex w-full items-center gap-3 text-left">
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-rose-50 text-primary"><span className="text-sm font-black">%</span></span>
-                <span className="min-w-0 flex-1"><span className="block text-sm font-bold text-zinc-900">Apply coupon</span><span className="block text-[11px] text-zinc-500">{cart.coupons.length ? `${cart.coupons.length} coupon${cart.coupons.length === 1 ? "" : "s"} applied` : "Enter a coupon code to save"}</span></span>
-                <ArrowRight className={`h-4 w-4 text-zinc-400 transition-transform ${showCouponEntry ? "rotate-90" : ""}`} />
-              </button>
-              {showCouponEntry && <form onSubmit={applyCoupon} className="mt-3 flex gap-2"><input value={couponCode} onChange={(event) => setCouponCode(event.target.value.toUpperCase())} maxLength={24} placeholder="Enter coupon code" className="h-10 min-w-0 flex-1 rounded-lg border border-zinc-200 px-3 text-sm uppercase outline-none focus:border-primary" /><button type="submit" disabled={busyAction || !couponCode.trim()} className="rounded-lg bg-primary px-4 text-xs font-bold text-white disabled:opacity-40">Apply</button></form>}
-              {cart.coupons.map((coupon) => <div key={coupon.code} className="mt-2 flex items-center justify-between gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-800"><span><b>{coupon.code}</b> · {coupon.title} ({coupon.discountText})</span><button type="button" onClick={() => void removeCoupon(coupon.code)} className="font-bold underline">Remove</button></div>)}
-            </section>
-
-            <aside className="space-y-3 lg:sticky lg:top-24 lg:col-start-2 lg:row-start-1">
+            <aside className="space-y-3 md:sticky md:top-24 lg:col-start-2 lg:row-start-1">
               <section className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-5">
                 <h2 className="text-base font-extrabold text-zinc-950">Price details</h2>
                 <div className="mt-3 space-y-2.5 border-b border-zinc-100 pb-3 text-sm">
@@ -265,10 +258,19 @@ export default function CartPage() {
                 </div>
                 <div className="mt-3 flex items-center justify-between gap-3 text-lg font-extrabold text-zinc-950"><span>Total</span><span>{quoteLoading ? <LoaderCircle className="h-5 w-5 animate-spin" /> : money(finalTotal)}</span></div>
                 <p className="mt-1 text-[11px] leading-relaxed text-zinc-500">Final delivery availability is confirmed for your pincode during checkout.</p>
-                <Link href="/checkout" className="mt-4 hidden h-12 items-center justify-center gap-2 rounded-xl bg-primary text-sm font-extrabold text-white shadow-md transition hover:brightness-105 lg:flex"><ShieldCheck className="h-4 w-4" /> Proceed to checkout <ArrowRight className="h-4 w-4" /></Link>
-                {(showPincodeEntry || pincode) && <label className="mt-3 flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2.5"><MapPin className="h-4 w-4 shrink-0 text-primary" /><input inputMode="numeric" maxLength={6} value={pincode} onChange={(event) => setPincode(event.target.value.replace(/\D/g, ""))} placeholder="Enter 6-digit pincode" className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-zinc-400" /></label>}
+                <div className="mt-4 border-t border-zinc-100 pt-4">
+                  <button type="button" onClick={() => setShowCouponEntry((open) => !open)} className="flex w-full items-center gap-3 text-left">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-rose-50 text-primary"><span className="text-sm font-black">%</span></span>
+                    <span className="min-w-0 flex-1"><span className="block text-sm font-bold text-zinc-900">Apply coupon</span><span className="block text-[11px] text-zinc-500">{cart.coupons.length ? `${cart.coupons.length} coupon${cart.coupons.length === 1 ? "" : "s"} applied` : "Enter a coupon code to save"}</span></span>
+                    <ArrowRight className={`h-4 w-4 text-zinc-400 transition-transform ${showCouponEntry ? "rotate-90" : ""}`} />
+                  </button>
+                  {showCouponEntry && <form onSubmit={applyCoupon} className="mt-3 flex gap-2"><input value={couponCode} onChange={(event) => setCouponCode(event.target.value.toUpperCase())} maxLength={24} placeholder="Enter coupon code" className="h-10 min-w-0 flex-1 rounded-lg border border-zinc-200 px-3 text-sm uppercase outline-none focus:border-primary focus:ring-2 focus:ring-primary" /><button type="submit" disabled={busyAction || !couponCode.trim()} className="rounded-lg bg-primary px-4 text-xs font-bold text-white disabled:opacity-40">Apply</button></form>}
+                  {cart.coupons.map((coupon) => <div key={coupon.code} className="mt-2 flex items-center justify-between gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-800"><span><b>{coupon.code}</b> · {coupon.title} ({coupon.discountText})</span><button type="button" onClick={() => void removeCoupon(coupon.code)} className="font-bold underline">Remove</button></div>)}
+                </div>
+                <Link href="/checkout" className="mt-4 hidden h-12 items-center justify-center gap-2 rounded-xl bg-primary text-sm font-extrabold text-white shadow-md transition hover:brightness-105 md:flex"><ShieldCheck className="h-4 w-4" /> Proceed to checkout <ArrowRight className="h-4 w-4" /></Link>
+                {(showPincodeEntry || pincode) && <label className="mt-3 flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2.5"><MapPin className="h-4 w-4 shrink-0 text-primary" /><input inputMode="numeric" maxLength={6} value={pincode} onChange={(event) => setPincode(event.target.value.replace(/\D/g, ""))} placeholder="Enter 6-digit pincode" className="min-w-0 flex-1 bg-transparent text-sm outline-none focus:ring-2 focus:ring-primary placeholder:text-zinc-400" /></label>}
                 {quoteError && <p role="alert" className="mt-2 text-xs text-red-600">{quoteError}</p>}
-                {quote && !quote.serviceable && <p role="status" className="mt-2 text-xs text-red-600">Delivery is not available for this pincode.</p>}
+                {quote && !quote.serviceable && <p role="status" className="mt-2 text-xs text-red-600">We currently deliver in Patna. Try 800001–800014.</p>}
               </section>
 
             </aside>
@@ -276,7 +278,7 @@ export default function CartPage() {
         )}
       </main>
 
-      {!!cart?.items.length && !loading && <div className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-200 bg-white px-3 pb-[calc(0.5rem_+_env(safe-area-inset-bottom))] pt-2.5 shadow-[0_-8px_20px_-16px_rgba(0,0,0,.35)] md:hidden"><Link href="/checkout" className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-extrabold text-white shadow-md"><span>Proceed to Checkout</span><ArrowRight className="h-4 w-4" /></Link><p className="mt-1.5 flex items-center justify-center gap-1 text-[10px] text-zinc-500"><ShieldCheck className="h-3 w-3" /> Secure payment · UPI, Cards, Net Banking, COD</p></div>}
+      {!!cart?.items.length && !loading && <div className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-200 bg-white px-3 pb-[calc(0.5rem_+_env(safe-area-inset-bottom))] pt-2.5 shadow-[0_-8px_20px_-16px_rgba(0,0,0,.35)] md:hidden"><Link href="/checkout" className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-extrabold text-white shadow-md"><span>Proceed to checkout</span><ArrowRight className="h-4 w-4" /></Link><p className="mt-1.5 flex items-center justify-center gap-1 text-[10px] text-zinc-500"><ShieldCheck className="h-3 w-3" /> Cash on delivery · pay when it arrives</p></div>}
     </div>
   );
 }

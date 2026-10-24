@@ -76,10 +76,10 @@ export default function ShopAllProductsPage() {
 
   if (loading && !shopData) {
     return (
-      <div className="-mt-14 min-h-screen bg-[#f4f4f6] md:mt-0">
+      <div className="shop-shell min-h-screen bg-[#f6f6f6]">
         <ShopNavbar searchValue={search} onSearchChange={setSearch} />
-        <main className="mx-auto flex w-full max-w-[560px] flex-col gap-3 px-3 pb-28 pt-3 sm:max-w-[720px] sm:px-4 md:max-w-[1480px] md:gap-5 md:px-8 md:pb-16 md:pt-8 lg:px-12">
-          <div className="sticky top-14 z-40 -mx-3 bg-[#f4f4f6] px-3 py-2 md:hidden">
+        <main className="mx-auto flex w-full max-w-[560px] flex-col gap-3 px-3 pb-28 pt-3 sm:max-w-[720px] sm:px-4 md:max-w-[1480px] md:gap-5 md:px-8 md:pb-28 md:pt-8 lg:px-12">
+          <div className="sticky top-14 z-40 -mx-3 bg-[#f6f6f6] px-3 py-2 md:hidden">
             <SearchBar value={search} onChange={setSearch} placeholder="Search appliances, spare parts, brands, or models" />
           </div>
           <div className="h-5 w-28 animate-pulse rounded bg-zinc-200" />
@@ -94,24 +94,28 @@ export default function ShopAllProductsPage() {
   }
 
   return (
-    <div className="-mt-14 min-h-screen bg-[#f4f4f6] md:mt-0">
+    <div className="shop-shell min-h-screen bg-[#f6f6f6]">
       <ShopNavbar searchValue={search} onSearchChange={setSearch} />
-      <main className="mx-auto flex w-full max-w-[560px] flex-col gap-3 px-3 pb-28 pt-3 sm:max-w-[720px] sm:px-4 md:max-w-[1480px] md:gap-5 md:px-8 md:pb-16 md:pt-8 lg:px-12">
-        <div className="sticky top-14 z-40 -mx-3 bg-[#f4f4f6] px-3 py-2 md:hidden">
+      <main className="mx-auto flex w-full max-w-[560px] flex-col gap-3 px-3 pb-28 pt-3 sm:max-w-[720px] sm:px-4 md:max-w-[1480px] md:gap-5 md:px-8 md:pb-28 md:pt-8 lg:px-12">
+        <div className="sticky top-14 z-40 -mx-3 bg-[#f6f6f6] px-3 py-2 md:hidden">
           <SearchBar
             value={search}
             onChange={setSearch}
             placeholder="Search appliances, spare parts, brands, or models"
           />
         </div>
-        <Link href="/shop" className="inline-flex w-fit items-center gap-2 text-sm font-semibold text-slate-600 hover:text-[#e9002d]"><ArrowLeft className="h-4 w-4" /> Back to Shop</Link>
+        <Link href="/shop" className="inline-flex w-fit items-center gap-2 text-sm font-semibold text-slate-600 hover:text-primary"><ArrowLeft className="h-4 w-4" /> Back to shop</Link>
         <div>
-          <h1 className="text-xl font-bold text-slate-900 sm:text-2xl md:text-3xl">All Shop Products</h1>
+          <h1 className="text-xl font-bold text-slate-900 sm:text-2xl md:text-3xl">All shop products</h1>
           <p className="mt-1 text-sm text-slate-500">Appliances and spare parts in one list</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Link href="/shop/spare-parts" className="inline-flex h-9 items-center rounded-xl border border-zinc-200 bg-white px-3 text-sm font-semibold text-zinc-800">Spare parts</Link>
+            <Link href="/shop/appliances" className="inline-flex h-9 items-center rounded-xl border border-zinc-200 bg-white px-3 text-sm font-semibold text-zinc-800">Appliances</Link>
+          </div>
         </div>
 
         {error && !shopData ? (
-          <div role="status" className="rounded-xl bg-white px-4 py-10 text-center text-sm text-slate-600">Products could not be loaded. <button onClick={retry} className="font-semibold text-[#e9002d]">Try again</button></div>
+          <div role="status" className="rounded-xl bg-white px-4 py-10 text-center text-sm text-slate-600">Products could not be loaded. <button onClick={retry} className="font-semibold text-primary">Try again</button></div>
         ) : visibleProducts.length > 0 ? (
           <>
             <p className="text-xs text-slate-500">Showing {loadedProducts} of {totalProducts} products</p>
@@ -120,7 +124,7 @@ export default function ShopAllProductsPage() {
             </div>
             {shopData?.pagination.hasMore && (
               <div className="flex justify-center py-3">
-                <button type="button" onClick={loadMore} disabled={loadingMore} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#e9002d] px-6 text-sm font-semibold text-white disabled:opacity-60">
+                <button type="button" onClick={loadMore} disabled={loadingMore} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-6 text-sm font-semibold text-white disabled:opacity-60">
                   {loadingMore && <LoaderCircle className="h-4 w-4 animate-spin" />}
                   {loadingMore ? "Loading products" : "Load more products"}
                 </button>
