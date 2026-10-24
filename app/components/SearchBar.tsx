@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/app/lib/utils";
 import { fetchSuggestions } from "@/app/lib/spareParts";
+import { SHOP_SPARE_PARTS_HREF } from "@/app/lib/shop-routes";
 
 export interface SearchSuggestion {
   type: "part" | "category" | "brand";
@@ -99,7 +100,7 @@ export default function SearchBar({
       if (onSearch) {
         onSearch("");
       } else if (variant === "compact") {
-        router.push("/spare-parts");
+        router.push(SHOP_SPARE_PARTS_HREF);
       }
 
       if (focusInput) {
@@ -210,7 +211,7 @@ export default function SearchBar({
 
       if (suggestion.type === "part" && suggestion.sku) {
         router.push(
-          `/spare-parts/${encodeURIComponent(suggestion.sku)}`,
+          `${SHOP_SPARE_PARTS_HREF}/${encodeURIComponent(suggestion.sku)}`,
         );
         return;
       }
@@ -229,7 +230,7 @@ export default function SearchBar({
         const queryString = params.toString();
 
         router.push(
-          `/spare-parts${queryString ? `?${queryString}` : ""}`,
+          `${SHOP_SPARE_PARTS_HREF}${queryString ? `?${queryString}` : ""}`,
         );
         return;
       }
@@ -243,7 +244,7 @@ export default function SearchBar({
           params.set("brand", suggestion.slug);
         }
 
-        router.push(`/spare-parts?${params.toString()}`);
+        router.push(`${SHOP_SPARE_PARTS_HREF}?${params.toString()}`);
       }
     },
     [onSelect, router],
@@ -262,7 +263,7 @@ export default function SearchBar({
         onSearch(trimmed);
       } else {
         router.push(
-          `/spare-parts?q=${encodeURIComponent(trimmed)}`,
+          `${SHOP_SPARE_PARTS_HREF}?q=${encodeURIComponent(trimmed)}`,
         );
       }
     },

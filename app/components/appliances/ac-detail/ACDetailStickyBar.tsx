@@ -17,7 +17,7 @@ interface ACDetailStickyBarProps {
 export default function ACDetailStickyBar({
   product,
 }: ACDetailStickyBarProps) {
-  const enquiryHref = `/spare-parts/enquiry?product=${encodeURIComponent(
+  const enquiryHref = `/shop/requests?product=${encodeURIComponent(
     product.slug,
   )}&type=appliance`;
 

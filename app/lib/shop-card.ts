@@ -26,6 +26,6 @@ export function toShopCardProduct(product: ApiShopCard) {
       : `/shop/spare-parts/${encodeURIComponent(product.sku || product.id)}`,
     enquiryHref: isAppliance
       ? SHOP_APPLIANCES_HREF
-      : `/spare-parts/enquiry?part=${encodeURIComponent(product.id)}`,
+      : `/shop/requests?part=${encodeURIComponent(product.id)}`,
   };
 }

@@ -6,9 +6,10 @@ import Link from "next/link";
 type Props = {
   onCheck: (model: string) => void;
   result?: string;
+  inputId?: string;
 };
 
-export default function FitmentBanner({ onCheck, result }: Props) {
+export default function FitmentBanner({ onCheck, result, inputId = "appliance-model" }: Props) {
   const [model, setModel] = useState("");
 
   return (
@@ -19,13 +20,13 @@ export default function FitmentBanner({ onCheck, result }: Props) {
       }}
       className="w-full rounded-2xl border border-zinc-200 bg-white p-3 sm:p-4"
     >
-      <label htmlFor="appliance-model" className="block text-sm font-bold text-zinc-900">
+      <label htmlFor={inputId} className="block text-sm font-bold text-zinc-900">
         What is the model on the appliance?
       </label>
       <p className="mt-1 text-xs text-zinc-500">Example: WW70T4020EE or RT28M3022S8</p>
       <div className="mt-3 flex flex-col gap-2 sm:flex-row">
         <input
-          id="appliance-model"
+          id={inputId}
           value={model}
           onChange={(event) => setModel(event.target.value)}
           placeholder="Enter model number"

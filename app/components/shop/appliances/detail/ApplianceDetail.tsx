@@ -45,7 +45,10 @@ export default function ApplianceDetail({ slug }: { slug: string }) {
     setError("");
     fetch(`${API_URL}/appliances/${encodeURIComponent(slug)}`, { signal: controller.signal, cache: "no-store" })
       .then(async (r) => { if (!r.ok) throw new Error(r.status === 404 ? "This appliance could not be found." : "Could not load this appliance."); return r.json(); })
-      .then((data) => setProduct(data.product || null))
+      .then((data) => {
+        if (!data?.product) throw new Error("This appliance could not be found.");
+        setProduct(data.product);
+      })
       .catch((e: unknown) => { if (!controller.signal.aborted) setError(e instanceof Error ? e.message : "Could not load this appliance."); });
     return () => controller.abort();
   }, [slug, retry]);

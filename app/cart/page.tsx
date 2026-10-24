@@ -176,7 +176,7 @@ export default function CartPage() {
   return (
     <div className="min-h-screen bg-[#f6f6f6]">
       <ShopNavbar mobileTitle="Cart" mobileBackHref="/shop" hideDockOnMobile />
-      <main className="mx-auto w-full max-w-6xl px-3 pb-32 pt-5 sm:px-5 md:pb-28 md:pt-8">
+      <main className="mx-auto w-full max-w-6xl px-3 pb-32 pt-5 sm:px-5 lg:pb-28 lg:pt-8">
         <div className="mb-5 flex items-end justify-between gap-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[.14em] text-zinc-500">Fixxer Shop</p>
@@ -267,7 +267,7 @@ export default function CartPage() {
                   {showCouponEntry && <form onSubmit={applyCoupon} className="mt-3 flex gap-2"><input value={couponCode} onChange={(event) => setCouponCode(event.target.value.toUpperCase())} maxLength={24} placeholder="Enter coupon code" className="h-10 min-w-0 flex-1 rounded-lg border border-zinc-200 px-3 text-sm uppercase outline-none focus:border-primary focus:ring-2 focus:ring-primary" /><button type="submit" disabled={busyAction || !couponCode.trim()} className="rounded-lg bg-primary px-4 text-xs font-bold text-white disabled:opacity-40">Apply</button></form>}
                   {cart.coupons.map((coupon) => <div key={coupon.code} className="mt-2 flex items-center justify-between gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-800"><span><b>{coupon.code}</b> · {coupon.title} ({coupon.discountText})</span><button type="button" onClick={() => void removeCoupon(coupon.code)} className="font-bold underline">Remove</button></div>)}
                 </div>
-                <Link href="/checkout" className="mt-4 hidden h-12 items-center justify-center gap-2 rounded-xl bg-primary text-sm font-extrabold text-white shadow-md transition hover:brightness-105 md:flex"><ShieldCheck className="h-4 w-4" /> Proceed to checkout <ArrowRight className="h-4 w-4" /></Link>
+                <Link href="/checkout" className="mt-4 hidden h-12 items-center justify-center gap-2 rounded-xl bg-primary text-sm font-extrabold text-white shadow-md transition hover:brightness-105 lg:flex"><ShieldCheck className="h-4 w-4" /> Proceed to checkout <ArrowRight className="h-4 w-4" /></Link>
                 {(showPincodeEntry || pincode) && <label className="mt-3 flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2.5"><MapPin className="h-4 w-4 shrink-0 text-primary" /><input inputMode="numeric" maxLength={6} value={pincode} onChange={(event) => setPincode(event.target.value.replace(/\D/g, ""))} placeholder="Enter 6-digit pincode" className="min-w-0 flex-1 bg-transparent text-sm outline-none focus:ring-2 focus:ring-primary placeholder:text-zinc-400" /></label>}
                 {quoteError && <p role="alert" className="mt-2 text-xs text-red-600">{quoteError}</p>}
                 {quote && !quote.serviceable && <p role="status" className="mt-2 text-xs text-red-600">We currently deliver in Patna. Try 800001–800014.</p>}
@@ -278,7 +278,7 @@ export default function CartPage() {
         )}
       </main>
 
-      {!!cart?.items.length && !loading && <div className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-200 bg-white px-3 pb-[calc(0.5rem_+_env(safe-area-inset-bottom))] pt-2.5 shadow-[0_-8px_20px_-16px_rgba(0,0,0,.35)] md:hidden"><Link href="/checkout" className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-extrabold text-white shadow-md"><span>Proceed to checkout</span><ArrowRight className="h-4 w-4" /></Link><p className="mt-1.5 flex items-center justify-center gap-1 text-[10px] text-zinc-500"><ShieldCheck className="h-3 w-3" /> Cash on delivery · pay when it arrives</p></div>}
+      {!!cart?.items.length && !loading && <div className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-200 bg-white px-3 pb-[calc(0.5rem_+_env(safe-area-inset-bottom))] pt-2.5 shadow-[0_-8px_20px_-16px_rgba(0,0,0,.35)] lg:hidden"><Link href="/checkout" className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-extrabold text-white shadow-md"><span>Proceed to checkout</span><ArrowRight className="h-4 w-4" /></Link><p className="mt-1.5 flex items-center justify-center gap-1 text-[10px] text-zinc-500"><ShieldCheck className="h-3 w-3" /> Cash on delivery · pay when it arrives</p></div>}
     </div>
   );
 }

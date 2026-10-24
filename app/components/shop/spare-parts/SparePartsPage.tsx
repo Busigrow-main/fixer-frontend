@@ -250,7 +250,7 @@ export default function SparePartsPage() {
           </div>
           <div className="mt-4 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-3.5">
             <CategoryChips items={CATEGORIES} selected={category} onSelect={changeCategory} className="mx-0 px-0 md:gap-2.5" />
-            <div className="w-full max-w-[520px] lg:w-[520px]"><FitmentBanner onCheck={checkModel} result={fitmentResult} /></div>
+            <div className="w-full max-w-[520px] lg:w-[520px]"><FitmentBanner inputId="appliance-model-desktop" onCheck={checkModel} result={fitmentResult} /></div>
           </div>
         </section>
 
@@ -293,7 +293,7 @@ export default function SparePartsPage() {
             <div className="mb-3 flex flex-col gap-3 lg:hidden">
               <CategoryChips items={CATEGORIES} selected={category} onSelect={changeCategory} />
               <FilterBar activeFilterCount={activeFilterCount} brandLabel={brandLabel} capacityLabel={capacityLabel} onSort={() => setSheet(true)} onFilter={() => setSheet(true)} onBrand={() => setSheet(true)} onCapacity={() => setSheet(true)} />
-              <FitmentBanner onCheck={checkModel} result={fitmentResult} />
+              <FitmentBanner inputId="appliance-model-mobile" onCheck={checkModel} result={fitmentResult} />
             </div>
             <section className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3.5 shadow-[0_1px_3px_rgba(15,23,42,0.025)]">
               <div>

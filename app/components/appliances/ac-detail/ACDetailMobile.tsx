@@ -39,7 +39,7 @@ interface ACDetailMobileProps {
 export function ACDetailMobile({
   product,
 }: ACDetailMobileProps) {
-  const enquiryHref = `/spare-parts/enquiry?product=${encodeURIComponent(
+  const enquiryHref = `/shop/requests?product=${encodeURIComponent(
     product.slug,
   )}&type=appliance`;
 

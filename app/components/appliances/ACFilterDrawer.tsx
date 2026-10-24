@@ -147,8 +147,8 @@ export function ACFilterDrawer() {
 
     router.push(
       query
-        ? `/spare-parts/appliances/ac?${query}`
-        : "/spare-parts/appliances/ac",
+        ? `/shop/appliances?type=ac&${query}`
+        : "/shop/appliances?type=ac",
     );
 
     setOpen(false);
@@ -158,7 +158,7 @@ export function ACFilterDrawer() {
     setFilters(DEFAULT_FILTERS);
 
     router.push(
-      "/spare-parts/appliances/ac",
+      "/shop/appliances?type=ac",
     );
 
     setOpen(false);

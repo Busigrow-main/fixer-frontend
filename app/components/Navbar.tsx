@@ -8,6 +8,7 @@ import { useAuth } from "@/app/context/AuthContext";
 import { SERVICES } from "@/app/lib/services";
 import {
   isShopRoute,
+  SHOP_SPARE_PARTS_HREF,
 } from "@/app/lib/shop-routes";
 import { MobileBottomNav } from "@/app/components/MobileBottomNav";
 import FixxerLogo from "@/app/components/FixxerLogo";
@@ -77,7 +78,7 @@ export default function Navbar() {
     const query = globalSearchQuery.trim();
     if (!query) return;
 
-    router.push(`/spare-parts?q=${encodeURIComponent(query)}`);
+    router.push(`${SHOP_SPARE_PARTS_HREF}?q=${encodeURIComponent(query)}`);
   };
 
   return (
@@ -232,7 +233,7 @@ export default function Navbar() {
             {/* Search - Icon only for mobile if subpage */}
             {isSubpage && !hasInPageSearch && pathname !== "/my-bookings" && (
               <button
-                onClick={() => router.push("/spare-parts")}
+                onClick={() => router.push(SHOP_SPARE_PARTS_HREF)}
                 className="w-10 h-10 flex items-center justify-center rounded-full active:bg-surface-container transition-colors"
                 aria-label="Open spare parts search"
               >

@@ -95,7 +95,7 @@ export default function ShopNavbar({
         <ShopDock
           cartCount={token ? cartCount : 0}
           onSearch={() => setCommandOpen(true)}
-          className={hideDockOnMobile ? "hidden md:flex" : undefined}
+          className={hideDockOnMobile ? "hidden lg:flex" : undefined}
         />
       )}
     </>

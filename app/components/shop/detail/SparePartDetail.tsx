@@ -45,10 +45,19 @@ export default function SparePartDetail({ id }: { id: string }) {
   useEffect(() => {
     const controller = new AbortController();
     setPart(null); setError("");
+    let timedOut = false;
+    const timeout = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, 12000);
     fetch(`${API_URL}/spare-parts/${encodeURIComponent(id)}`, { signal: controller.signal, cache: "no-store" })
       .then(async (r) => { if (!r.ok) throw new Error(r.status === 404 ? "This part could not be found." : "Could not load this part."); return r.json(); })
-      .then((data: Part) => setPart(data))
-      .catch((e: unknown) => { if (!controller.signal.aborted) setError(e instanceof Error ? e.message : "Could not load this part."); });
+      .then((data: Part) => { if (!data?._id && !data?.sku) throw new Error("This part could not be found."); setPart(data); })
+      .catch((e: unknown) => {
+        if (controller.signal.aborted && !timedOut) return;
+        setError(timedOut ? "This part could not be found." : e instanceof Error ? e.message : "Could not load this part.");
+      })
+      .finally(() => clearTimeout(timeout));
     return () => controller.abort();
   }, [id, retry]);
 
@@ -105,9 +114,12 @@ export default function SparePartDetail({ id }: { id: string }) {
       <main className="mx-auto min-h-screen max-w-3xl px-4 pb-8 pt-20 md:pt-8">
         {error ? (
           <div role="alert" className="rounded-2xl bg-white p-8 text-center">
-            <h1 className="font-bold">Unable to load part</h1>
+            <h1 className="font-bold">{error.includes("could not be found") ? "Part not found" : "Unable to load part"}</h1>
             <p className="mt-2 text-sm text-zinc-600">{error}</p>
-            <button className="mt-5 rounded-xl bg-primary px-5 py-3 font-bold text-white" onClick={() => setRetry((n) => n + 1)}>Try again</button>
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+              <Link href="/shop/spare-parts" className="rounded-xl border border-zinc-200 px-5 py-3 text-sm font-bold text-zinc-800">Back to spare parts</Link>
+              <button className="rounded-xl bg-primary px-5 py-3 font-bold text-white" onClick={() => setRetry((n) => n + 1)}>Try again</button>
+            </div>
           </div>
         ) : (
           <div className="animate-pulse rounded-2xl bg-white p-8 text-zinc-500">Loading part details…</div>

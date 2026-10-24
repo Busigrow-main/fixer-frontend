@@ -134,8 +134,8 @@ export default function HeroOffersCarousel({
               backgroundImage: `url("${offer.imageUrl || FALLBACK_IMAGE}")`,
             }}
           />
-          {/* <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" /> */}
-          {/* <div className="absolute inset-x-4 bottom-10 flex items-end justify-between gap-3 text-left text-white sm:inset-x-6 sm:bottom-11 md:inset-x-8">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+          <div className="absolute inset-x-4 bottom-10 flex items-end justify-between gap-3 text-left text-white sm:inset-x-6 sm:bottom-11 md:inset-x-8">
             <span className="min-w-0">
               <span className="block truncate font-headline text-lg font-bold sm:text-2xl md:text-3xl">{offer.title}</span>
               {offer.discountText && <span className="mt-1 block truncate text-xs font-semibold sm:text-sm">{offer.discountText}</span>}
@@ -143,7 +143,7 @@ export default function HeroOffersCarousel({
             <span className="shrink-0 rounded-lg bg-primary px-3 py-2 text-[9px] font-black uppercase tracking-wide text-on-primary shadow-lg sm:px-4 sm:text-[10px]">
               {offer.ctaLabel?.trim() || "Explore offer"}
             </span>
-          </div> */}
+          </div>
         </Link>
       ))}
 
