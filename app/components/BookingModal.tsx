@@ -58,7 +58,8 @@ export default function BookingModal() {
         aria-modal="true"
         aria-label="Book a repair"
         className={`relative flex min-h-0 w-full max-w-[640px] flex-col overflow-hidden rounded-[28px] bg-white
-          max-h-[min(720px,calc(100dvh-32px))]
+          xl:max-w-[800px] 2xl:max-w-[880px]
+          max-h-[min(720px,calc(100dvh-32px))] xl:max-h-[min(800px,calc(100dvh-48px))]`}
           shadow-[0_2px_6px_rgba(0,0,0,0.06),0_40px_100px_-16px_rgba(0,0,0,0.45)]
           transition-all duration-300 ease-out ${
             isOpen
