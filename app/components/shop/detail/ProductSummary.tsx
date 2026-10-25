@@ -1,5 +1,7 @@
 "use client";
 
+import { warrantyInWords } from "@/app/lib/shop-copy";
+
 type Props = {
   name: string;
   price: number;
@@ -10,11 +12,12 @@ type Props = {
   inStock?: boolean;
   productLabel?: string;
   verified?: boolean;
+  warrantyMonths?: number;
 };
 
 const inr = (n: number) => `₹${n.toLocaleString("en-IN")}`;
 
-export default function ProductSummary({ name, price, mrp, rating, reviews, description, inStock = true, productLabel, verified = false }: Props) {
+export default function ProductSummary({ name, price, mrp, rating, reviews, description, inStock = true, productLabel, verified = false, warrantyMonths }: Props) {
   const off = mrp && mrp > price ? Math.round(((mrp - price) / mrp) * 100) : 0;
 
   return (
@@ -37,11 +40,11 @@ export default function ProductSummary({ name, price, mrp, rating, reviews, desc
 
       {(rating > 0 || reviews > 0 || verified) && <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-zinc-600">
         {rating > 0 && <>
-        <span className="inline-flex items-center gap-1 font-bold text-zinc-900">
+        <a href="#reviews" className="inline-flex items-center gap-1 font-bold text-zinc-900 hover:text-primary">
           <span className="material-symbols-outlined icon-filled text-[16px] text-amber-500">star</span>
           {rating}
-        </span>
-        {reviews > 0 && <span>({reviews} reviews)</span>}
+          {reviews > 0 && <span className="font-normal text-zinc-500">({reviews} reviews)</span>}
+        </a>
         </>}
         <span className="text-zinc-300">·</span>
         {verified && <span className="inline-flex items-center gap-1 font-semibold text-green-700">
@@ -59,6 +62,7 @@ export default function ProductSummary({ name, price, mrp, rating, reviews, desc
           <span className="rounded-md bg-green-50 px-2 py-0.5 text-xs font-bold text-green-700">{off}% off</span>
         )}
       </div>
+      <p className="mt-1 text-xs text-zinc-500">Inclusive of taxes{warrantyInWords(warrantyMonths) ? ` · ${warrantyInWords(warrantyMonths)}` : ""}</p>
 
       <p className="mt-2.5 text-[13px] leading-relaxed text-zinc-600">{description}</p>
     </div>

@@ -12,7 +12,7 @@ export default function PartRequestAction({
   compact?: boolean;
 }) {
   const [quantity, setQuantity] = useState(1);
-  const href = `/spare-parts/enquiry?part=${encodeURIComponent(partId)}&quantity=${quantity}`;
+  const href = `/shop/requests?part=${encodeURIComponent(partId)}&quantity=${quantity}`;
 
   return (
     <div className={compact ? "flex items-center gap-2" : "space-y-3"}>

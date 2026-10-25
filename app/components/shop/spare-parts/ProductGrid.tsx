@@ -35,6 +35,7 @@ type Props = {
   onRetry?: () => void;
   emptyTitle?: string;
   emptyDescription?: string;
+  onClearFilters?: () => void;
 };
 
 export default function ProductGrid({
@@ -47,6 +48,7 @@ export default function ProductGrid({
   onRetry,
   emptyTitle = "No parts found",
   emptyDescription = "Try another part name or model number, or clear your filters.",
+  onClearFilters,
 }: Props) {
   const gridClass =
     "grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 lg:gap-5";
@@ -67,7 +69,7 @@ export default function ProductGrid({
   if (parts.length === 0) {
     return (
       <div className="rounded-xl border border-zinc-200 bg-white px-4 py-10 text-center sm:rounded-2xl sm:px-6 sm:py-14">
-        <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-[#D8102B] sm:h-14 sm:w-14">
+        <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-primary sm:h-14 sm:w-14">
           <SearchX size={25} strokeWidth={1.8} />
         </span>
 
@@ -78,6 +80,11 @@ export default function ProductGrid({
         <p className="mx-auto mt-1 max-w-xs text-xs leading-5 text-zinc-500 sm:text-[13px]">
           {emptyDescription}
         </p>
+        {onClearFilters && (
+          <button type="button" onClick={onClearFilters} className="mt-4 inline-flex h-10 items-center rounded-xl bg-primary px-4 text-sm font-semibold text-white">
+            Clear filters
+          </button>
+        )}
       </div>
     );
   }

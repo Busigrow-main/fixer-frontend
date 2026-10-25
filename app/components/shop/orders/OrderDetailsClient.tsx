@@ -65,7 +65,7 @@ export default function OrderDetailsClient({ id }: { id: string }) {
   const title = appliance ? order?.applianceItem?.name || "Appliance order" : items[0]?.partId?.name || "Spare part order";
   const total = Number(order?.invoiceData?.totalAmount || (appliance ? (order?.applianceItem?.price || 0) * (order?.applianceItem?.quantity || 1) : 0));
 
-  return <div className="min-h-screen bg-[#f5f6f8]"><ShopNavbar /><main className="mx-auto w-full max-w-3xl px-3 pb-24 pt-5 sm:px-5 md:pt-8">
+  return <div className="shop-shell min-h-screen bg-[#f6f6f6]"><ShopNavbar /><main className="mx-auto w-full max-w-3xl px-3 pb-28 pt-5 sm:px-5 md:pt-8">
     <Link href="/orders" className="inline-flex items-center gap-2 text-sm font-semibold text-zinc-600 hover:text-primary"><ArrowLeft className="h-4 w-4" /> All orders</Link>
     {loading ? <div role="status" className="mt-5 flex min-h-64 items-center justify-center gap-2 rounded-2xl bg-white text-sm text-zinc-600"><LoaderCircle className="h-5 w-5 animate-spin text-primary" /> Loading order…</div> : error || !order ? <div role="alert" className="mt-5 rounded-2xl border border-zinc-200 bg-white p-8 text-center"><h1 className="font-bold text-zinc-900">Order unavailable</h1><p className="mt-2 text-sm text-zinc-600">{error || "This order could not be found."}</p><Link href="/orders" className="mt-4 inline-flex font-semibold text-primary">Return to orders</Link></div> : <>
       <header className="mb-4 mt-4"><p className="text-xs font-semibold uppercase tracking-[.14em] text-zinc-500">Order #{order._id.slice(-8).toUpperCase()}</p><h1 className="mt-1 text-2xl font-extrabold text-zinc-950">{title}</h1><p className="mt-1 text-sm text-zinc-500">Placed {date(order.createdAt)}</p></header>

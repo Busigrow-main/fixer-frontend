@@ -24,7 +24,7 @@ export default function SparePartsFilter({
     if (newCategory && newCategory !== "All") params.set("category", newCategory);
     params.set("page", "1"); // Reset to page 1 on filter
     
-    router.push(`/spare-parts?${params.toString()}`);
+    router.push(`/shop/spare-parts?${params.toString()}`);
   };
 
   const handleSearch = (e: React.FormEvent) => {

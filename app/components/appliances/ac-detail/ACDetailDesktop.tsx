@@ -39,7 +39,7 @@ interface ACDetailDesktopProps {
 export function ACDetailDesktop({
   product,
 }: ACDetailDesktopProps) {
-  const enquiryHref = `/spare-parts/enquiry?product=${encodeURIComponent(
+  const enquiryHref = `/shop/requests?product=${encodeURIComponent(
     product.slug,
   )}&type=appliance`;
 

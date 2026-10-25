@@ -217,7 +217,7 @@ export default function HomeShopSection() {
 
     {/* Post a requirement */}
     <Link
-      href="/spare-parts/enquiry"
+      href="/shop/requests"
       className="group inline-flex h-12 w-full items-center justify-center gap-2.5 rounded-xl bg-zinc-900 px-5 text-center font-label text-[10px] font-black uppercase tracking-[0.12em] text-white shadow-md shadow-black/10 transition-all duration-200 hover:bg-primary hover:shadow-lg hover:shadow-primary/20 active:scale-[0.98] sm:w-auto sm:min-w-[190px] sm:px-6"
     >
       <span className="material-symbols-outlined text-[19px] transition-transform duration-200 group-hover:scale-105">

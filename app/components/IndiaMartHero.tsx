@@ -38,7 +38,7 @@ export default function IndiaMartHero() {
             onClick={() => {
               const input = document.querySelector<HTMLInputElement>('input[type=text]');
               if (input?.value) {
-                window.location.href = `/spare-parts?q=${encodeURIComponent(input.value)}`;
+                window.location.href = `/shop/spare-parts?q=${encodeURIComponent(input.value)}`;
               }
             }}
           >
@@ -50,7 +50,7 @@ export default function IndiaMartHero() {
             {["AC Filter", "Compressor", "Motor", "Thermostat"].map((tag) => (
               <a
                 key={tag}
-                href={`/spare-parts?q=${encodeURIComponent(tag)}`}
+                href={`/shop/spare-parts?q=${encodeURIComponent(tag)}`}
                 className="text-[11px] font-bold text-zinc-500 hover:text-primary bg-zinc-100 hover:bg-primary/5 px-2.5 py-1 rounded-full transition-colors"
               >
                 {tag}

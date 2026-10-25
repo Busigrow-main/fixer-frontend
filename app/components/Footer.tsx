@@ -192,16 +192,15 @@ export default function Footer() {
             <div className="space-y-4">
 
               {/* Phone */}
-              <div className="flex items-start gap-3 group">
+              <a
+                href="tel:+917004771388"
+                aria-label="Call Cool Air Refrigeration at +91 70047 71388"
+                className="flex items-start gap-3 group"
+              >
                 <div className="w-8 h-8 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-primary-container flex items-center justify-center flex-shrink-0 group-active:bg-primary transition-colors">
-                  <a
-                    href="tel:+917004771388"
-                    aria-label="Call Cool Air Refrigeration"
-                  >
-                    <span className="material-symbols-outlined text-primary group-active:text-white text-base md:text-lg icon-filled">
-                      call
-                    </span>
-                  </a>
+                  <span className="material-symbols-outlined text-primary group-active:text-white text-base md:text-lg icon-filled">
+                    call
+                  </span>
                 </div>
 
                 <div>
@@ -213,7 +212,7 @@ export default function Footer() {
                     8 AM - 11 PM Daily
                   </p>
                 </div>
-              </div>
+              </a>
 
               {/* WhatsApp */}
               <div className="flex items-start gap-3 group">

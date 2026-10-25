@@ -144,7 +144,7 @@ export function ACFilterSidebar({
     setFilters(DEFAULT_FILTERS);
 
     router.push(
-      "/spare-parts/appliances/ac",
+      "/shop/appliances?type=ac",
     );
 
     onApply?.();

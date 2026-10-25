@@ -142,7 +142,7 @@ export default function ServicePickerSection() {
             >
               {/* Most Booked Badge */}
               {item.mostBooked && (
-                <span className="absolute left-1.5 top-1.5 z-20 rounded-full bg-primary px-1.5 py-1 text-[5px] font-black uppercase tracking-[0.08em] text-white shadow-md sm:left-3 sm:top-3 sm:px-2.5 sm:text-[8px]">
+                <span className="absolute left-1.5 top-1.5 z-20 rounded-full bg-primary px-1.5 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-white shadow-md sm:left-3 sm:top-3 sm:px-2.5 sm:text-xs">
                   Most Booked
                 </span>
               )}

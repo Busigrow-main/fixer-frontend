@@ -325,7 +325,7 @@ export default function ShopPartHelpForm() {
           <button
             type="button"
             onClick={() =>
-              router.push("/spare-parts")
+              router.push("/shop/spare-parts")
             }
             className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-5 text-sm font-black text-zinc-700 transition hover:border-primary/30 hover:text-primary active:scale-[0.99]"
           >

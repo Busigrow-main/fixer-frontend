@@ -36,11 +36,11 @@ interface ACProductCardMobileProps {
 export function ACProductCardMobile({
   product,
 }: ACProductCardMobileProps) {
-  const detailHref = `/spare-parts/appliances/ac/${encodeURIComponent(
+  const detailHref = `/shop/appliances/ac/${encodeURIComponent(
     product.slug,
   )}`;
 
-  const enquiryHref = `/spare-parts/enquiry?product=${encodeURIComponent(
+  const enquiryHref = `/shop/requests?product=${encodeURIComponent(
     product.slug,
   )}&type=appliance`;
 

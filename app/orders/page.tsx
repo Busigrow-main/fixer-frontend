@@ -119,9 +119,9 @@ export default function OrdersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f6f8]">
+    <div className="shop-shell min-h-screen bg-[#f6f6f6]">
       <ShopNavbar mobileTitle="Orders" mobileBackHref="/shop" />
-      <main className="mx-auto w-full max-w-3xl px-3 pb-24 pt-5 sm:px-5 md:pt-8">
+      <main className="mx-auto w-full max-w-3xl px-3 pb-28 pt-5 sm:px-5 md:pt-8">
         <div className="mb-4 hidden items-end justify-between gap-3 md:flex">
           <div><p className="text-xs font-semibold uppercase tracking-[.14em] text-zinc-500">Fixxer Shop</p><h1 className="mt-1 text-2xl font-extrabold tracking-tight text-zinc-950 sm:text-3xl">Orders</h1><p className="mt-1 text-sm text-zinc-500">Track your Fixxer Shop deliveries and installation services.</p></div>
           <Link href="/shop" className="hidden items-center gap-1 text-sm font-semibold text-primary sm:inline-flex">Continue shopping <ArrowRight className="h-4 w-4" /></Link>
