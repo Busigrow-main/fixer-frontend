@@ -14,6 +14,7 @@ type Order = {
   _id: string;
   orderType?: "part" | "appliance" | string;
   status: string;
+  paymentStatus?: string;
   createdAt?: string;
   updatedAt?: string;
   items?: OrderItem[];
