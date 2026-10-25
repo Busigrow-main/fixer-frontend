@@ -6,6 +6,7 @@ import Link from "next/link";
 import DetailHeader from "@/app/components/shop/detail/DetailHeader";
 import ImageGallery from "@/app/components/shop/detail/ImageGallery";
 import SpecsGrid, { type Spec } from "@/app/components/shop/detail/SpecsGrid";
+import ShopNavbar from "@/app/components/shop/ShopNavbar";
 import { API_URL } from "@/app/config";
 import { useAuth } from "@/app/context/AuthContext";
 
@@ -48,7 +49,7 @@ export default function ApplianceDetail({ slug }: { slug: string }) {
     catch (e) { setNotice(e instanceof Error ? e.message : "Could not add this appliance to your cart."); } finally { setBusy(false); }
   }, [product, token, authLoading, router, qty, optionId, pincode]);
 
-  if (!product) return <div className="min-h-screen bg-zinc-50"><DetailHeader title="Appliance Detail Page" cartCount={cartCount} fallbackHref="/shop/appliances"/><main className="mx-auto min-h-screen max-w-3xl px-4 pb-8 pt-20 md:pt-24">{error ? <section role="alert" className="rounded-2xl bg-white p-8 text-center"><h1 className="font-bold">Unable to load appliance</h1><p className="mt-2 text-sm text-zinc-600">{error}</p><button onClick={() => setRetry((n) => n + 1)} className="mt-5 rounded-xl bg-primary px-5 py-3 font-bold text-white">Try again</button></section> : <div className="animate-pulse rounded-2xl bg-white p-8 text-zinc-500">Loading appliance details…</div>}</main></div>;
+  if (!product) return <div className="min-h-screen bg-zinc-50"><ShopNavbar hideMobileHeader showMobileBottomNav={false} /><DetailHeader title="Appliance Detail Page" cartCount={cartCount} fallbackHref="/shop/appliances"/><main className="mx-auto min-h-screen max-w-3xl px-4 pb-8 pt-20 md:pt-24">{error ? <section role="alert" className="rounded-2xl bg-white p-8 text-center"><h1 className="font-bold">Unable to load appliance</h1><p className="mt-2 text-sm text-zinc-600">{error}</p><button onClick={() => setRetry((n) => n + 1)} className="mt-5 rounded-xl bg-primary px-5 py-3 font-bold text-white">Try again</button></section> : <div className="animate-pulse rounded-2xl bg-white p-8 text-zinc-500">Loading appliance details…</div>}</main></div>;
 
   const images = product.images?.filter(Boolean) || [];
   const specs: Spec[] = Object.entries({ ...product.specsPerformance, ...product.specsSmart, ...product.specsPhysical }).filter(([, v]) => v != null && ["string", "number", "boolean"].includes(typeof v)).map(([label, value]) => ({ label: label.replace(/([a-z])([A-Z])/g, "$1 $2").replaceAll("_", " "), value: String(value) }));
@@ -56,7 +57,7 @@ export default function ApplianceDetail({ slug }: { slug: string }) {
   const discount = mrp && product.price ? Math.round((mrp - product.price) / mrp * 100) : 0;
   const warranty: string[] = [product.productWarrantyYears ? `${product.productWarrantyYears} Year Product Warranty` : undefined, product.compressorWarrantyYears ? `${product.compressorWarrantyYears} Year Compressor Warranty` : undefined].filter((value): value is string => Boolean(value));
 
-  return <div className="min-h-screen bg-[#f5f5f6]"><DetailHeader title={product.name} cartCount={cartCount} fallbackHref="/shop/appliances"/>
+  return <div className="min-h-screen bg-[#f5f5f6]"><ShopNavbar hideMobileHeader showMobileBottomNav={false} /><DetailHeader title={product.name} cartCount={cartCount} fallbackHref="/shop/appliances"/>
     <main className="mx-auto w-full max-w-[1280px] px-3 pb-28 pt-14 sm:px-5 md:pt-20 lg:px-10 lg:pb-12 lg:pt-24"><nav className="mb-5 hidden text-sm text-zinc-500 lg:block"><Link href="/shop">Shop</Link> <span className="px-1">/</span> <Link href="/shop/appliances">Appliances</Link> <span className="px-1">/</span> <span className="text-zinc-900">{product.name}</span></nav>
         <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(420px,.92fr)] lg:gap-8 xl:gap-12"><section className="rounded-2xl border border-zinc-200 bg-white p-2 shadow-sm sm:p-5 lg:sticky lg:top-20"><ImageGallery images={images} alt={product.name}/></section>
         <div className="space-y-3 sm:space-y-4"><section className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-6"><div className="flex flex-wrap gap-1.5">{product.isBestseller && <span className="rounded-full bg-primary px-2 py-1 text-[10px] font-bold text-white">BEST SELLER</span>}{product.brand && <span className="rounded-full bg-zinc-100 px-2 py-1 text-[10px] font-bold uppercase text-zinc-700">{product.brand}</span>}{product.isInverter && <span className="rounded-full bg-zinc-100 px-2 py-1 text-[10px] font-bold text-zinc-700">Inverter</span>}{product.inStock != null && <span className={`rounded-full px-2 py-1 text-[10px] font-bold ${product.inStock ? "bg-emerald-50 text-emerald-700" : "bg-zinc-100 text-zinc-600"}`}>{product.inStock ? "In Stock" : "Out of Stock"}</span>}</div>

@@ -76,10 +76,10 @@ export default function ShopAllProductsPage() {
 
   if (loading && !shopData) {
     return (
-      <div className="shop-shell min-h-screen bg-[#f6f6f6]">
+      <div className="shop-shell -mt-14 min-h-screen bg-[#f4f4f6] md:mt-0 md:bg-[#f6f6f6]">
         <ShopNavbar searchValue={search} onSearchChange={setSearch} />
         <main className="mx-auto flex w-full max-w-[560px] flex-col gap-3 px-3 pb-28 pt-3 sm:max-w-[720px] sm:px-4 md:max-w-[1480px] md:gap-5 md:px-8 md:pb-28 md:pt-8 lg:px-12">
-          <div className="sticky top-14 z-40 -mx-3 bg-[#f6f6f6] px-3 py-2 md:hidden">
+          <div className="sticky top-14 z-40 -mx-3 bg-[#f4f4f6] px-3 py-2 md:hidden">
             <SearchBar value={search} onChange={setSearch} placeholder="Search appliances, spare parts, brands, or models" />
           </div>
           <div className="h-5 w-28 animate-pulse rounded bg-zinc-200" />
@@ -94,10 +94,10 @@ export default function ShopAllProductsPage() {
   }
 
   return (
-    <div className="shop-shell min-h-screen bg-[#f6f6f6]">
+    <div className="shop-shell -mt-14 min-h-screen bg-[#f4f4f6] md:mt-0 md:bg-[#f6f6f6]">
       <ShopNavbar searchValue={search} onSearchChange={setSearch} />
       <main className="mx-auto flex w-full max-w-[560px] flex-col gap-3 px-3 pb-28 pt-3 sm:max-w-[720px] sm:px-4 md:max-w-[1480px] md:gap-5 md:px-8 md:pb-28 md:pt-8 lg:px-12">
-        <div className="sticky top-14 z-40 -mx-3 bg-[#f6f6f6] px-3 py-2 md:hidden">
+        <div className="sticky top-14 z-40 -mx-3 bg-[#f4f4f6] px-3 py-2 md:hidden">
           <SearchBar
             value={search}
             onChange={setSearch}

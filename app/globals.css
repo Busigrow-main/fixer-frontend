@@ -229,11 +229,13 @@ body {
 }
 
 /* ─── Mobile bottom chrome (nav + FAB + optional CTA strip) ─── */
-@media (max-width: 767px) {
+@media (min-width: 768px) {
   body:has(.shop-shell) {
     padding-top: 0;
   }
+}
 
+@media (max-width: 767px) {
   :root {
     --mobile-nav-h: 3.5rem;
     --mobile-cta-h: 3.25rem;

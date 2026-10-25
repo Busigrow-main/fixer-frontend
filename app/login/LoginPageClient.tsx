@@ -78,17 +78,25 @@ function LoginFormInner() {
     <>
       <Navbar />
       <main className="pt-20 pb-20 bg-surface min-h-screen flex items-center justify-center px-6">
-        <div className={`max-w-md w-full bg-white border border-outline p-8 md:p-12 shadow-2xl shadow-black/5 transition-all ${isShopFlow ? "rounded-2xl" : "rounded-[2rem]"}`}>
+        <div className={`max-w-md w-full bg-white border border-outline p-8 md:p-12 shadow-2xl shadow-black/5 transition-all rounded-[2rem] ${isShopFlow ? "md:rounded-2xl" : ""}`}>
           <div className="text-center mb-10">
-            <h1 className={`${isShopFlow ? "font-sans text-3xl font-extrabold" : "font-headline text-4xl md:text-5xl"} text-on-surface`}>
-              {isBookingFlow ? "One more step" : isShopFlow ? "Sign in to add this to your cart" : "Continue with phone"}
+            <h1 className={`${isShopFlow ? "font-sans text-3xl font-extrabold md:font-sans" : "font-headline text-4xl md:text-5xl"} text-on-surface`}>
+              {isBookingFlow ? "One more step" : (
+                <>
+                  <span className="md:hidden">Continue with phone</span>
+                  <span className="hidden md:inline">{isShopFlow ? "Sign in to add this to your cart" : "Continue with phone"}</span>
+                </>
+              )}
             </h1>
             <p className="text-on-surface-variant text-sm mt-3 font-medium">
               {isBookingFlow
                 ? "Enter your mobile number to finish your booking — no password needed."
-                : isShopFlow
-                  ? "Use your mobile number and we will send you back to the product or cart you left."
-                : "Use your mobile number to view bookings and track repairs."}
+                : (
+                  <>
+                    <span className="md:hidden">Use your mobile number to view bookings and track repairs.</span>
+                    <span className="hidden md:inline">{isShopFlow ? "Use your mobile number and we will send you back to the product or cart you left." : "Use your mobile number to view bookings and track repairs."}</span>
+                  </>
+                )}
             </p>
           </div>
 

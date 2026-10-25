@@ -224,7 +224,7 @@ export default function SparePartsPage() {
   const capacityLabel = filters.capacities.size ? [...filters.capacities].join(", ") : "Part type";
 
   return (
-    <div className="shop-shell min-h-screen bg-[#f6f6f6]">
+    <div className="shop-shell min-h-screen bg-[#f4f4f6] md:bg-[#f6f6f6]">
       <ShopNavbar hideMobileHeader searchValue={query} onSearchChange={changeQuery} />
 
       {/* Phone header (screenshot). Remove if ShopNavbar already shows a top bar. */}
@@ -233,7 +233,7 @@ export default function SparePartsPage() {
       </div>
 
       <main className="mx-auto flex w-full max-w-[560px] flex-col gap-4 px-8 pb-28 pt-3 sm:max-w-[720px] sm:gap-5 sm:px-4 md:max-w-[1280px] md:gap-8 md:px-8 md:pb-16 md:pt-8 lg:gap-10 lg:px-12">
-      <div className="sticky top-14 z-40 -mx-3 bg-[#f6f6f6] px-3 pb-2 lg:hidden">
+      <div className="sticky top-14 z-40 -mx-3 bg-[#f4f4f6] px-3 pb-2 md:hidden">
   <SearchBar value={query} onChange={changeQuery} onVoice={() => {}} />
 </div>
 

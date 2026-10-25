@@ -10,6 +10,7 @@ import TrustChips from "./TrustChips";
 import CompatibilityChecker from "./CompactibilityChecker";
 import QuantityAddToCart from "./QuantityAddToCart";
 import SpecsGrid, { type Spec } from "./SpecsGrid";
+import ShopNavbar from "@/app/components/shop/ShopNavbar";
 import { API_URL } from "@/app/config";
 import { useAuth } from "@/app/context/AuthContext";
 
@@ -86,7 +87,7 @@ export default function SparePartDetail({ id }: { id: string }) {
     finally { setBusy(false); }
   }, [part, token, authLoading, router, qty, installId, pincode]);
 
-  if (!part) return <div className="min-h-screen bg-zinc-50"><DetailHeader cartCount={cartCount} fallbackHref="/shop/spare-parts" /><main className="mx-auto min-h-screen max-w-3xl px-4 pb-8 pt-20 md:pt-24">{error ? <div role="alert" className="rounded-2xl bg-white p-8 text-center"><h1 className="font-bold">Unable to load part</h1><p className="mt-2 text-sm text-zinc-600">{error}</p><button className="mt-5 rounded-xl bg-primary px-5 py-3 font-bold text-white" onClick={() => setRetry((n) => n + 1)}>Try again</button></div> : <div className="animate-pulse rounded-2xl bg-white p-8 text-zinc-500">Loading part details…</div>}</main></div>;
+  if (!part) return <div className="min-h-screen bg-zinc-50"><ShopNavbar hideMobileHeader showMobileBottomNav={false} /><DetailHeader cartCount={cartCount} fallbackHref="/shop/spare-parts" /><main className="mx-auto min-h-screen max-w-3xl px-4 pb-8 pt-20 md:pt-24">{error ? <div role="alert" className="rounded-2xl bg-white p-8 text-center"><h1 className="font-bold">Unable to load part</h1><p className="mt-2 text-sm text-zinc-600">{error}</p><button className="mt-5 rounded-xl bg-primary px-5 py-3 font-bold text-white" onClick={() => setRetry((n) => n + 1)}>Try again</button></div> : <div className="animate-pulse rounded-2xl bg-white p-8 text-zinc-500">Loading part details…</div>}</main></div>;
 
   const images = part.imageUrls?.filter(Boolean) || [];
   const models = [...new Set((part.compatibleModels || []).map((m) => m.modelNumber || m.displayName).filter((m): m is string => Boolean(m)))];
@@ -102,7 +103,7 @@ export default function SparePartDetail({ id }: { id: string }) {
     part.partType?.type ? { icon: "workspace_premium", label: part.partType.type } : null,
     part.isInStock === true ? { icon: "inventory_2", label: "In Stock" } : null].filter((x): x is { icon: string; label: string } => Boolean(x));
 
-  return <div className="min-h-screen bg-[#f5f5f6]"><DetailHeader title={part.name} cartCount={cartCount} fallbackHref="/shop/spare-parts" />
+  return <div className="min-h-screen bg-[#f5f5f6]"><ShopNavbar hideMobileHeader showMobileBottomNav={false} /><DetailHeader title={part.name} cartCount={cartCount} fallbackHref="/shop/spare-parts" />
     <main className="mx-auto w-full max-w-[1280px] px-3 pb-28 pt-14 sm:px-5 md:pt-20 lg:px-10 lg:pb-28 lg:pt-24">
       <nav className="mb-5 hidden text-sm text-zinc-500 lg:block"><Link href="/shop">Shop</Link> <span className="px-1">/</span> <Link href="/shop/spare-parts">Spare Parts</Link> <span className="px-1">/</span> <span className="text-zinc-900">{part.name}</span></nav>
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(420px,.92fr)] lg:gap-8 xl:gap-12">

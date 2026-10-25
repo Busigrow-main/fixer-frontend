@@ -55,7 +55,7 @@ export default function SocialProofSection() {
             <div className="mt-8 md:mt-12 flex flex-wrap gap-4 md:gap-8 pt-6 md:pt-8 border-t border-outline">
               {[
                 { icon: "verified", text: "Licensed" },
-                { icon: "support_agent", text: "8 AM – 11 PM" },
+                { icon: "support_agent", text: "24/7 Support" },
                 { icon: "thumb_up", text: "Guarantee" },
               ].map(({ icon, text }) => (
                 <div key={text} className="flex items-center gap-2 text-on-surface-variant">
