@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ChevronRight, ShieldCheck } from "lucide-react";
 
 type Props = {
-  onCheck: (model?: string) => void;
+  onCheck: (model: string) => void;
   result?: string;
   inputId?: string;
 };
