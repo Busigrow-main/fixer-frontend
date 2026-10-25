@@ -2,20 +2,24 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ClipboardList } from "lucide-react";
+import { useBooking } from "@/app/context/BookingContext";
 import { useAuth } from "@/app/context/AuthContext";
+import { MobileBottomNav } from "@/app/components/MobileBottomNav";
 import { API_URL } from "@/app/config";
-import { Button } from "@/app/components/ui/button";
+import FixxerLogo from "@/app/components/FixxerLogo";
+import CartLink from "@/app/components/shop/CartLink";
 import ShopCommand from "@/app/components/shop/ShopCommand";
 import ShopDock from "@/app/components/shop/ShopDock";
 
 export default function ShopNavbar({
+  hideMobileHeader = false,
+  flowOnMobile = false,
   mobileTitle,
   mobileBackHref = "/shop",
-  searchValue = "",
+  showMobileBottomNav = true,
   onSearchChange,
   showDock = true,
-  hideDockOnMobile = false,
 }: {
   hideMobileHeader?: boolean;
   flowOnMobile?: boolean;
@@ -29,6 +33,7 @@ export default function ShopNavbar({
 }) {
   const [cartCount, setCartCount] = useState(0);
   const [commandOpen, setCommandOpen] = useState(false);
+  const { openBooking } = useBooking();
   const { token } = useAuth();
 
   useEffect(() => {
@@ -72,32 +77,65 @@ export default function ShopNavbar({
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  const visibleCartCount = token ? cartCount : 0;
+
   return (
     <>
-      {mobileTitle && (
-        <header className="sticky top-0 z-40 flex h-12 items-center gap-2 border-b border-zinc-200/80 bg-white/90 px-2 backdrop-blur md:hidden">
-          <Button variant="ghost" size="icon" asChild>
-            <Link href={mobileBackHref} aria-label="Go back">
-              <ArrowLeft />
+      <header
+        className={`${hideMobileHeader ? "hidden" : ""} ${
+          flowOnMobile ? "relative" : "fixed left-0 right-0 top-0"
+        } z-50 h-14 shrink-0 border-b border-slate-200 bg-white md:hidden`}
+      >
+        <div
+          className={`mx-auto flex h-full w-full items-center justify-between gap-3 px-3 ${
+            mobileTitle ? "hidden" : ""
+          }`}
+        >
+          <Link href="/" className="flex w-fit min-w-max flex-col leading-none" aria-label="Fixxer home">
+            <FixxerLogo className="text-[22px]" />
+          </Link>
+          <div className="flex w-fit min-w-max shrink-0 items-center gap-2">
+            <Link
+              href="/orders"
+              aria-label="Your orders"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#E6E7EB] bg-[#F7F7F8] text-slate-900 transition-colors hover:bg-slate-100 active:scale-95"
+            >
+              <ClipboardList className="h-[18px] w-[18px]" />
             </Link>
-          </Button>
-          <p className="min-w-0 flex-1 truncate text-sm font-semibold text-zinc-900">{mobileTitle}</p>
-        </header>
-      )}
+            <CartLink count={visibleCartCount} />
+          </div>
+        </div>
 
-      <ShopCommand
-        open={commandOpen}
-        onOpenChange={setCommandOpen}
-        onQuery={onSearchChange}
-      />
+        {mobileTitle && (
+          <div className="absolute inset-x-0 top-0 flex h-14 items-center gap-3 px-3">
+            <Link
+              href={mobileBackHref}
+              aria-label="Go back"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-zinc-800 active:bg-zinc-100"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
+            <h1 className="text-sm font-extrabold uppercase tracking-tight text-zinc-900">{mobileTitle}</h1>
+            <div className="ml-auto">
+              <CartLink count={visibleCartCount} />
+            </div>
+          </div>
+        )}
+      </header>
+
+      {!hideMobileHeader && !flowOnMobile && <div aria-hidden="true" className="h-14 md:hidden" />}
+
+      <ShopCommand open={commandOpen} onOpenChange={setCommandOpen} onQuery={onSearchChange} />
 
       {showDock && (
         <ShopDock
-          cartCount={token ? cartCount : 0}
+          cartCount={visibleCartCount}
           onSearch={() => setCommandOpen(true)}
-          className={hideDockOnMobile ? "hidden lg:flex" : undefined}
+          className="hidden md:flex"
         />
       )}
+
+      {showMobileBottomNav && <MobileBottomNav activeTab="Shop" onBook={openBooking} />}
     </>
   );
 }

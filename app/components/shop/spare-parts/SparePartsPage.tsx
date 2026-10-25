@@ -225,7 +225,7 @@ export default function SparePartsPage() {
 
   return (
     <div className="shop-shell min-h-screen bg-[#f6f6f6]">
-      <ShopNavbar searchValue={query} onSearchChange={changeQuery} />
+      <ShopNavbar hideMobileHeader searchValue={query} onSearchChange={changeQuery} />
 
       {/* Phone header (screenshot). Remove if ShopNavbar already shows a top bar. */}
       <div className="md:hidden">

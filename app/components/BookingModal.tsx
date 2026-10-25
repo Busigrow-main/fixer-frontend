@@ -47,7 +47,7 @@ export default function BookingModal() {
 
   return (
     <div
-      className={`fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 transition-opacity duration-300 ${
+      className={`fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 transition-opacity duration-300 ${
         isOpen ? "opacity-100" : "pointer-events-none opacity-0"
       }`}
     >
@@ -61,7 +61,7 @@ export default function BookingModal() {
         role="dialog"
         aria-modal="true"
         aria-label="Book a repair"
-        className={`relative flex min-h-0 w-full max-w-lg flex-col overflow-hidden rounded-[28px] bg-white shadow-[0_2px_6px_rgba(0,0,0,0.06),0_40px_100px_-16px_rgba(0,0,0,0.45)] transition-all duration-300 ease-out md:max-h-[min(840px,calc(100dvh-48px))] md:max-w-4xl md:flex-row lg:max-w-5xl max-h-[min(760px,calc(100dvh-24px))] ${
+        className={`relative flex min-h-0 w-full max-w-[460px] flex-col overflow-hidden rounded-[28px] bg-white shadow-[0_2px_6px_rgba(0,0,0,0.06),0_40px_100px_-16px_rgba(0,0,0,0.45)] transition-all duration-300 ease-out max-h-[min(720px,calc(100dvh-32px))] md:max-h-[min(840px,calc(100dvh-48px))] md:max-w-4xl md:flex-row lg:max-w-5xl ${
           isOpen ? "translate-y-0 scale-100 opacity-100" : "translate-y-5 scale-[0.96] opacity-0"
         }`}
       >
@@ -93,12 +93,12 @@ export default function BookingModal() {
             </button>
           </header>
 
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-width:thin]">
+          <div className="booking-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain">
             <BookingForm initialServiceSlug={selectedService} onSuccess={closeBooking} />
           </div>
         </div>
 
-        <aside className="hidden w-[300px] shrink-0 flex-col justify-between border-l border-zinc-100 bg-zinc-50/80 px-6 py-6 lg:w-[340px] md:flex">
+        <aside className="hidden w-[300px] shrink-0 flex-col justify-between border-l border-zinc-100 bg-zinc-50/80 px-6 py-6 md:flex lg:w-[340px]">
           <div>
             <p className="text-[11px] font-black uppercase tracking-[0.18em] text-zinc-400">What happens next</p>
             <ul className="mt-5 space-y-5">
@@ -124,6 +124,29 @@ export default function BookingModal() {
           </div>
         </aside>
       </div>
+
+      <style jsx>{`
+        .booking-scroll {
+          scrollbar-width: thin;
+          scrollbar-color: #e4e4e7 transparent;
+          -webkit-overflow-scrolling: touch;
+        }
+        .booking-scroll::-webkit-scrollbar {
+          width: 4px;
+        }
+        .booking-scroll::-webkit-scrollbar-thumb {
+          background: #e4e4e7;
+          border-radius: 999px;
+        }
+        @media (max-width: 767px) {
+          .booking-scroll {
+            scrollbar-width: none;
+          }
+          .booking-scroll::-webkit-scrollbar {
+            display: none;
+          }
+        }
+      `}</style>
     </div>
   );
 }
