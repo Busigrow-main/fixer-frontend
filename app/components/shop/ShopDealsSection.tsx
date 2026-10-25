@@ -56,7 +56,7 @@ export default function ShopDealsSection({
         </h2>
         <Link
           href={SHOP_ALL_PRODUCTS_HREF}
-          className="inline-flex items-center gap-1 text-[13px] font-semibold text-primary hover:underline sm:text-sm md:text-base"
+          className="inline-flex items-center gap-1 text-[13px] font-semibold text-[#e9002d] hover:underline sm:text-sm md:text-base md:text-primary"
         >
           View All <ArrowRight className="h-3.5 w-3.5 md:h-4 md:w-4" />
         </Link>
@@ -74,7 +74,7 @@ export default function ShopDealsSection({
       ) : error ? (
         <div role="status" className="rounded-xl border border-slate-200 bg-white px-4 py-8 text-center text-sm text-slate-600">
           <p>Shop products are temporarily unavailable.</p>
-          <button type="button" onClick={onRetry} className="mt-2 font-semibold text-primary hover:underline">Try again</button>
+          <button type="button" onClick={onRetry} className="mt-2 font-semibold text-[#e9002d] hover:underline md:text-primary">Try again</button>
         </div>
       ) : visibleDeals.length > 0 ? (
         <div className="grid grid-cols-2 items-stretch gap-2.5 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 lg:gap-6">
@@ -90,7 +90,7 @@ export default function ShopDealsSection({
               : `No products match “${searchValue}”. Try another search.`}
           </p>
           {shopData?.products.length === 0 && (
-            <button type="button" onClick={onRetry} className="mt-2 font-semibold text-primary hover:underline">Refresh</button>
+            <button type="button" onClick={onRetry} className="mt-2 font-semibold text-[#e9002d] hover:underline md:text-primary">Refresh</button>
           )}
         </div>
       )}
