@@ -174,8 +174,8 @@ export default function CartPage() {
   const finalTotal = quote?.total ?? cart?.total ?? 0;
 
   return (
-    <div className="min-h-screen bg-[#f6f6f6]">
-      <ShopNavbar mobileTitle="Cart" mobileBackHref="/shop" hideDockOnMobile />
+    <div className="shop-shell min-h-screen bg-[#f6f6f6]">
+      <ShopNavbar mobileTitle="Cart" mobileBackHref="/shop" showMobileBottomNav={false} />
       <main className="mx-auto w-full max-w-6xl px-3 pb-32 pt-5 sm:px-5 lg:pb-28 lg:pt-8">
         <div className="mb-5 flex items-end justify-between gap-3">
           <div>
