@@ -138,12 +138,12 @@ export default function ApplianceShopPage({ initialCategory = "all" }: { initial
   };
 
   return (
-    <div className="shop-shell min-h-screen bg-[#f6f6f6]">
+    <div className="shop-shell min-h-screen bg-[#f4f4f6] md:bg-[#f6f6f6]">
       <ShopNavbar hideMobileHeader searchValue={query} onSearchChange={setQuery} />
       <div className="md:hidden"><SpareHeader title="Appliances" location="Patna - 800001" onBack={() => router.push("/shop")} /></div>
 
       <main className="mx-auto flex w-full max-w-[560px] flex-col gap-3 px-3 pb-28 pt-[52px] sm:max-w-[720px] sm:px-4 sm:pt-14 md:max-w-[1480px] md:gap-5 md:px-8 md:pb-16 md:pt-8 lg:px-12">
-        <div className="sticky top-[52px] z-40 -mx-3 bg-[#f6f6f6] px-3 pt-0 pb-2 sm:top-14 lg:hidden"><SearchBar value={query} onChange={setQuery} onVoice={() => {}} placeholder="Search for appliances, brands, or models..." /></div>
+        <div className="sticky top-[52px] z-40 -mx-3 bg-[#f4f4f6] px-3 pt-0 pb-2 sm:top-14 md:hidden"><SearchBar value={query} onChange={setQuery} onVoice={() => {}} placeholder="Search for appliances, brands, or models..." /></div>
         <div className="w-full md:mx-auto md:max-w-[520px]"><ShopCategorySwitch /></div>
         <section className="hidden border-b border-slate-200 pb-5 md:block">
           <div>
