@@ -84,7 +84,7 @@ export default function CheckoutPage() {
         ? "Add your name, phone, and address to place this order."
         : "";
 
-  return <div className="shop-shell min-h-screen bg-[#f6f6f6]"><ShopNavbar /><main className="mx-auto w-full max-w-5xl px-3 pb-28 pt-5 sm:px-5 md:pt-8">
+  return <div className="shop-shell min-h-screen bg-[#f6f6f6]"><ShopNavbar showMobileBottomNav={false} /><main className="mx-auto w-full max-w-5xl px-3 pb-28 pt-5 sm:px-5 md:pt-8">
     <Link href="/cart" className="inline-flex items-center gap-2 text-sm font-semibold text-zinc-600 hover:text-primary"><ArrowLeft className="h-4 w-4" /> Back to cart</Link>
     <header className="mb-5 mt-3"><p className="text-xs font-semibold uppercase tracking-[.14em] text-zinc-500">Fixxer Shop</p><h1 className="mt-1 text-2xl font-extrabold tracking-tight text-zinc-950 sm:text-3xl">Checkout</h1><p className="mt-1 text-sm text-zinc-500">Confirm delivery details and review the live order total.</p></header>
     {error && <div role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}

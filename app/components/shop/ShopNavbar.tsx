@@ -3,14 +3,13 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowLeft, ClipboardList } from "lucide-react";
-import { useBooking } from "@/app/context/BookingContext";
 import { useAuth } from "@/app/context/AuthContext";
-import { MobileBottomNav } from "@/app/components/MobileBottomNav";
 import { API_URL } from "@/app/config";
 import FixxerLogo from "@/app/components/FixxerLogo";
 import CartLink from "@/app/components/shop/CartLink";
 import ShopCommand from "@/app/components/shop/ShopCommand";
 import ShopDock from "@/app/components/shop/ShopDock";
+import ShopMobileBottomNav from "@/app/components/shop/ShopMobileBottomNav";
 
 export default function ShopNavbar({
   hideMobileHeader = false,
@@ -20,6 +19,7 @@ export default function ShopNavbar({
   showMobileBottomNav = true,
   onSearchChange,
   showDock = true,
+  hideDockOnMobile = false,
 }: {
   hideMobileHeader?: boolean;
   flowOnMobile?: boolean;
@@ -33,7 +33,6 @@ export default function ShopNavbar({
 }) {
   const [cartCount, setCartCount] = useState(0);
   const [commandOpen, setCommandOpen] = useState(false);
-  const { openBooking } = useBooking();
   const { token } = useAuth();
 
   useEffect(() => {
@@ -135,7 +134,9 @@ export default function ShopNavbar({
         />
       )}
 
-      {showMobileBottomNav && <MobileBottomNav activeTab="Shop" onBook={openBooking} />}
+      {showMobileBottomNav && !hideDockOnMobile && (
+        <ShopMobileBottomNav cartCount={visibleCartCount} />
+      )}
     </>
   );
 }
