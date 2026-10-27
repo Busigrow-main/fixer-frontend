@@ -164,7 +164,7 @@ export default function ShopProductCard({ part, onRequest, inCart = false }: Sho
               onClick={addToCart}
               disabled={adding || authLoading || !inStock || isAdded}
               aria-label={isAdded ? `${part.name} added to cart` : `Add ${part.name} to cart`}
-              className={`shop-product-card__cta mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#e9002d] px-2 text-[13px] font-bold text-white shadow-[0_3px_6px_rgba(233,0,45,0.18)] transition hover:bg-[#d60029] active:scale-[0.98] ${isAdded ? "bg-emerald-600 hover:bg-emerald-600" : ""} disabled:cursor-not-allowed disabled:opacity-70`}
+              className={`shop-product-card__cta mt-3 flex h-10 w-full items-center justify-center gap-1.5 rounded-lg bg-[#e9002d] px-2 text-[12px] font-bold text-white shadow-[0_3px_6px_rgba(233,0,45,0.18)] transition hover:bg-[#d60029] active:scale-[0.98] ${isAdded ? "bg-emerald-600 hover:bg-emerald-600" : ""} disabled:cursor-not-allowed disabled:opacity-70`}
             >
               {cta}
             </button>

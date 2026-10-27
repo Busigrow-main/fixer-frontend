@@ -9,7 +9,6 @@ import FixxerLogo from "@/app/components/FixxerLogo";
 import CartLink from "@/app/components/shop/CartLink";
 import ShopCommand from "@/app/components/shop/ShopCommand";
 import ShopDock from "@/app/components/shop/ShopDock";
-import ShopMobileBottomNav from "@/app/components/shop/ShopMobileBottomNav";
 
 export default function ShopNavbar({
   hideMobileHeader = false,
@@ -130,12 +129,8 @@ export default function ShopNavbar({
         <ShopDock
           cartCount={visibleCartCount}
           onSearch={() => setCommandOpen(true)}
-          className="hidden md:flex"
+          className="flex"
         />
-      )}
-
-      {showMobileBottomNav && !hideDockOnMobile && (
-        <ShopMobileBottomNav cartCount={visibleCartCount} />
       )}
     </>
   );
