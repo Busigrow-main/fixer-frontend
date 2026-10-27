@@ -7,7 +7,7 @@ import { useAuth } from "@/app/context/AuthContext";
 import { API_URL } from "@/app/config";
 import FixxerLogo from "@/app/components/FixxerLogo";
 import CartLink from "@/app/components/shop/CartLink";
-import ShopCommand from "@/app/components/shop/ShopCommand";
+import ShopSearchDialog from "@/app/components/shop/ShopSearchDialog";
 import ShopDock from "@/app/components/shop/ShopDock";
 
 export default function ShopNavbar({
@@ -123,7 +123,11 @@ export default function ShopNavbar({
 
       {!hideMobileHeader && !flowOnMobile && <div aria-hidden="true" className="h-14 md:hidden" />}
 
-      <ShopCommand open={commandOpen} onOpenChange={setCommandOpen} onQuery={onSearchChange} />
+      <ShopSearchDialog
+        open={commandOpen}
+        onOpenChange={setCommandOpen}
+        onQuery={onSearchChange}
+      />
 
       {showDock && (
         <ShopDock

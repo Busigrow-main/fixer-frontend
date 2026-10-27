@@ -100,7 +100,25 @@
 
 /* ─── Base ───────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  /* Reserve scrollbar space so nothing jumps when a dialog locks scrolling */
+  scrollbar-gutter: stable;
+}
+
+/* Stop Radix from adding extra spacing to the body while scroll is locked */
+body[data-scroll-locked] {
+  margin-right: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* Group headings inside the shop search dialog (cmdk) */
+[cmdk-group-heading] {
+  padding: 0.5rem 0.75rem 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569; /* slate-600, good contrast */
+}
 
 body {
   background-color: #FAFAFA;
