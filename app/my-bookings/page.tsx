@@ -978,7 +978,7 @@ function RepairBookingCard({
               >
                 {warranty
                   ? `Warranty ${warranty.label}`
-                  : `${booking.jobDetails?.warrantyPeriod || "60 Days"} warranty included`}
+                  : `${booking.jobDetails?.warrantyPeriod || "60 Days"} Service warranty included`}
               </span>
 
               <Link

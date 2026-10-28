@@ -29,7 +29,7 @@ const POINTS = [
   {
     icon: "workspace_premium",
     eyebrow: "GUARANTEE",
-    title: "60-Day Warranty",
+    title: "60-Day Service Warranty",
     body: "We stand by our mastery. All repairs include a 60-day service warranty and 6 months on genuine Fixxer-installed parts.",
     highlight: "6 months on genuine parts",
     color: "bg-tertiary-container",
@@ -49,38 +49,31 @@ export default function DifferenceSection() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
-  /**
-   * Scroll only the horizontal card carousel.
-   *
-   * We intentionally do NOT use scrollIntoView()
-   * because it can move the entire landing page vertically.
-   */
+  // Scrolls only the card row (never the whole page).
   const scrollToCard = (index: number) => {
     const container = carouselRef.current;
     const card = cardRefs.current[index];
 
     if (!container || !card) return;
 
-    const cardLeft = card.offsetLeft;
-    const cardWidth = card.offsetWidth;
-    const containerWidth = container.clientWidth;
-
-    const targetLeft =
-      cardLeft - (containerWidth - cardWidth) / 2;
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
 
     container.scrollTo({
-      left: Math.max(0, targetLeft),
-      behavior: "smooth",
+      left: Math.max(0, card.offsetLeft),
+      behavior: reduceMotion ? "auto" : "smooth",
     });
 
     setActiveIndex(index);
   };
 
   const goToNextCard = () => {
-    const nextIndex =
-      activeIndex >= POINTS.length - 1 ? 0 : activeIndex + 1;
+    scrollToCard(activeIndex >= POINTS.length - 1 ? 0 : activeIndex + 1);
+  };
 
-    scrollToCard(nextIndex);
+  const goToPreviousCard = () => {
+    scrollToCard(activeIndex <= 0 ? POINTS.length - 1 : activeIndex - 1);
   };
 
   const pauseCarousel = () => {
@@ -102,20 +95,16 @@ export default function DifferenceSection() {
     }, 1800);
   };
 
-  /**
-   * Auto-slide is ONLY enabled on small/mobile screens.
-   *
-   * Desktop/tablet:
-   * - No auto-slide
-   * - No automatic horizontal movement
-   * - Cards remain a normal 3-column grid
-   */
+  // Auto-slide: phones only, and not for people who prefer reduced motion.
   useEffect(() => {
     if (isPaused) return;
 
-    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const isPhone = window.matchMedia("(max-width: 767px)").matches;
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
 
-    if (!mediaQuery.matches) return;
+    if (!isPhone || reduceMotion) return;
 
     const interval = setInterval(() => {
       goToNextCard();
@@ -126,9 +115,7 @@ export default function DifferenceSection() {
     };
   }, [activeIndex, isPaused]);
 
-  /**
-   * Detect the card currently centered after manual swiping.
-   */
+  // Keep the dots in sync after manual swiping.
   useEffect(() => {
     const container = carouselRef.current;
 
@@ -142,21 +129,13 @@ export default function DifferenceSection() {
       }
 
       scrollTimeout = setTimeout(() => {
-        const containerCenter =
-          container.scrollLeft + container.clientWidth / 2;
-
         let closestIndex = 0;
         let closestDistance = Number.POSITIVE_INFINITY;
 
         cardRefs.current.forEach((card, index) => {
           if (!card) return;
 
-          const cardCenter =
-            card.offsetLeft + card.offsetWidth / 2;
-
-          const distance = Math.abs(
-            cardCenter - containerCenter,
-          );
+          const distance = Math.abs(card.offsetLeft - container.scrollLeft);
 
           if (distance < closestDistance) {
             closestDistance = distance;
@@ -181,9 +160,6 @@ export default function DifferenceSection() {
     };
   }, []);
 
-  /**
-   * Cleanup resume timer.
-   */
   useEffect(() => {
     return () => {
       if (resumeTimerRef.current) {
@@ -193,7 +169,7 @@ export default function DifferenceSection() {
   }, []);
 
   return (
-    <section className="relative overflow-hidden bg-[#F7F5F0] py-12 md:py-20">
+    <section className="relative overflow-hidden bg-[#F7F5F0] py-8 sm:py-12 md:py-20">
       {/* Ambient background */}
       <div
         aria-hidden="true"
@@ -207,18 +183,18 @@ export default function DifferenceSection() {
 
       <div className="relative z-10 mx-auto w-full max-w-screen-2xl px-5 sm:px-6 md:px-10 xl:px-12">
         {/* Header */}
-        <div className="mb-8 sm:mb-11 md:mb-14">
-          <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+        <div className="mb-4 sm:mb-8 md:mb-14">
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between md:gap-5">
             <div>
-              <div className="mb-3 flex items-center gap-2.5">
+              <div className="mb-2 flex items-center gap-2.5 md:mb-3">
                 <span className="h-[2px] w-7 rounded-full bg-primary" />
 
-                <p className="text-[9px] font-black uppercase tracking-[0.3em] text-primary sm:text-[10px]">
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">
                   Why Fixxer
                 </p>
               </div>
 
-              <h2 className="font-headline text-[2rem] font-medium leading-[1.02] tracking-[-0.045em] text-on-surface sm:text-4xl md:text-5xl lg:text-[3.75rem]">
+              <h2 className="font-headline text-[1.6rem] font-medium leading-[1.05] tracking-[-0.045em] text-on-surface sm:text-4xl md:text-5xl lg:text-[3.75rem]">
                 More than a repair.
                 <br />
                 <span className="italic text-primary">
@@ -227,183 +203,197 @@ export default function DifferenceSection() {
               </h2>
             </div>
 
-            <p className="max-w-[300px] text-[10px] font-bold uppercase leading-5 tracking-[0.17em] text-on-surface-variant/55 sm:text-xs md:pb-1 md:text-right">
+            <p className="hidden max-w-[300px] text-xs font-bold uppercase leading-5 tracking-[0.17em] text-on-surface-variant/55 md:block md:pb-1 md:text-right">
               Trusted by 150k+ households for the moments that matter.
             </p>
           </div>
         </div>
 
-        {/* Cards */}
-        <div
-          ref={carouselRef}
-          onTouchStart={pauseCarousel}
-          onTouchEnd={resumeCarousel}
-          onMouseEnter={pauseCarousel}
-          onMouseLeave={resumeCarousel}
-          className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain px-4 pb-2 sm:-mx-6 sm:gap-5 sm:px-6 md:mx-0 md:grid md:grid-cols-3 md:gap-6 md:overflow-visible md:px-0 md:pb-0"
-        >
-          {POINTS.map(
-            (
-              {
-                icon,
-                eyebrow,
-                title,
-                body,
-                highlight,
-                color,
-                iconColor,
-                glow,
-                href,
-              },
-              index,
-            ) => (
-              <Link
-                key={title}
-                href={href}
-                ref={(element) => {
-                  cardRefs.current[index] = element;
-                }}
-                className="group block w-[calc(100vw-32px)] shrink-0 snap-center sm:w-[calc(100vw-48px)] md:w-auto md:max-w-none"
-              >
-                <article className="relative flex min-h-[300px] flex-col overflow-hidden rounded-[1.5rem] border border-[#EAE3D6] bg-[#FFFDF8] p-5 shadow-[0_12px_35px_rgba(75,60,40,0.07)] transition-all duration-500 active:scale-[0.99] sm:min-h-[320px] sm:p-6 md:min-h-[390px] md:rounded-[1.75rem] md:p-7 lg:min-h-[410px] lg:p-8 md:hover:-translate-y-1.5 md:hover:shadow-[0_20px_45px_rgba(75,60,40,0.10)]">
-                  {/* Background number */}
-                  <span
-                    aria-hidden="true"
-                    className="pointer-events-none absolute right-4 top-4 select-none font-headline text-[7rem] font-bold leading-[0.8] tracking-[-0.11em] text-on-surface/[0.045] transition-all duration-500 sm:right-5 sm:top-5 sm:text-[8rem] lg:text-[9rem] group-hover:text-on-surface/[0.065]"
-                  >
-                    0{index + 1}
-                  </span>
-
-                  {/* Soft glow */}
-                  <div
-                    aria-hidden="true"
-                    className={`pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full ${glow} opacity-50 blur-[55px] transition-all duration-700 group-hover:scale-125`}
-                  />
-
-                  {/* Icon */}
-                  <div className="relative z-10">
-                    <div
-                      className={`flex h-12 w-12 items-center justify-center rounded-[1rem] ${color} shadow-[0_6px_18px_rgba(24,24,27,0.07)] transition-all duration-500 sm:h-14 sm:w-14 group-hover:-translate-y-1 group-hover:rotate-[-4deg] group-hover:scale-105`}
+        {/* Phones: one card at a time, centered. md and up: 3-column grid. */}
+        <div className="mx-auto w-full max-w-[420px] md:max-w-none">
+          <div
+            ref={carouselRef}
+            onTouchStart={pauseCarousel}
+            onTouchEnd={resumeCarousel}
+            onMouseEnter={pauseCarousel}
+            onMouseLeave={resumeCarousel}
+            className="no-scrollbar relative flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain pb-2 pt-0.5 md:grid md:grid-cols-3 md:snap-none md:gap-6 md:overflow-visible md:pb-0 md:pt-0"
+          >
+            {POINTS.map(
+              (
+                {
+                  icon,
+                  eyebrow,
+                  title,
+                  body,
+                  highlight,
+                  color,
+                  iconColor,
+                  glow,
+                  href,
+                },
+                index,
+              ) => (
+                <Link
+                  key={title}
+                  href={href}
+                  ref={(element) => {
+                    cardRefs.current[index] = element;
+                  }}
+                  className="group block w-full shrink-0 snap-start md:w-auto"
+                >
+                  <article className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-[#EAE3D6] bg-[#FFFDF8] p-3.5 shadow-[0_6px_18px_rgba(75,60,40,0.07)] transition-all duration-500 active:scale-[0.99] sm:p-4 md:min-h-[390px] md:rounded-[1.75rem] md:p-7 md:shadow-[0_12px_35px_rgba(75,60,40,0.07)] md:hover:-translate-y-1.5 md:hover:shadow-[0_20px_45px_rgba(75,60,40,0.10)] lg:min-h-[410px] lg:p-8">
+                    {/* Background number (desktop only) */}
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute right-4 top-4 hidden select-none font-headline text-[8rem] font-bold leading-[0.8] tracking-[-0.11em] text-on-surface/[0.045] transition-all duration-500 md:block lg:text-[9rem] group-hover:text-on-surface/[0.065]"
                     >
-                      <span
-                        className={`material-symbols-outlined ${iconColor} text-[25px] transition-transform duration-500 group-hover:scale-110`}
+                      0{index + 1}
+                    </span>
+
+                    {/* Soft glow */}
+                    <div
+                      aria-hidden="true"
+                      className={`pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full ${glow} opacity-50 blur-[55px] transition-all duration-700 group-hover:scale-125`}
+                    />
+
+                    {/* Icon + title. One row on phones, stacked on desktop. */}
+                    <div className="relative z-10 flex items-center gap-3 md:block">
+                      <div
+                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${color} shadow-[0_6px_18px_rgba(24,24,27,0.07)] transition-all duration-500 md:h-14 md:w-14 md:rounded-[1rem] group-hover:-translate-y-1 group-hover:rotate-[-4deg] group-hover:scale-105`}
                       >
-                        {icon}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Content */}
-                  <div className="relative z-10 mt-7 sm:mt-8">
-                    <p className="mb-2 text-[8px] font-black uppercase tracking-[0.28em] text-primary sm:text-[9px]">
-                      {eyebrow}
-                    </p>
-
-                    <h3 className="max-w-[280px] text-[1.45rem] font-bold leading-[1.05] tracking-[-0.035em] text-on-surface sm:text-[1.7rem]">
-                      {title}
-                    </h3>
-
-                    <div className="mt-4 flex items-center gap-2">
-                      <span className="h-[2px] w-7 rounded-full bg-primary transition-all duration-500 group-hover:w-10" />
-                      <span className="h-px w-10 bg-outline/20" />
-                    </div>
-
-                    <p className="mt-4 max-w-[330px] text-[11px] leading-5 text-on-surface-variant sm:text-xs sm:leading-6 md:text-[13px]">
-                      {body}
-                    </p>
-
-                    {/* Highlight */}
-                    <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-primary/10 bg-primary/[0.035] px-3 py-2 transition-all duration-300 group-hover:border-primary/20 group-hover:bg-primary/[0.06]">
-                      <span className="material-symbols-outlined text-[14px] text-primary">
-                        check_circle
-                      </span>
-
-                      <span className="text-[9px] font-bold tracking-wide text-on-surface sm:text-[10px]">
-                        {highlight}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* CTA */}
-                  <div className="relative z-10 mt-auto pt-6">
-                    <div className="flex items-center justify-between border-t border-outline/15 pt-4">
-                      <span className="text-[8px] font-black uppercase tracking-[0.2em] text-on-surface-variant/50 sm:text-[9px]">
-                        Learn more
-                      </span>
-
-                      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-white transition-all duration-300 group-hover:w-11">
-                        <span className="material-symbols-outlined text-[17px]">
-                          arrow_forward
+                        <span
+                          className={`material-symbols-outlined ${iconColor} text-[22px] transition-transform duration-500 md:text-[25px] group-hover:scale-110`}
+                        >
+                          {icon}
                         </span>
-                      </span>
+                      </div>
+
+                      <div className="min-w-0 flex-1 md:mt-8">
+                        <p className="mb-0.5 text-[10px] font-black uppercase tracking-[0.2em] text-primary md:mb-2 md:tracking-[0.28em]">
+                          {eyebrow}
+                        </p>
+
+                        <h3 className="max-w-[280px] text-base font-bold leading-tight tracking-[-0.02em] text-on-surface md:text-[1.7rem] md:leading-[1.05] md:tracking-[-0.035em]">
+                          {title}
+                        </h3>
+                      </div>
                     </div>
-                  </div>
-                </article>
-              </Link>
-            ),
-          )}
-        </div>
 
-        {/* Mobile controls */}
-        <div className="mt-5 flex flex-col items-center gap-2 md:hidden">
-          <div className="flex items-center gap-2">
-            <span className="text-[8px] font-black uppercase tracking-[0.22em] text-on-surface-variant/55">
-              {isPaused ? "Swipe to explore" : "Auto exploring"}
-            </span>
+                    {/* Body, divider and highlight */}
+                    <div className="relative z-10">
+                      {/* Divider (desktop only) */}
+                      <div className="mt-4 hidden items-center gap-2 md:flex">
+                        <span className="h-[2px] w-7 rounded-full bg-primary transition-all duration-500 group-hover:w-10" />
+                        <span className="h-px w-10 bg-outline/20" />
+                      </div>
 
-            <span className="material-symbols-outlined text-[15px] text-primary">
-              {isPaused ? "swipe" : "autorenew"}
-            </span>
+                      {/* 3 lines max on phones, full text on desktop */}
+                      <p className="mt-2.5 line-clamp-3 max-w-[330px] text-xs leading-[1.1rem] text-on-surface-variant md:mt-4 md:line-clamp-none md:text-[13px] md:leading-6">
+                        {body}
+                      </p>
+
+                      {/* Highlight (desktop only) */}
+                      <div className="mt-4 hidden items-center gap-2 rounded-full border border-primary/10 bg-primary/[0.035] px-3 py-2 transition-all duration-300 group-hover:border-primary/20 group-hover:bg-primary/[0.06] md:inline-flex">
+                        <span className="material-symbols-outlined text-[14px] text-primary">
+                          check_circle
+                        </span>
+
+                        <span className="text-[10px] font-bold tracking-wide text-on-surface">
+                          {highlight}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* CTA (desktop only) */}
+                    <div className="relative z-10 mt-auto hidden pt-6 md:block">
+                      <div className="flex items-center justify-between border-t border-outline/15 pt-4">
+                        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-on-surface-variant/60">
+                          Learn more
+                        </span>
+
+                        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-white transition-all duration-300 group-hover:w-11">
+                          <span className="material-symbols-outlined text-[17px]">
+                            arrow_forward
+                          </span>
+                        </span>
+                      </div>
+                    </div>
+                  </article>
+                </Link>
+              ),
+            )}
           </div>
 
+          {/* Phones only: previous, dots with count, next */}
           <div
-            className="flex items-center gap-1.5"
+            className="mt-2 flex items-center justify-between md:hidden"
+            role="group"
             aria-label={`Showing card ${activeIndex + 1} of ${POINTS.length}`}
           >
-            {POINTS.map((point, index) => (
-              <button
-                key={point.title}
-                type="button"
-                aria-label={`Go to ${point.title}`}
-                aria-current={
-                  activeIndex === index ? "true" : undefined
-                }
-                onClick={() => {
-                  pauseCarousel();
-                  scrollToCard(index);
-                  resumeCarousel();
-                }}
-                className="flex h-4 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-              >
-                <span
-                  className={`block h-1.5 rounded-full transition-all duration-500 ${
-                    activeIndex === index
-                      ? "w-5 bg-primary"
-                      : "w-1.5 bg-on-surface/15"
-                  }`}
-                />
-              </button>
-            ))}
+            <button
+              type="button"
+              aria-label="Previous card"
+              onClick={() => {
+                pauseCarousel();
+                goToPreviousCard();
+                resumeCarousel();
+              }}
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-[#EAE3D6] bg-white text-on-surface transition-colors active:bg-surface-container focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            >
+              <span className="material-symbols-outlined text-[20px]">
+                chevron_left
+              </span>
+            </button>
+
+            <div className="flex flex-col items-center">
+              <div className="flex items-center">
+                {POINTS.map((point, index) => (
+                  <button
+                    key={point.title}
+                    type="button"
+                    aria-label={`Go to ${point.title}`}
+                    aria-current={activeIndex === index ? "true" : undefined}
+                    onClick={() => {
+                      pauseCarousel();
+                      scrollToCard(index);
+                      resumeCarousel();
+                    }}
+                    className="flex h-6 w-6 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                  >
+                    <span
+                      className={`block h-1.5 rounded-full transition-all duration-500 ${
+                        activeIndex === index
+                          ? "w-5 bg-primary"
+                          : "w-1.5 bg-on-surface/25"
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+
+              <span className="text-[11px] font-semibold tabular-nums text-on-surface-variant">
+                {activeIndex + 1} / {POINTS.length}
+              </span>
+            </div>
+
+            <button
+              type="button"
+              aria-label="Next card"
+              onClick={() => {
+                pauseCarousel();
+                goToNextCard();
+                resumeCarousel();
+              }}
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-[#EAE3D6] bg-white text-on-surface transition-colors active:bg-surface-container focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            >
+              <span className="material-symbols-outlined text-[20px]">
+                chevron_right
+              </span>
+            </button>
           </div>
         </div>
       </div>
-
-      <style jsx>{`
-        .scrollbar-none {
-          scrollbar-width: none;
-          -ms-overflow-style: none;
-        }
-
-        .scrollbar-none::-webkit-scrollbar {
-          display: none;
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          .scrollbar-none {
-            scroll-behavior: auto;
-          }
-        }
-      `}</style>
     </section>
   );
 }
