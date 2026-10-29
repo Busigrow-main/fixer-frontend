@@ -24,7 +24,7 @@ export default function CategoryChips({
     <div
       role="tablist"
       aria-label="Part categories"
-      className={`no-scrollbar flex min-w-0 gap-1.5 overflow-x-auto py-0.5 sm:gap-2 ${className}`}
+      className={`no-scrollbar flex min-w-0 gap-1.5 overflow-x-auto overflow-y-hidden sm:gap-2 ${className}`}
     >
       {items.map((category) => {
         const active = category.key === selected;
@@ -36,7 +36,7 @@ export default function CategoryChips({
             role="tab"
             aria-selected={active}
             onClick={() => onSelect(category.key)}
-            className={`inline-flex h-[30px] shrink-0 snap-start items-center justify-center gap-1 whitespace-nowrap rounded-full border px-3 text-[10px] font-semibold transition-colors active:scale-[0.98] sm:h-9 sm:px-4 sm:text-xs ${
+            className={`inline-flex h-[30px] shrink-0 snap-start items-center justify-center gap-1 whitespace-nowrap rounded-full border px-3 text-[10px] font-medium transition-colors active:scale-[0.98] sm:h-9 sm:px-4 sm:text-xs ${
               active
                 ? "border-primary bg-primary text-white"
                 : "border-[#E5E5E9] bg-white text-[#55565B] hover:border-primary/40"
@@ -46,7 +46,7 @@ export default function CategoryChips({
 
             {category.count != null && (
               <span
-                className={`rounded-full px-1.5 text-[9px] font-bold leading-[15px] ${
+                className={`rounded-full px-1.5 text-[9px] font-medium leading-[15px] ${
                   active
                     ? "bg-white/20 text-white"
                     : "bg-[#F1F1F3] text-[#77787D]"

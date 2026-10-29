@@ -8,6 +8,7 @@ type Props = {
   activeFilterCount?: number;
   brandLabel?: string;
   capacityLabel?: string;
+  capacityActive?: boolean;
   onSort: () => void;
   onFilter: () => void;
   onBrand: () => void;
@@ -49,7 +50,7 @@ function Chip({
       <span className="truncate">{children}</span>
 
       {typeof badge === "number" && badge > 0 && (
-        <span className="flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold leading-none text-white">
+        <span className="flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-medium leading-none text-white">
           {badge}
         </span>
       )}
@@ -68,6 +69,7 @@ export default function FilterBar({
   activeFilterCount = 0,
   brandLabel = "Brand",
   capacityLabel = "Capacity",
+  capacityActive,
   onSort,
   onFilter,
   onBrand,
@@ -77,7 +79,7 @@ export default function FilterBar({
   return (
     <div
       aria-label="Product sorting and filters"
-      className={`no-scrollbar flex min-w-0 gap-1.5 overflow-x-auto py-0.5 sm:gap-2 ${className}`}
+      className={`no-scrollbar flex min-w-0 gap-1.5 overflow-x-auto overflow-y-hidden sm:gap-2 ${className}`}
     >
       <Chip icon={<ArrowDownUp />} onClick={onSort}>
         Sort
@@ -102,7 +104,7 @@ export default function FilterBar({
 
       <Chip
         onClick={onCapacity}
-        active={capacityLabel !== "Capacity"}
+        active={capacityActive ?? capacityLabel !== "Capacity"}
         chevron
       >
         {capacityLabel}

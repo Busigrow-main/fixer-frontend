@@ -2,12 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { CheckCircle2, Heart, Image as ImageIcon, ShieldCheck, ShoppingCart, Star } from "lucide-react";
+import { Check, CheckCircle2, Heart, Image as ImageIcon, Plus, ShieldCheck, Star } from "lucide-react";
 import { useAuth } from "@/app/context/AuthContext";
 import { API_URL } from "@/app/config";
 import { warrantyInWords } from "@/app/lib/shop-copy";
+import { isWished, SHOP_WISHLIST_EVENT, toggleWishlist, wishlistKey } from "@/app/lib/shop-wishlist";
 
 interface ShopProductCardProps {
   part: {
@@ -45,6 +46,14 @@ export default function ShopProductCard({ part, onRequest, inCart = false }: Sho
   const pathname = usePathname();
   const { token, loading: authLoading } = useAuth();
   const [wished, setWished] = useState(false);
+  const savedKey = wishlistKey(part);
+
+  useEffect(() => {
+    const sync = () => setWished(isWished(part));
+    sync();
+    window.addEventListener(SHOP_WISHLIST_EVENT, sync);
+    return () => window.removeEventListener(SHOP_WISHLIST_EVENT, sync);
+  }, [savedKey]);
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
   const [addError, setAddError] = useState("");
@@ -98,28 +107,27 @@ export default function ShopProductCard({ part, onRequest, inCart = false }: Sho
     }
   };
 
-  const cta = (
-    <>
-      {adding ? <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white" /> : isAdded ? <CheckCircle2 className="h-3.5 w-3.5" /> : <ShoppingCart className="h-3.5 w-3.5" />}
-      <span>{adding ? "Adding…" : isAdded ? "Added to Cart" : "Add to Cart"}</span>
-    </>
-  );
+  const hasReviews = Boolean(part.rating && part.reviews);
+  const meta = [
+    hasReviews ? `★ ${part.rating} (${part.reviews})` : null,
+    stockKnown && !inStock ? "Out of stock" : warranty,
+  ].filter(Boolean);
 
   return (
     <>
-      <article className="shop-product-card group flex h-full min-w-0 flex-col overflow-hidden rounded-[22px] border border-[#e0e2e5] bg-white shadow-[0_2px_7px_rgba(20,20,20,0.07)] transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg md:hidden">
-        <div className="shop-product-card__image-wrap relative m-2.5 aspect-square overflow-hidden rounded-[18px] bg-[#f7f7f7]">
+      <article className="group flex h-full min-w-0 flex-col rounded-[18px] bg-white p-1.5 shadow-[0_1px_2px_rgba(16,16,20,0.04),0_6px_18px_-10px_rgba(16,16,20,0.14)] transition-transform duration-200 active:scale-[0.985] md:hidden">
+        <div className="relative aspect-[5/4] overflow-hidden rounded-[13px] bg-gradient-to-b from-[#f7f7f8] to-[#ededf0]">
           <Link href={detailHref} aria-label={`View ${part.name}`} className="absolute inset-0">
             {image ? (
-              <Image src={image} alt={part.name} fill unoptimized sizes="50vw" className="shop-product-card__image object-contain p-3 transition-transform duration-300 group-hover:scale-[1.03]" />
+              <Image src={image} alt={part.name} fill unoptimized sizes="50vw" className="object-contain p-2.5 mix-blend-multiply" />
             ) : (
-              <span className="flex h-full items-center justify-center text-slate-300" aria-label="Product image unavailable">
-                <ImageIcon className="h-10 w-10" strokeWidth={1.25} />
+              <span className="flex h-full items-center justify-center text-[#c7c7cc]" aria-label="Product image unavailable">
+                <ImageIcon className="h-8 w-8" strokeWidth={1.25} />
               </span>
             )}
           </Link>
           {part.bestSeller && (
-            <span className="shop-product-card__badge pointer-events-none absolute left-2 top-2 z-10 rounded-full bg-[#e9002d] px-2.5 py-1.5 text-[10px] font-extrabold uppercase leading-none tracking-wide text-white">
+            <span className="pointer-events-none absolute left-1.5 top-1.5 z-10 rounded-full bg-white/90 px-1.5 py-1 text-[8px] font-semibold uppercase leading-none tracking-[0.08em] text-[#1d1d1f] backdrop-blur">
               Bestseller
             </span>
           )}
@@ -127,49 +135,67 @@ export default function ShopProductCard({ part, onRequest, inCart = false }: Sho
             type="button"
             aria-label={wished ? "Remove from wishlist" : "Add to wishlist"}
             aria-pressed={wished}
-            onClick={() => setWished((w) => !w)}
-            className="shop-product-card__wishlist absolute right-2 top-2 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white shadow-sm transition active:scale-90"
+            onClick={() => setWished(toggleWishlist(part))}
+            className="absolute right-1.5 top-1.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/85 backdrop-blur transition before:absolute before:-inset-1.5 before:content-[''] active:scale-90"
           >
-            <Heart className={`h-4 w-4 ${wished ? "fill-[#e9002d] text-[#e9002d]" : "text-slate-500"}`} />
+            <Heart className={`h-[13px] w-[13px] ${wished ? "fill-[#e9002d] text-[#e9002d]" : "text-[#3a3a3c]"}`} strokeWidth={2} />
           </button>
         </div>
-        <div className="shop-product-card__content flex flex-1 flex-col px-3 pb-3 pt-1.5">
-          <p className="shop-product-card__rating flex items-center gap-1 text-[13px] font-medium leading-none text-slate-700">
-            {part.rating && <><Star className="h-3 w-3 fill-emerald-600 text-emerald-600" /><span>{part.rating}</span>{part.reviews !== undefined && <span className="text-slate-400">({part.reviews})</span>}</>}
-            {!stockKnown ? null : inStock ? null : (
-              <span className="ml-auto font-semibold text-slate-400">Out of stock</span>
-            )}
-          </p>
-          <Link href={detailHref} className="shop-product-card__title mt-2 line-clamp-2 min-h-[2.5em] text-[15px] font-bold leading-[1.25] text-slate-900 transition-colors hover:text-[#e9002d]">
+
+        <div className="flex flex-1 flex-col px-1 pt-2">
+          {part.brand && (
+            <p className="truncate text-[9px] font-medium uppercase tracking-[0.08em] text-[#8e8e93]">{part.brand}</p>
+          )}
+          <Link href={detailHref} className="mt-0.5 line-clamp-2 min-h-[2.6em] text-[12px] font-medium leading-[1.3] tracking-[-0.01em] text-[#1d1d1f]">
             {part.name}
           </Link>
-          <div className="shop-product-card__pricing mt-auto pt-1.5">
-            {hasPrice ? (
-              <div className="flex flex-wrap items-baseline gap-x-2 leading-tight">
-                <span className="shop-product-card__price text-[21px] font-extrabold tracking-tight text-slate-950">₹{part.price!.toLocaleString("en-IN")}</span>
-                {hasMrp && <span className="shop-product-card__mrp text-[12px] text-slate-400 line-through">₹{part.mrp!.toLocaleString("en-IN")}</span>}
-                {hasMrp && <span className="shop-product-card__discount text-[12px] font-semibold text-[#e9002d]">{discount}% off</span>}
-              </div>
-            ) : (
-              <p className="text-[13px] font-extrabold text-slate-700">Price on request</p>
-            )}
-            {part.warrantyMonths && part.warrantyMonths > 0 ? (
-              <p className="shop-product-card__warranty mt-2 flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
-                <ShieldCheck className="h-3 w-3" />
-                {part.warrantyMonths}M warranty
-              </p>
-            ) : null}
+          {meta.length > 0 && (
+            <p className="mt-0.5 truncate text-[10px] text-[#8e8e93]">
+              {meta.join(" · ")}
+            </p>
+          )}
+
+          <div className="mt-auto flex items-end justify-between gap-1.5 pb-0.5 pt-2">
+            <div className="min-w-0">
+              {hasPrice ? (
+                <>
+                  <p className="text-[15px] font-semibold leading-none tracking-[-0.02em] text-[#1d1d1f] tabular-nums">
+                    ₹{part.price!.toLocaleString("en-IN")}
+                  </p>
+                  {hasMrp && (
+                    <p className="mt-1 flex items-baseline gap-1 whitespace-nowrap text-[10px] leading-none tabular-nums">
+                      <span className="text-[#aeaeb2] line-through">₹{part.mrp!.toLocaleString("en-IN")}</span>
+                      <span className="font-semibold text-[#e9002d]">−{discount}%</span>
+                    </p>
+                  )}
+                </>
+              ) : (
+                <p className="text-[13px] font-medium text-[#3a3a3c]">Price on request</p>
+              )}
+            </div>
             <button
               type="button"
               onClick={addToCart}
               disabled={adding || authLoading || !inStock || isAdded}
-              aria-label={isAdded ? `${part.name} added to cart` : `Add ${part.name} to cart`}
-              className={`shop-product-card__cta mt-3 flex h-10 w-full items-center justify-center gap-1.5 rounded-lg bg-[#e9002d] px-2 text-[12px] font-bold text-white shadow-[0_3px_6px_rgba(233,0,45,0.18)] transition hover:bg-[#d60029] active:scale-[0.98] ${isAdded ? "bg-emerald-600 hover:bg-emerald-600" : ""} disabled:cursor-not-allowed disabled:opacity-70`}
+              aria-label={!inStock ? `${part.name} is out of stock` : isAdded ? `${part.name} added to cart` : `Add ${part.name} to cart`}
+              className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition before:absolute before:-inset-2 before:content-[''] active:scale-90 disabled:cursor-not-allowed ${
+                !inStock
+                  ? "bg-[#f2f2f4] text-[#c7c7cc]"
+                  : isAdded
+                    ? "bg-emerald-600 text-white"
+                    : "bg-[#1d1d1f] text-white shadow-[0_4px_10px_-2px_rgba(16,16,20,0.35)]"
+              }`}
             >
-              {cta}
+              {adding ? (
+                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+              ) : isAdded ? (
+                <Check className="h-4 w-4" strokeWidth={2.5} />
+              ) : (
+                <Plus className="h-4 w-4" strokeWidth={2.25} />
+              )}
             </button>
-            {addError && <p role="status" className="mt-1.5 text-center text-[11px] leading-tight text-red-600">{addError}</p>}
           </div>
+          {addError && <p role="status" className="pb-1 pt-1.5 text-[11px] leading-tight text-red-600">{addError}</p>}
         </div>
       </article>
 
@@ -188,8 +214,8 @@ export default function ShopProductCard({ part, onRequest, inCart = false }: Sho
             )}
           </div>
           <div className="flex flex-1 flex-col px-3 pb-4 pt-1">
-            {part.brand && <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">{part.brand}</p>}
-            <h3 className="mt-1 line-clamp-2 min-h-[2.5em] text-[15px] font-bold leading-snug text-zinc-900 group-hover:text-primary">{part.name}</h3>
+            {part.brand && <p className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">{part.brand}</p>}
+            <h3 className="mt-1 line-clamp-2 min-h-[2.5em] text-[15px] font-medium leading-snug text-zinc-900 group-hover:text-primary">{part.name}</h3>
             {part.description && <p className="mt-1 truncate text-[12px] text-zinc-500" title={part.description}>{part.description}</p>}
             {typeof part.fitCount === "number" && part.fitCount > 0 && <p className="mt-1 text-[12px] text-zinc-600">Fits {part.fitCount} models</p>}
             <div className="mt-auto pt-2">
@@ -202,17 +228,17 @@ export default function ShopProductCard({ part, onRequest, inCart = false }: Sho
               )}
               {hasPrice ? (
                 <p className="flex flex-wrap items-baseline gap-x-2">
-                  <span className="text-lg font-extrabold tracking-tight text-zinc-950">₹{part.price!.toLocaleString("en-IN")}</span>
+                  <span className="text-lg font-semibold tracking-tight text-zinc-950">₹{part.price!.toLocaleString("en-IN")}</span>
                   {hasMrp && <span className="text-xs text-zinc-400 line-through">₹{part.mrp!.toLocaleString("en-IN")}</span>}
                 </p>
               ) : (
-                <p className="text-sm font-bold text-zinc-700">Price on request</p>
+                <p className="text-sm font-medium text-zinc-700">Price on request</p>
               )}
               {warranty && <p className="mt-1.5 flex items-center gap-1 text-[12px] font-medium text-zinc-600"><ShieldCheck className="h-3.5 w-3.5" /> {warranty}</p>}
               {stockKnown && (inStock ? (
-                <p className="mt-1 flex items-center gap-1 text-[12px] font-semibold text-emerald-700"><CheckCircle2 className="h-3.5 w-3.5" /> In stock</p>
+                <p className="mt-1 flex items-center gap-1 text-[12px] font-medium text-emerald-700"><CheckCircle2 className="h-3.5 w-3.5" /> In stock</p>
               ) : (
-                <p className="mt-1 text-[12px] font-semibold text-zinc-500">Out of stock</p>
+                <p className="mt-1 text-[12px] font-medium text-zinc-500">Out of stock</p>
               ))}
             </div>
           </div>

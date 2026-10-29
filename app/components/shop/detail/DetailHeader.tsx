@@ -34,7 +34,7 @@ export default function DetailHeader({ title = "Spare Parts Detail Page", cartCo
         <span aria-hidden="true" className="material-symbols-outlined text-[24px]">arrow_back</span>
       </button>
 
-      <p className="mx-auto min-w-0 flex-1 truncate text-[12px] font-extrabold uppercase tracking-wide text-zinc-900 md:text-sm">{title}</p>
+      <p className="mx-auto min-w-0 flex-1 truncate text-[13px] font-medium tracking-tight text-zinc-900 md:text-sm">{title}</p>
 
       <CartLink count={cartCount} />
     </header>

@@ -43,7 +43,7 @@ export default function ShopCategorySwitch({
           key={label}
           href={href}
           aria-current={active ? "page" : undefined}
-          className={`flex h-10 min-w-0 items-center justify-center gap-2 rounded-xl border px-3 text-xs font-semibold transition-colors active:scale-[0.98] sm:h-11 sm:text-sm md:h-12 ${
+          className={`flex h-10 min-w-0 items-center justify-center gap-2 rounded-xl border px-3 text-xs font-medium transition-colors active:scale-[0.98] sm:h-11 sm:text-sm md:h-12 ${
             active
               ? "border-[#D8102B] bg-[#D8102B] text-white md:border-primary md:bg-primary"
               : "border-[#E6E7EB] bg-white text-[#303238] hover:border-[#D8102B]/40 md:border-zinc-200 md:text-zinc-700 md:hover:border-primary/40"

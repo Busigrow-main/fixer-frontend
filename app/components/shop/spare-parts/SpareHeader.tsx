@@ -29,7 +29,7 @@ export default function SpareHeader({
       </button>
 
       {/* Page title */}
-      <h1 className="min-w-0 flex-1 truncate text-[15px] font-semibold tracking-[-0.2px] text-[#242424] sm:text-base">
+      <h1 className="min-w-0 flex-1 truncate text-[16px] font-medium tracking-tight text-[#242424] sm:text-base">
         {title}
       </h1>
 

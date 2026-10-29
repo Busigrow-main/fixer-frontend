@@ -22,7 +22,7 @@ export default function ServicePromoBanner({ image, onBook }: Props) {
         />
       </div>
       <div className="min-w-0 flex-1">
-        <h3 className="text-[14px] font-bold leading-[1.2] text-[#202124] sm:text-base md:text-xl">
+        <h3 className="text-[14px] font-medium leading-[1.2] text-[#202124] sm:text-base md:text-xl">
           Need Installation or Repair?
         </h3>
         <p className="mt-1 text-[11px] leading-snug text-[#72747B] sm:text-xs md:mt-1.5 md:text-sm">
@@ -32,7 +32,7 @@ export default function ServicePromoBanner({ image, onBook }: Props) {
       <button
         type="button"
         onClick={onBook}
-        className="inline-flex h-10 shrink-0 items-center gap-1 rounded-full border-[1.5px] border-primary px-2.5 text-[11px] font-semibold text-primary transition hover:bg-primary hover:text-white sm:px-4 sm:text-xs md:h-11 md:gap-1.5 md:px-5 md:text-sm"
+        className="inline-flex h-10 shrink-0 items-center gap-1 rounded-full border-[1.5px] border-primary px-2.5 text-[11px] font-medium text-primary transition hover:bg-primary hover:text-white sm:px-4 sm:text-xs md:h-11 md:gap-1.5 md:px-5 md:text-sm"
       >
         Book Now
         <ArrowRight size={14} />

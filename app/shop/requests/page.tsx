@@ -53,11 +53,11 @@ export default function ShopRequestsPage() {
   }, [authLoading, token]);
 
   return (
-    <div className="shop-shell min-h-screen bg-[#f5f6f8] md:bg-[#f6f6f6]">
+    <div className="shop-shell -mt-14 min-h-screen bg-[#f5f6f8] md:mt-0 md:bg-[#f6f6f6]">
       <ShopNavbar />
-      <main className="mx-auto w-full max-w-3xl px-4 pb-24 pt-6 sm:pt-9 md:pb-28">
-        <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">Fixxer Shop</p>
-        <h1 className="mt-1 text-2xl font-extrabold text-zinc-950 sm:text-3xl">Part help requests</h1>
+      <main className="mx-auto w-full max-w-3xl px-4 pb-24 pt-3 sm:pt-6 md:pb-28 md:pt-8">
+        <p className="text-xs font-medium uppercase tracking-widest text-zinc-500">Fixxer Shop</p>
+        <h1 className="mt-1 text-2xl font-semibold text-zinc-950 sm:text-3xl">Part help requests</h1>
         <p className="mt-1 text-sm text-zinc-600">Track requests for help identifying a compatible spare part.</p>
 
         {error && <p role="alert" className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">{error}</p>}
@@ -69,13 +69,13 @@ export default function ShopRequestsPage() {
               <article key={request._id} className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-5">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
-                    <h2 className="font-bold text-zinc-900">{[request.applianceBrand, request.applianceType].filter(Boolean).join(" · ") || "Part identification request"}</h2>
+                    <h2 className="font-medium text-zinc-900">{[request.applianceBrand, request.applianceType].filter(Boolean).join(" · ") || "Part identification request"}</h2>
                     <p className="mt-1 text-xs text-zinc-500">Request #{request._id.slice(-6).toUpperCase()}{request.createdAt ? ` · ${new Date(request.createdAt).toLocaleDateString("en-IN")}` : ""}</p>
                   </div>
-                  <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">{request.status || "Received"}</span>
+                  <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">{request.status || "Received"}</span>
                 </div>
                 {request.partDescription && <p className="mt-3 text-sm text-zinc-700">{request.partDescription}</p>}
-                {request.adminResponse && <div className="mt-3 rounded-xl bg-zinc-50 p-3"><p className="text-xs font-bold text-zinc-700">Fixxer Shop response</p><p className="mt-1 text-sm text-zinc-700">{request.adminResponse}</p>{request.quotedPrice != null && <p className="mt-2 font-extrabold text-primary">₹{request.quotedPrice.toLocaleString("en-IN")} · {request.isAvailable ? "Available" : "Unavailable"}</p>}</div>}
+                {request.adminResponse && <div className="mt-3 rounded-xl bg-zinc-50 p-3"><p className="text-xs font-medium text-zinc-700">Fixxer Shop response</p><p className="mt-1 text-sm text-zinc-700">{request.adminResponse}</p>{request.quotedPrice != null && <p className="mt-2 font-semibold text-primary">₹{request.quotedPrice.toLocaleString("en-IN")} · {request.isAvailable ? "Available" : "Unavailable"}</p>}</div>}
               </article>
             ))}
           </div>

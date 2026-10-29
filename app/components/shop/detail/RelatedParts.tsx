@@ -21,7 +21,7 @@ export default function RelatedParts({ parts }: { parts: SparePart[] }) {
         <h2 id="related-title" className="font-headline text-2xl text-zinc-900">
           You may also need
         </h2>
-        <a href="/shop/spare-parts" className="text-sm font-semibold text-primary hover:underline">
+        <a href="/shop/spare-parts" className="text-sm font-medium text-primary hover:underline">
           View all parts
         </a>
       </div>

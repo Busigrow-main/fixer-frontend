@@ -2,11 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowLeft, ClipboardList } from "lucide-react";
+import { ArrowLeft, Heart } from "lucide-react";
 import { useAuth } from "@/app/context/AuthContext";
 import { API_URL } from "@/app/config";
 import FixxerLogo from "@/app/components/FixxerLogo";
-import CartLink from "@/app/components/shop/CartLink";
 import ShopSearchDialog from "@/app/components/shop/ShopSearchDialog";
 import ShopDock from "@/app/components/shop/ShopDock";
 
@@ -89,19 +88,24 @@ export default function ShopNavbar({
             mobileTitle ? "hidden" : ""
           }`}
         >
-          <Link href="/" className="flex w-fit min-w-max flex-col leading-none" aria-label="Fixxer home">
-            <FixxerLogo className="text-[22px]" />
+          <Link
+            href="/shop"
+            className="whitespace-nowrap text-[22px] leading-none"
+            aria-label="Fixxer Shop home"
+          >
+            <FixxerLogo className="align-middle text-[22px] leading-none" />
+            <span aria-hidden="true" className="mx-1.5 inline-block h-3 w-px align-middle bg-zinc-300" />
+            <span className="inline-block align-middle text-[11px] font-semibold uppercase leading-none tracking-[0.14em] text-zinc-500">
+              Shop
+            </span>
           </Link>
-          <div className="flex w-fit min-w-max shrink-0 items-center gap-2">
-            <Link
-              href="/orders"
-              aria-label="Your orders"
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#E6E7EB] bg-[#F7F7F8] text-slate-900 transition-colors hover:bg-slate-100 active:scale-95"
-            >
-              <ClipboardList className="h-[18px] w-[18px]" />
-            </Link>
-            <CartLink count={visibleCartCount} />
-          </div>
+          <Link
+            href="/shop/wishlist"
+            aria-label="Wishlist"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#E6E7EB] bg-[#F7F7F8] text-slate-900 transition-colors hover:bg-slate-100 active:scale-95"
+          >
+            <Heart className="h-[18px] w-[18px]" />
+          </Link>
         </div>
 
         {mobileTitle && (
@@ -113,10 +117,7 @@ export default function ShopNavbar({
             >
               <ArrowLeft className="h-5 w-5" />
             </Link>
-            <h1 className="text-sm font-extrabold uppercase tracking-tight text-zinc-900">{mobileTitle}</h1>
-            <div className="ml-auto">
-              <CartLink count={visibleCartCount} />
-            </div>
+            <h1 className="text-[16px] font-medium tracking-tight text-zinc-900">{mobileTitle}</h1>
           </div>
         )}
       </header>

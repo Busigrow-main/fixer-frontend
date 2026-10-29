@@ -132,7 +132,7 @@ function FilterOptions({
 }) {
   return (
     <fieldset>
-      <legend className="text-sm font-bold text-zinc-900">
+      <legend className="text-sm font-medium text-zinc-900">
         {title}
       </legend>
 
@@ -148,7 +148,7 @@ function FilterOptions({
               key={option}
               className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border px-3 text-sm transition ${
                 checked
-                  ? "border-primary bg-primary/5 font-semibold text-primary"
+                  ? "border-primary bg-primary/5 font-medium text-primary"
                   : "border-zinc-200 text-zinc-700"
               }`}
             >
@@ -343,7 +343,7 @@ export default function SparePartsPage() {
     : "Part type";
 
   return (
-    <div className="shop-shell min-h-screen bg-[#f4f4f6] md:bg-[#f6f6f6]">
+    <div className="shop-shell -mt-14 min-h-screen bg-[#f4f4f6] md:mt-0 md:bg-[#f6f6f6]">
       <ShopNavbar
         hideMobileHeader
         searchValue={query}
@@ -359,13 +359,12 @@ export default function SparePartsPage() {
       </div>
 
       {/* Reduced horizontal padding on mobile */}
-      <main className="mx-auto flex w-full max-w-[560px] flex-col gap-3 px-3 pb-28 pt-3 sm:max-w-[720px] sm:gap-5 sm:px-4 md:max-w-[1280px] md:gap-8 md:px-8 md:pb-16 md:pt-8 lg:gap-10 lg:px-12">
+      <main className="mx-auto flex w-full max-w-[560px] flex-col gap-2 px-3 pb-28 pt-[52px] sm:max-w-[720px] sm:px-4 sm:pt-14 md:max-w-[1280px] md:gap-5 md:px-8 md:pb-16 md:pt-8 lg:px-12">
         {/* Mobile search */}
-        <div className="sticky top-14 z-40 -mx-3 bg-[#f4f4f6] px-3 pb-2 md:hidden">
+        <div className="sticky top-[52px] z-40 -mx-3 bg-[#f4f4f6] px-3 sm:top-14 md:hidden">
           <SearchBar
             value={query}
             onChange={changeQuery}
-            onVoice={() => {}}
           />
         </div>
 
@@ -385,7 +384,7 @@ export default function SparePartsPage() {
                 Spare parts
               </p>
 
-              <h1 className="mt-2 text-[30px] font-bold tracking-tight text-slate-950 lg:text-[34px]">
+              <h1 className="mt-2 text-[30px] font-semibold tracking-tight text-slate-950 lg:text-[34px]">
                 Spare parts for your appliances
               </h1>
 
@@ -419,7 +418,7 @@ export default function SparePartsPage() {
           <aside className="hidden self-start rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_2px_8px_rgba(15,23,42,0.03)] lg:sticky lg:top-6 lg:block">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
-                <h2 className="text-base font-bold text-slate-900">
+                <h2 className="text-base font-medium text-slate-900">
                   Filters
                 </h2>
                 <p className="mt-0.5 text-xs text-slate-500">
@@ -430,14 +429,14 @@ export default function SparePartsPage() {
               <button
                 type="button"
                 onClick={clearAll}
-                className="text-xs font-semibold text-primary hover:underline"
+                className="text-xs font-medium text-primary hover:underline"
               >
                 Clear all
               </button>
             </div>
 
             <fieldset className="border-b border-slate-100 py-4">
-              <legend className="text-sm font-semibold text-slate-900">
+              <legend className="text-sm font-medium text-slate-900">
                 Brand
               </legend>
 
@@ -469,7 +468,7 @@ export default function SparePartsPage() {
             </fieldset>
 
             <fieldset className="border-b border-slate-100 py-4">
-              <legend className="text-sm font-semibold text-slate-900">
+              <legend className="text-sm font-medium text-slate-900">
                 Part category
               </legend>
 
@@ -521,22 +520,25 @@ export default function SparePartsPage() {
           {/* Products */}
           <div className="min-w-0">
             {/* Mobile controls */}
-            <div className="mb-3 flex flex-col gap-2.5 lg:hidden">
-              <CategoryChips
-                items={CATEGORIES}
-                selected={category}
-                onSelect={changeCategory}
-              />
+            <div className="mb-2 flex flex-col gap-2 lg:hidden">
+              <div className="flex flex-col gap-1.5">
+                <CategoryChips
+                  items={CATEGORIES.slice(1)}
+                  selected={category}
+                  onSelect={(key) => changeCategory(key === category ? "all" : key)}
+                />
 
-              <FilterBar
-                activeFilterCount={activeFilterCount}
-                brandLabel={brandLabel}
-                capacityLabel={capacityLabel}
-                onSort={() => setSheet(true)}
-                onFilter={() => setSheet(true)}
-                onBrand={() => setSheet(true)}
-                onCapacity={() => setSheet(true)}
-              />
+                <FilterBar
+                  activeFilterCount={activeFilterCount}
+                  brandLabel={brandLabel}
+                  capacityLabel={capacityLabel}
+                  capacityActive={filters.capacities.size > 0}
+                  onSort={() => setSheet(true)}
+                  onFilter={() => setSheet(true)}
+                  onBrand={() => setSheet(true)}
+                  onCapacity={() => setSheet(true)}
+                />
+              </div>
 
               <FitmentBanner
                 inputId="appliance-model-mobile"
@@ -545,10 +547,9 @@ export default function SparePartsPage() {
               />
             </div>
 
-            {/* Results header: tighter horizontal padding on mobile */}
-            <section className="mb-3 flex items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 py-3 shadow-[0_1px_3px_rgba(15,23,42,0.025)] md:mb-4 md:gap-3 md:px-4 md:py-3.5">
+            <section className="mb-4 hidden items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3.5 md:flex">
               <div className="min-w-0">
-                <h2 className="text-sm font-bold text-slate-900">
+                <h2 className="text-sm font-medium text-slate-900">
                   Spare parts
                 </h2>
 
@@ -567,7 +568,7 @@ export default function SparePartsPage() {
                   onChange={(e) =>
                     changeSort(e.target.value as SortKey)
                   }
-                  className="h-9 max-w-[145px] rounded-lg border border-slate-200 bg-white px-2 text-xs font-semibold text-slate-800 outline-none focus:border-primary sm:max-w-none sm:px-2.5 sm:text-sm"
+                  className="h-9 max-w-[145px] rounded-lg border border-slate-200 bg-white px-2 text-xs font-medium text-slate-800 outline-none focus:border-primary sm:max-w-none sm:px-2.5 sm:text-sm"
                 >
                   {SORTS.map((option) => (
                     <option key={option.key} value={option.key}>
@@ -625,7 +626,7 @@ export default function SparePartsPage() {
                 <button
                   type="button"
                   onClick={clearAll}
-                  className="ml-1 text-xs font-semibold text-primary hover:underline"
+                  className="ml-1 text-xs font-medium text-primary hover:underline"
                 >
                   Clear
                 </button>
@@ -686,7 +687,7 @@ export default function SparePartsPage() {
             <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-4">
               <div className="space-y-6 py-1">
                 <fieldset>
-                  <legend className="text-sm font-bold text-zinc-900">
+                  <legend className="text-sm font-medium text-zinc-900">
                     Sort by
                   </legend>
 
@@ -728,7 +729,7 @@ export default function SparePartsPage() {
                   }
                 />
 
-                <label className="flex min-h-11 cursor-pointer items-center justify-between rounded-xl border border-zinc-200 px-3 text-sm font-semibold text-zinc-700">
+                <label className="flex min-h-11 cursor-pointer items-center justify-between rounded-xl border border-zinc-200 px-3 text-sm font-medium text-zinc-700">
                   In-stock parts only
                   <input
                     type="checkbox"
@@ -749,7 +750,7 @@ export default function SparePartsPage() {
               <button
                 type="button"
                 onClick={clearAll}
-                className="h-12 rounded-xl border border-zinc-200 px-5 text-sm font-semibold text-zinc-700"
+                className="h-12 rounded-xl border border-zinc-200 px-5 text-sm font-medium text-zinc-700"
               >
                 Clear all
               </button>
@@ -757,7 +758,7 @@ export default function SparePartsPage() {
               <button
                 type="button"
                 onClick={() => setSheet(false)}
-                className="h-12 rounded-xl bg-primary text-sm font-semibold text-white shadow-[0_8px_16px_-8px_rgba(200,16,46,0.7)]"
+                className="h-12 rounded-xl bg-primary text-sm font-medium text-white shadow-[0_8px_16px_-8px_rgba(200,16,46,0.7)]"
               >
                 Show {visible.length} parts
               </button>

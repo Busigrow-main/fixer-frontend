@@ -13,7 +13,7 @@ import {
   Store,
 } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
-import { Fragment } from "react";
+import { Fragment, useEffect, useState } from "react";
 
 import { Separator } from "@/app/components/ui/separator";
 import {
@@ -31,6 +31,7 @@ type DockItem = {
   href?: string;
   onSelect?: () => void;
   badge?: number;
+  hideOnMobile?: boolean;
 };
 
 type ShopDockProps = {
@@ -45,18 +46,28 @@ export default function ShopDock({
   className,
 }: ShopDockProps) {
   const pathname = usePathname();
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 767px)");
+    const sync = () => setIsMobile(media.matches);
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, []);
 
   const items: DockItem[] = [
     { id: "home", label: "Home", icon: Home, href: "/" },
     { id: "shop", label: "Shop", icon: Store, href: "/shop" },
-    { id: "parts", label: "Parts", icon: Package, href: "/shop/spare-parts" },
+    { id: "parts", label: "Parts", icon: Package, href: "/shop/spare-parts", hideOnMobile: true },
     {
       id: "appliances",
       label: "Appliances",
       icon: Refrigerator,
       href: "/shop/appliances",
+      hideOnMobile: true,
     },
-    { id: "search", label: "Search", icon: Search, onSelect: onSearch },
+    { id: "search", label: "Search", icon: Search, onSelect: onSearch, hideOnMobile: true },
     { id: "orders", label: "Orders", icon: ClipboardList, href: "/orders" },
     {
       id: "cart",
@@ -72,7 +83,7 @@ export default function ShopDock({
       case "home":
         return pathname === "/";
       case "shop":
-        // Shop is active only on its root and "all products", not subcategories.
+        if (isMobile) return pathname === "/shop" || pathname.startsWith("/shop/");
         return pathname === "/shop" || pathname === "/shop/all";
       case "cart":
         return pathname === "/cart" || pathname.startsWith("/checkout");
@@ -94,9 +105,9 @@ export default function ShopDock({
         aria-label="Shop navigation"
         className={cn(
           "fixed inset-x-0 bottom-0 z-50 flex justify-center",
-          // Mobile: full-width bar
-          "border-t border-slate-200/80 bg-white/95 px-1 pt-1.5 backdrop-blur-xl",
-          "pb-[max(0.375rem,env(safe-area-inset-bottom))]",
+          // Mobile: compact tab bar
+          "border-t border-slate-200/80 bg-white/95 px-2 pt-1 backdrop-blur-xl",
+          "pb-[max(0.25rem,env(safe-area-inset-bottom))]",
           // Desktop: floating pill
           "md:pointer-events-none md:border-0 md:bg-transparent md:px-3 md:pb-5 md:pt-0 md:backdrop-blur-none",
           className
@@ -118,7 +129,7 @@ export default function ShopDock({
                   className="mx-1 hidden h-7 md:block"
                 />
               )}
-              <DockButton item={item} active={isActive(item)} />
+              <DockButton item={item} active={isActive(item)} hideOnMobile={item.hideOnMobile} />
             </Fragment>
           ))}
         </div>
@@ -127,39 +138,46 @@ export default function ShopDock({
   );
 }
 
-function DockButton({ item, active }: { item: DockItem; active: boolean }) {
+function DockButton({
+  item,
+  active,
+  hideOnMobile = false,
+}: {
+  item: DockItem;
+  active: boolean;
+  hideOnMobile?: boolean;
+}) {
   const Icon = item.icon;
   const reduceMotion = useReducedMotion();
 
   const controlClassName = cn(
     "group flex w-full min-w-0 flex-col items-center justify-center gap-0.5",
-    "rounded-xl py-1 outline-none",
+    "rounded-lg py-0.5 outline-none",
     "focus-visible:ring-2 focus-visible:ring-primary/40",
     "md:h-10 md:w-10 md:gap-0 md:rounded-full md:p-0"
   );
 
   const content = (
     <>
-      {/* Same pill size for every item. Active only changes color. */}
       <span
         className={cn(
-          "relative flex h-8 w-12 items-center justify-center rounded-full",
+          "relative flex h-7 w-7 items-center justify-center rounded-full",
           "transition-colors duration-200",
           "md:h-10 md:w-10",
           active
-            ? "bg-primary text-primary-foreground shadow-sm"
+            ? "bg-primary text-primary-foreground"
             : "text-slate-500 group-hover:bg-slate-100 group-hover:text-slate-900"
         )}
       >
-        <Icon className="size-5" strokeWidth={2} />
+        <Icon className="size-[18px] md:size-5" strokeWidth={1.75} />
 
         {!!item.badge && item.badge > 0 && (
           <span
             className={cn(
-              "absolute -right-0.5 -top-1 flex h-4 min-w-4 items-center justify-center",
-              "rounded-full bg-primary px-1 text-[10px] font-semibold leading-none",
+              "absolute -right-1 -top-0.5 flex h-3.5 min-w-3.5 items-center justify-center",
+              "rounded-full bg-primary px-0.5 text-[8px] font-semibold leading-none",
               "text-primary-foreground ring-2 ring-white",
-              "md:-right-1"
+              "md:-right-1 md:h-4 md:min-w-4 md:px-1 md:text-[10px]"
             )}
           >
             {item.badge > 99 ? "99+" : item.badge}
@@ -169,7 +187,7 @@ function DockButton({ item, active }: { item: DockItem; active: boolean }) {
 
       <span
         className={cn(
-          "max-w-full truncate text-[10px] leading-none tracking-tight md:hidden",
+          "max-w-full truncate text-[9px] leading-none tracking-tight md:hidden",
           "transition-colors duration-200",
           active ? "font-semibold text-primary" : "font-medium text-slate-500"
         )}
@@ -205,7 +223,7 @@ function DockButton({ item, active }: { item: DockItem; active: boolean }) {
       <TooltipTrigger asChild>
         <motion.div
           whileTap={reduceMotion ? undefined : { scale: 0.95 }}
-          className="flex min-w-0 flex-1 justify-center md:flex-none"
+          className={cn("flex min-w-0 flex-1 justify-center md:flex-none", hideOnMobile && "hidden md:flex")}
         >
           {control}
         </motion.div>
