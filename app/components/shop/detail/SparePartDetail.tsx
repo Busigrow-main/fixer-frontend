@@ -240,11 +240,11 @@ export default function SparePartDetail({ id }: { id: string }) {
               role="alert"
               className="rounded-2xl bg-white p-8 text-center"
             >
-              <h1 className="font-bold">Unable to load part</h1>
+              <h1 className="font-medium">Unable to load part</h1>
               <p className="mt-2 text-sm text-zinc-600">{error}</p>
 
               <button
-                className="mt-5 rounded-xl bg-primary px-5 py-3 font-bold text-white"
+                className="mt-5 rounded-xl bg-primary px-5 py-3 font-medium text-white"
                 onClick={() => setRetry((count) => count + 1)}
               >
                 Try again
@@ -325,7 +325,7 @@ export default function SparePartDetail({ id }: { id: string }) {
         fallbackHref="/shop/spare-parts"
       />
 
-      <main className="mx-auto w-full max-w-[1280px] px-3 pb-28 pt-14 sm:px-5 md:pt-20 lg:px-10 lg:pb-28 lg:pt-24">
+      <main className="mx-auto w-full max-w-[1280px] px-3 pb-mobile-cta pt-14 sm:px-5 md:pt-20 lg:px-10 lg:pb-28 lg:pt-24">
         <nav className="mb-5 hidden text-sm text-zinc-500 lg:block">
           <Link href="/shop">Shop</Link>
           <span className="px-1">/</span>
@@ -366,7 +366,7 @@ export default function SparePartDetail({ id }: { id: string }) {
             <section className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <h2 className="font-bold">Installation service</h2>
+                  <h2 className="font-medium">Installation service</h2>
                   <p className="text-xs text-zinc-500">
                     Check options for your area
                   </p>
@@ -387,7 +387,7 @@ export default function SparePartDetail({ id }: { id: string }) {
 
               <button
                 onClick={loadInstallation}
-                className="mt-3 rounded-lg border px-3 py-2 text-sm font-semibold"
+                className="mt-3 rounded-lg border px-3 py-2 text-sm font-medium"
               >
                 Check installation
               </button>
@@ -408,13 +408,13 @@ export default function SparePartDetail({ id }: { id: string }) {
 
                       <span className="flex-1">{option.label}</span>
 
-                      <b>
+                      <span className="font-medium">
                         {option.included
                           ? "Included"
                           : option.charge
                             ? inr(option.charge)
                             : "Free"}
-                      </b>
+                      </span>
                     </label>
                   ))}
                 </div>
@@ -423,7 +423,7 @@ export default function SparePartDetail({ id }: { id: string }) {
 
             {specs.length > 0 && (
               <section className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-6">
-                <h2 className="mb-3 font-bold">Part Specifications</h2>
+                <h2 className="mb-3 font-medium">Part Specifications</h2>
                 <SpecsGrid specs={specs} cols="2" />
               </section>
             )}
@@ -438,7 +438,7 @@ export default function SparePartDetail({ id }: { id: string }) {
                   <>
                     {" · "}
                     <Link
-                      className="font-bold text-primary"
+                      className="font-medium text-primary"
                       href="/cart"
                     >
                       View cart

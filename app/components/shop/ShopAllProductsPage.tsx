@@ -104,18 +104,18 @@ export default function ShopAllProductsPage() {
             placeholder="Search appliances, spare parts, brands, or models"
           />
         </div>
-        <Link href="/shop" className="inline-flex w-fit items-center gap-2 text-sm font-semibold text-slate-600 hover:text-primary"><ArrowLeft className="h-4 w-4" /> Back to shop</Link>
+        <Link href="/shop" className="inline-flex w-fit items-center gap-2 text-sm font-medium text-slate-600 hover:text-primary"><ArrowLeft className="h-4 w-4" /> Back to shop</Link>
         <div>
-          <h1 className="text-xl font-bold text-slate-900 sm:text-2xl md:text-3xl">All shop products</h1>
+          <h1 className="text-xl font-medium text-slate-900 sm:text-2xl md:text-3xl md:font-semibold">All shop products</h1>
           <p className="mt-1 text-sm text-slate-500">Appliances and spare parts in one list</p>
           <div className="mt-3 flex flex-wrap gap-2">
-            <Link href="/shop/spare-parts" className="inline-flex h-9 items-center rounded-xl border border-zinc-200 bg-white px-3 text-sm font-semibold text-zinc-800">Spare parts</Link>
-            <Link href="/shop/appliances" className="inline-flex h-9 items-center rounded-xl border border-zinc-200 bg-white px-3 text-sm font-semibold text-zinc-800">Appliances</Link>
+            <Link href="/shop/spare-parts" className="inline-flex h-9 items-center rounded-xl border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-800">Spare parts</Link>
+            <Link href="/shop/appliances" className="inline-flex h-9 items-center rounded-xl border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-800">Appliances</Link>
           </div>
         </div>
 
         {error && !shopData ? (
-          <div role="status" className="rounded-xl bg-white px-4 py-10 text-center text-sm text-slate-600">Products could not be loaded. <button onClick={retry} className="font-semibold text-primary">Try again</button></div>
+          <div role="status" className="rounded-xl bg-white px-4 py-10 text-center text-sm text-slate-600">Products could not be loaded. <button onClick={retry} className="font-medium text-primary">Try again</button></div>
         ) : visibleProducts.length > 0 ? (
           <>
             <p className="text-xs text-slate-500">Showing {loadedProducts} of {totalProducts} products</p>
@@ -124,13 +124,13 @@ export default function ShopAllProductsPage() {
             </div>
             {shopData?.pagination.hasMore && (
               <div className="flex justify-center py-3">
-                <button type="button" onClick={loadMore} disabled={loadingMore} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-6 text-sm font-semibold text-white disabled:opacity-60">
+                <button type="button" onClick={loadMore} disabled={loadingMore} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-6 text-sm font-medium text-white disabled:opacity-60">
                   {loadingMore && <LoaderCircle className="h-4 w-4 animate-spin" />}
                   {loadingMore ? "Loading products" : "Load more products"}
                 </button>
               </div>
             )}
-            {error && <p role="status" className="text-center text-sm text-red-700">Could not load more products. <button onClick={retry} className="font-semibold underline">Retry</button></p>}
+            {error && <p role="status" className="text-center text-sm text-red-700">Could not load more products. <button onClick={retry} className="font-medium underline">Retry</button></p>}
           </>
         ) : (
           <div role="status" className="rounded-xl bg-white px-4 py-10 text-center text-sm text-slate-500">{shopData?.products.length ? "No products match your search." : "No shop products are available right now."}</div>

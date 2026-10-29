@@ -60,8 +60,8 @@ export default function ProductGrid({
   if (error) {
     return (
       <div role="alert" className="rounded-xl border border-zinc-200 bg-white px-4 py-10 text-center sm:rounded-2xl sm:px-6 sm:py-14">
-        <p className="text-sm font-semibold text-zinc-900">Products could not be loaded.</p>
-        {onRetry && <button type="button" onClick={onRetry} className="mt-3 text-sm font-bold text-primary hover:underline">Try again</button>}
+        <p className="text-sm font-medium text-zinc-900">Products could not be loaded.</p>
+        {onRetry && <button type="button" onClick={onRetry} className="mt-3 text-sm font-medium text-primary hover:underline">Try again</button>}
       </div>
     );
   }
@@ -73,7 +73,7 @@ export default function ProductGrid({
           <SearchX size={25} strokeWidth={1.8} />
         </span>
 
-        <p className="mt-3 text-sm font-semibold text-zinc-900 sm:text-base">
+        <p className="mt-3 text-sm font-medium text-zinc-900 sm:text-base">
           {emptyTitle}
         </p>
 
@@ -81,7 +81,7 @@ export default function ProductGrid({
           {emptyDescription}
         </p>
         {onClearFilters && (
-          <button type="button" onClick={onClearFilters} className="mt-4 inline-flex h-10 items-center rounded-xl bg-primary px-4 text-sm font-semibold text-white">
+          <button type="button" onClick={onClearFilters} className="mt-4 inline-flex h-10 items-center rounded-xl bg-primary px-4 text-sm font-medium text-white">
             Clear filters
           </button>
         )}

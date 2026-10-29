@@ -15,7 +15,7 @@ export default function InstallationAddon({ checked, onChange, fee, city }: Prop
           <span className="material-symbols-outlined icon-filled text-[20px]">build</span>
         </span>
         <div className="min-w-0">
-          <h2 className="text-base font-bold leading-tight text-zinc-900">Need Installation?</h2>
+          <h2 className="text-base font-medium leading-tight text-zinc-900">Need Installation?</h2>
           <p className="mt-0.5 text-xs leading-snug text-zinc-500">
             Get it installed by certified Fixxer technicians
           </p>
@@ -42,8 +42,8 @@ export default function InstallationAddon({ checked, onChange, fee, city }: Prop
         </span>
         <span className="min-w-0 flex-1">
           <span className="flex items-center justify-between gap-3">
-            <span className="text-sm font-bold text-zinc-900">Add Installation Service</span>
-            <span className="text-sm font-extrabold text-zinc-900">₹{fee.toLocaleString("en-IN")}</span>
+            <span className="text-sm font-medium text-zinc-900">Add Installation Service</span>
+            <span className="text-sm font-semibold text-zinc-900">₹{fee.toLocaleString("en-IN")}</span>
           </span>
           <span className="mt-1 block text-xs leading-relaxed text-zinc-500">
             Includes technician visit, precision mounting &amp; test run. Available in {city}.

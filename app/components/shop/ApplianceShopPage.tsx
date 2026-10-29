@@ -37,12 +37,12 @@ const CATEGORY_API_TYPE: Record<string, string> = { fridge: "refrigerator", wash
 function FilterOptions({ title, options, selected, onChange }: { title: string; options: string[]; selected: Set<string>; onChange: (next: Set<string>) => void }) {
   return (
     <fieldset>
-      <legend className="text-sm font-bold text-zinc-900">{title}</legend>
+      <legend className="text-sm font-medium text-zinc-900">{title}</legend>
       <div className="mt-2 grid grid-cols-2 gap-2">
         {options.map((option) => {
           const checked = selected.has(option);
           return (
-            <label key={option} className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border px-3 text-sm ${checked ? "border-primary bg-primary/5 font-semibold text-primary" : "border-zinc-200 text-zinc-700"}`}>
+            <label key={option} className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border px-3 text-sm ${checked ? "border-primary bg-primary/5 font-medium text-primary" : "border-zinc-200 text-zinc-700"}`}>
               <input type="checkbox" checked={checked} onChange={() => { const next = new Set(selected); checked ? next.delete(option) : next.add(option); onChange(next); }} className="h-4 w-4 accent-primary" />
               {option}
             </label>
@@ -138,17 +138,17 @@ export default function ApplianceShopPage({ initialCategory = "all" }: { initial
   };
 
   return (
-    <div className="shop-shell min-h-screen bg-[#f4f4f6] md:bg-[#f6f6f6]">
+    <div className="shop-shell -mt-14 min-h-screen bg-[#f4f4f6] md:mt-0 md:bg-[#f6f6f6]">
       <ShopNavbar hideMobileHeader searchValue={query} onSearchChange={setQuery} />
       <div className="md:hidden"><SpareHeader title="Appliances" location="Patna - 800001" onBack={() => router.push("/shop")} /></div>
 
-      <main className="mx-auto flex w-full max-w-[560px] flex-col gap-3 px-3 pb-28 pt-[52px] sm:max-w-[720px] sm:px-4 sm:pt-14 md:max-w-[1480px] md:gap-5 md:px-8 md:pb-16 md:pt-8 lg:px-12">
-        <div className="sticky top-[52px] z-40 -mx-3 bg-[#f4f4f6] px-3 pt-0 pb-2 sm:top-14 md:hidden"><SearchBar value={query} onChange={setQuery} onVoice={() => {}} placeholder="Search for appliances, brands, or models..." /></div>
+      <main className="mx-auto flex w-full max-w-[560px] flex-col gap-2 px-3 pb-28 pt-[52px] sm:max-w-[720px] sm:px-4 sm:pt-14 md:max-w-[1480px] md:gap-5 md:px-8 md:pb-16 md:pt-8 lg:px-12">
+        <div className="sticky top-[52px] z-40 -mx-3 bg-[#f4f4f6] px-3 sm:top-14 md:hidden"><SearchBar value={query} onChange={setQuery} placeholder="Search for appliances, brands, or models..." /></div>
         <div className="w-full md:mx-auto md:max-w-[520px]"><ShopCategorySwitch /></div>
         <section className="hidden border-b border-slate-200 pb-5 md:block">
           <div>
             <p className="text-xs font-medium text-slate-500">Home <span className="px-1.5 text-slate-300">/</span> Shop <span className="px-1.5 text-slate-300">/</span> Appliances</p>
-            <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">Appliances for your home</h1>
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">Appliances for your home</h1>
             <p className="mt-1 text-sm text-slate-500">Explore trusted brands and find the right fit.</p>
           </div>
         </section>
@@ -156,16 +156,16 @@ export default function ApplianceShopPage({ initialCategory = "all" }: { initial
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[230px_minmax(0,1fr)] lg:gap-6">
           <aside className="hidden self-start rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_2px_8px_rgba(15,23,42,0.03)] lg:sticky lg:top-6 lg:block">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <div><h2 className="text-base font-bold text-slate-900">Categories</h2><p className="mt-0.5 text-xs text-slate-500">Shop by appliance</p></div>
-              <button type="button" onClick={clearAll} className="text-xs font-semibold text-primary hover:underline">Clear</button>
+              <div><h2 className="text-base font-medium text-slate-900">Categories</h2><p className="mt-0.5 text-xs text-slate-500">Shop by appliance</p></div>
+              <button type="button" onClick={clearAll} className="text-xs font-medium text-primary hover:underline">Clear</button>
             </div>
             <div className="space-y-1 border-b border-slate-100 py-3">
-              {CATEGORIES.map((item) => <button key={item.key} type="button" onClick={() => changeCategory(item.key)} className={`flex min-h-9 w-full items-center rounded-lg px-2.5 text-left text-sm ${category === item.key ? "bg-red-50 font-semibold text-primary" : "text-slate-600 hover:bg-slate-50"}`}>{item.label}</button>)}
+              {CATEGORIES.map((item) => <button key={item.key} type="button" onClick={() => changeCategory(item.key)} className={`flex min-h-9 w-full items-center rounded-lg px-2.5 text-left text-sm ${category === item.key ? "bg-red-50 font-medium text-primary" : "text-slate-600 hover:bg-slate-50"}`}>{item.label}</button>)}
             </div>
             <div className="space-y-5 pt-4">
               {([["Brand", brands, filters.brands], ["Capacity", capacities, filters.capacities]] as const).map(([title, options, selected]) => (
                 <fieldset key={title}>
-                  <legend className="text-sm font-semibold text-slate-900">{title}</legend>
+                  <legend className="text-sm font-medium text-slate-900">{title}</legend>
                   <div className="mt-2 space-y-2">
                     {options.map((option) => <label key={option} className="flex cursor-pointer items-center gap-2.5 text-sm text-slate-600"><input type="checkbox" checked={selected.has(option)} onChange={() => { const next = new Set(selected); next.has(option) ? next.delete(option) : next.add(option); setFilters({ ...filters, [title === "Brand" ? "brands" : "capacities"]: next }); }} className="h-4 w-4 rounded accent-primary" />{option}</label>)}
                   </div>
@@ -175,13 +175,17 @@ export default function ApplianceShopPage({ initialCategory = "all" }: { initial
           </aside>
 
           <div className="min-w-0">
-            <div className="mb-3 flex flex-col gap-2.5 lg:hidden">
-              <CategoryChips items={CATEGORIES.slice(1)} selected={category === "all" ? "fridge" : category} onSelect={changeCategory} />
+            <div className="mb-2 flex flex-col gap-1.5 lg:hidden">
+              <CategoryChips
+                items={CATEGORIES.slice(1)}
+                selected={category}
+                onSelect={(key) => changeCategory(key === category ? "all" : key)}
+              />
               <FilterBar activeFilterCount={activeFilterCount} brandLabel={brandsLabel} capacityLabel={capacityLabel} onSort={() => setSheet(true)} onFilter={() => setSheet(true)} onBrand={() => setSheet(true)} onCapacity={() => setSheet(true)} />
             </div>
-            <section className="mb-3 flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 md:mb-4 md:py-3.5">
-              <div><h2 className="text-sm font-bold text-slate-900 md:text-base">Shop appliances</h2><p className="mt-0.5 text-xs text-slate-500">{loading ? "Loading products…" : `${visible.length} products available`}</p></div>
-              <label className="hidden shrink-0 items-center gap-2 text-xs font-medium text-slate-500 md:flex">Sort by<select value={sort} onChange={(e) => changeSort(e.target.value as SortKey)} className="h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-sm font-semibold text-slate-800 outline-none focus:border-primary">{SORTS.map((option) => <option key={option.key} value={option.key}>{option.label}</option>)}</select></label>
+            <section className="mb-4 hidden items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3.5 md:flex">
+              <div><h2 className="text-sm font-medium text-slate-900 md:text-base">Shop appliances</h2><p className="mt-0.5 text-xs text-slate-500">{loading ? "Loading products…" : `${visible.length} products available`}</p></div>
+              <label className="hidden shrink-0 items-center gap-2 text-xs font-medium text-slate-500 md:flex">Sort by<select value={sort} onChange={(e) => changeSort(e.target.value as SortKey)} className="h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-sm font-medium text-slate-800 outline-none focus:border-primary">{SORTS.map((option) => <option key={option.key} value={option.key}>{option.label}</option>)}</select></label>
             </section>
             <ProductGrid
               parts={gridProducts}
@@ -204,14 +208,14 @@ export default function ApplianceShopPage({ initialCategory = "all" }: { initial
 
       {sheet && <div className="fixed inset-0 z-[60] flex items-end bg-black/40 lg:items-center lg:justify-center lg:p-6" onMouseDown={(e) => e.target === e.currentTarget && setSheet(false)}>
         <div role="dialog" aria-modal="true" aria-label="Sort and filter appliances" className="flex max-h-[85dvh] w-full flex-col rounded-t-3xl bg-white shadow-2xl md:max-w-xl md:rounded-3xl">
-          <div className="flex items-center justify-between px-5 pb-3 pt-4"><h2 className="text-xl font-bold text-zinc-900">Sort &amp; Filter</h2><button type="button" aria-label="Close" onClick={() => setSheet(false)} className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-100 text-zinc-600"><span className="material-symbols-outlined text-[20px]">close</span></button></div>
+          <div className="flex items-center justify-between px-5 pb-3 pt-4"><h2 className="text-xl font-medium text-zinc-900">Sort &amp; Filter</h2><button type="button" aria-label="Close" onClick={() => setSheet(false)} className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-100 text-zinc-600"><span className="material-symbols-outlined text-[20px]">close</span></button></div>
           <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 pb-4">
-            <fieldset><legend className="text-sm font-bold text-zinc-900">Sort by</legend><div className="mt-2 space-y-1">{SORTS.map((option) => <label key={option.key} className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-2 text-sm text-zinc-700"><input type="radio" name="appliance-sort" checked={sort === option.key} onChange={() => changeSort(option.key)} className="h-4 w-4 accent-primary" />{option.label}</label>)}</div></fieldset>
+            <fieldset><legend className="text-sm font-medium text-zinc-900">Sort by</legend><div className="mt-2 space-y-1">{SORTS.map((option) => <label key={option.key} className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-2 text-sm text-zinc-700"><input type="radio" name="appliance-sort" checked={sort === option.key} onChange={() => changeSort(option.key)} className="h-4 w-4 accent-primary" />{option.label}</label>)}</div></fieldset>
             <FilterOptions title="Brand" options={brands} selected={filters.brands} onChange={(brands) => setFilters({ ...filters, brands })} />
             <FilterOptions title="Capacity" options={capacities} selected={filters.capacities} onChange={(capacities) => setFilters({ ...filters, capacities })} />
-            <label className="flex min-h-11 cursor-pointer items-center justify-between rounded-xl border border-zinc-200 px-3 text-sm font-semibold text-zinc-700">In-stock appliances only<input type="checkbox" checked={filters.inStock} onChange={(e) => setFilters({ ...filters, inStock: e.target.checked })} className="h-4 w-4 accent-primary" /></label>
+            <label className="flex min-h-11 cursor-pointer items-center justify-between rounded-xl border border-zinc-200 px-3 text-sm font-medium text-zinc-700">In-stock appliances only<input type="checkbox" checked={filters.inStock} onChange={(e) => setFilters({ ...filters, inStock: e.target.checked })} className="h-4 w-4 accent-primary" /></label>
           </div>
-          <div className="grid grid-cols-[auto_1fr] gap-2.5 border-t border-zinc-100 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]"><button type="button" onClick={clearAll} className="h-12 rounded-xl border border-zinc-200 px-5 text-sm font-semibold text-zinc-700">Clear all</button><button type="button" onClick={() => setSheet(false)} className="h-12 rounded-xl bg-primary text-sm font-semibold text-white">Show {visible.length} products</button></div>
+          <div className="grid grid-cols-[auto_1fr] gap-2.5 border-t border-zinc-100 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]"><button type="button" onClick={clearAll} className="h-12 rounded-xl border border-zinc-200 px-5 text-sm font-medium text-zinc-700">Clear all</button><button type="button" onClick={() => setSheet(false)} className="h-12 rounded-xl bg-primary text-sm font-medium text-white">Show {visible.length} products</button></div>
         </div>
       </div>}
     </div>

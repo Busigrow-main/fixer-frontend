@@ -26,7 +26,7 @@ export default function ACDetailStickyBar({
   );
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 border-t border-slate-200 bg-white/95 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_30px_rgba(15,23,42,0.12)] backdrop-blur-xl md:hidden">
+    <div className="mobile-bottom-cta fixed inset-x-0 z-40 border-t border-slate-200 bg-white/95 px-3 py-2 shadow-[0_-8px_30px_rgba(15,23,42,0.12)] backdrop-blur-xl md:hidden">
       <div className="mx-auto flex max-w-lg items-center gap-2">
         {/* Call */}
         <a
@@ -51,7 +51,7 @@ export default function ACDetailStickyBar({
         {/* Primary enquiry */}
         <Link
           href={enquiryHref}
-          className="flex h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-[11px] font-black text-white shadow-lg shadow-primary/20 transition-all active:scale-[0.98] active:bg-primary/90"
+          className="flex h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-[11px] font-medium text-white shadow-lg shadow-primary/20 transition-all active:scale-[0.98] active:bg-primary/90"
         >
           <span className="truncate">
             Enquire Now
@@ -60,7 +60,7 @@ export default function ACDetailStickyBar({
         </Link>
       </div>
 
-      <p className="mx-auto mt-1.5 max-w-lg text-center text-[8px] font-semibold text-slate-400">
+      <p className="mx-auto mt-1.5 max-w-lg text-center text-[8px] font-medium text-slate-400">
         No payment required · Fixxer will confirm availability
       </p>
     </div>

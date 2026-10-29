@@ -120,23 +120,62 @@ export default function OrdersPage() {
   };
 
   return (
-    <div className="shop-shell min-h-screen bg-[#f5f6f8] md:bg-[#f6f6f6]">
+    <div className="shop-shell -mt-14 min-h-screen bg-[#f5f6f8] md:mt-0 md:bg-[#f6f6f6]">
       <ShopNavbar mobileTitle="Orders" mobileBackHref="/shop" />
-      <main className="mx-auto w-full max-w-3xl px-3 pb-24 pt-5 sm:px-5 md:pb-28 md:pt-8">
+      <main className="mx-auto w-full max-w-3xl px-3 pb-24 pt-2 sm:px-5 md:pb-28 md:pt-8">
         <div className="mb-4 hidden items-end justify-between gap-3 md:flex">
-          <div><p className="text-xs font-semibold uppercase tracking-[.14em] text-zinc-500">Fixxer Shop</p><h1 className="mt-1 text-2xl font-extrabold tracking-tight text-zinc-950 sm:text-3xl">Orders</h1><p className="mt-1 text-sm text-zinc-500">Track your Fixxer Shop deliveries and installation services.</p></div>
-          <Link href="/shop" className="hidden items-center gap-1 text-sm font-semibold text-primary sm:inline-flex">Continue shopping <ArrowRight className="h-4 w-4" /></Link>
+          <div>
+            <p className="text-xs font-medium uppercase tracking-[.14em] text-zinc-500">Fixxer Shop</p>
+            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-zinc-950 sm:text-3xl">Orders</h1>
+            <p className="mt-1 text-sm text-zinc-500">Track your Fixxer Shop deliveries and installation services.</p>
+          </div>
+          <Link href="/shop" className="hidden items-center gap-1 text-sm font-medium text-primary sm:inline-flex">Continue shopping <ArrowRight className="h-4 w-4" /></Link>
         </div>
 
         <div className="sticky top-14 z-30 -mx-3 mb-3 border-y border-zinc-200 bg-[#f8f9fa]/95 px-3 py-2 backdrop-blur sm:static sm:mx-0 sm:rounded-xl sm:border sm:bg-white sm:p-1.5">
           <div className="flex gap-1 overflow-x-auto">
-            {tabs.map((tab) => <button key={tab.id} type="button" onClick={() => setFilter(tab.id)} aria-pressed={filter === tab.id} className={`min-h-10 shrink-0 rounded-lg px-3 text-xs font-semibold transition sm:text-sm ${filter === tab.id ? "bg-primary text-white shadow-sm" : "text-zinc-600 hover:bg-zinc-100"}`}>{tab.label}<span className={`ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] ${filter === tab.id ? "bg-white/20" : "bg-zinc-100"}`}>{tab.count}</span></button>)}
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setFilter(tab.id)}
+                aria-pressed={filter === tab.id}
+                className={`min-h-9 shrink-0 rounded-lg px-3 text-[13px] font-medium transition ${
+                  filter === tab.id ? "bg-primary text-white" : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700"
+                }`}
+              >
+                {tab.label}
+                <span className={`ml-1.5 text-[11px] font-normal tabular-nums ${filter === tab.id ? "text-white/80" : "text-zinc-400"}`}>
+                  {tab.count}
+                </span>
+              </button>
+            ))}
           </div>
         </div>
 
-        {error && <div role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}<button type="button" onClick={() => window.location.reload()} className="ml-2 font-bold underline">Retry</button></div>}
-        {loading ? <div aria-busy="true" className="space-y-3">{[0, 1, 2].map((item) => <div key={item} className="h-40 animate-pulse rounded-2xl bg-white" />)}</div> : filtered.length === 0 ? (
-          <div className="flex min-h-72 flex-col items-center justify-center rounded-2xl border border-zinc-200 bg-white px-6 text-center shadow-sm"><span className="flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100 text-zinc-500"><ShoppingBag className="h-5 w-5" /></span><h2 className="mt-3 text-lg font-bold text-zinc-900">No {filter === "all" ? "orders" : filter === "part" ? "spare part orders" : filter === "appliance" ? "appliance orders" : "installation orders"} yet</h2><p className="mt-1 max-w-sm text-sm text-zinc-500">Orders placed through the Fixxer shop will appear here with their latest status.</p><Link href="/shop" className="mt-5 inline-flex h-11 items-center rounded-xl bg-primary px-5 text-sm font-bold text-white">Browse the shop</Link></div>
+        {error && (
+          <div role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {error}
+            <button type="button" onClick={() => window.location.reload()} className="ml-2 font-medium underline">Retry</button>
+          </div>
+        )}
+        {loading ? (
+          <div aria-busy="true" className="space-y-3">{[0, 1, 2].map((item) => <div key={item} className="h-40 animate-pulse rounded-2xl bg-white" />)}</div>
+        ) : filtered.length === 0 ? (
+          <div className="flex min-h-72 flex-col items-center justify-center rounded-2xl border border-zinc-200 bg-white px-6 text-center">
+            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-zinc-100 text-zinc-400">
+              <ShoppingBag className="h-5 w-5" />
+            </span>
+            <h2 className="mt-3 text-[15px] font-medium text-zinc-900">
+              No {filter === "all" ? "orders" : filter === "part" ? "spare part orders" : filter === "appliance" ? "appliance orders" : "installation orders"} yet
+            </h2>
+            <p className="mt-1 max-w-sm text-[13px] leading-5 text-zinc-500">
+              Orders placed through the Fixxer shop will appear here with their latest status.
+            </p>
+            <Link href="/shop" className="mt-5 inline-flex h-10 items-center rounded-xl bg-primary px-5 text-[13px] font-medium text-white">
+              Browse the shop
+            </Link>
+          </div>
         ) : <div className="space-y-3">{filtered.map((order) => {
           const appliance = order.orderType === "appliance";
           const firstPart = order.items?.[0]?.partId;
@@ -146,13 +185,79 @@ export default function OrdersPage() {
           const step = statusStep[order.status] ?? -1;
           const total = Number(order.invoiceData?.totalAmount || (appliance ? (order.applianceItem?.price || 0) * (order.applianceItem?.quantity || 1) : 0));
           return <article key={order._id} className="overflow-hidden rounded-2xl border border-zinc-100 bg-white shadow-[0_2px_10px_rgba(15,23,42,.05)]">
-            <div className="flex items-center justify-between gap-2 px-3.5 pt-3.5 sm:px-4"><span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold ${order.status === "CANCELLED" || order.status === "RETURNED" ? "bg-rose-100 text-rose-700" : order.status === "DELIVERED" ? "bg-teal-100 text-teal-800" : "bg-blue-100 text-blue-800"}`}><span className="h-1.5 w-1.5 rounded-full bg-current" />{status}</span><span className="text-[10px] text-zinc-500">#{order._id.slice(-8).toUpperCase()} <span className="ml-2">{date(order.createdAt)}</span></span></div>
-            <div className="flex gap-3 px-3.5 py-3.5 sm:px-4"><div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-zinc-100 sm:h-14 sm:w-14 text-zinc-400">{image ? <Image src={image} alt={title} fill unoptimized sizes="56px" className="object-contain p-1" /> : appliance ? <span className="material-symbols-outlined text-2xl">devices</span> : <PackageCheck className="h-6 w-6" />}</div><div className="min-w-0 flex-1"><p className="line-clamp-2 text-[13px] font-bold leading-snug text-zinc-900">{title}</p><p className="mt-0.5 text-[11px] text-zinc-500">{appliance ? `${order.applianceItem?.brand || "Appliance"}${order.applianceItem?.modelNumber ? ` · ${order.applianceItem.modelNumber}` : ""} · Qty ${order.applianceItem?.quantity || 1}` : `${order.items?.length || 0} item${order.items?.length === 1 ? "" : "s"} · Qty ${order.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0}`}</p><div className="mt-1 flex items-center gap-2"><strong className="text-sm font-extrabold text-zinc-950">{total ? money(total) : "Total on invoice"}</strong>{order.paymentStatus === "PAID" && <span className="text-[10px] font-semibold text-teal-700">Paid</span>}</div>{!appliance && order.items?.[0]?.warrantyMonthsAtPurchase ? <p className="mt-0.5 text-[10px] font-medium text-teal-700">✓ {order.items[0].warrantyMonthsAtPurchase} month warranty</p> : null}</div></div>
-            {order.status !== "CANCELLED" && order.status !== "RETURNED" && step >= 0 && <div className="px-4 pb-3"><ol className="relative grid grid-cols-4 gap-1" aria-label="Shop order progress"><span aria-hidden="true" className="absolute left-[12.5%] right-[12.5%] top-[9px] h-0.5 bg-zinc-200"><span className="block h-full bg-teal-700" style={{ width: `${(step / 3) * 100}%` }} /></span>{orderSteps.map((label, index) => <li key={label} className="relative text-center"><div className={`relative z-10 mx-auto flex h-5 w-5 items-center justify-center rounded-full ${index <= step ? "bg-teal-700 text-white" : "bg-zinc-200 text-zinc-400"}`}>{index <= step ? <Check className="h-3 w-3" /> : <span className="text-[9px] font-bold">{index + 1}</span>}</div><p className={`mt-1 text-[9px] font-semibold leading-tight ${index <= step ? "text-zinc-700" : "text-zinc-400"}`}>{label}</p></li>)}</ol></div>}
-            {order.status === "CANCELLED" || order.status === "RETURNED" ? <p className="mx-3.5 mb-3 rounded-lg bg-rose-50 px-3 py-2 text-[11px] font-medium text-rose-800 sm:mx-4">This shop order was {status.toLowerCase()}.</p> : null}
-            {hasInstallation(order) && <div className="mx-3.5 mb-3 flex items-center gap-1.5 rounded-lg bg-teal-50 px-2.5 py-2 text-[10px] font-semibold text-teal-800 sm:mx-4"><Check className="h-3.5 w-3.5" /> Installation service included with this shop order</div>}
-            {order.courierTracking?.trackingNumber && <div className="mx-3.5 mb-3 rounded-lg bg-emerald-50 px-3 py-2 text-[11px] text-emerald-800 sm:mx-4"><b>{order.courierTracking.courierName || "Courier"}</b> · {order.courierTracking.trackingNumber}</div>}
-            <div className="grid grid-cols-2 gap-2 border-t border-zinc-100 bg-zinc-50/70 p-2.5"><button type="button" onClick={() => void buyAgain(order)} disabled={addingOrder === order._id} className="inline-flex h-9 items-center justify-center gap-1 rounded-lg bg-white text-[10px] font-bold text-zinc-700 disabled:opacity-50">{addingOrder === order._id ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <ShoppingBag className="h-3.5 w-3.5" />} Buy again</button><Link href={`/orders/${encodeURIComponent(order._id)}#tracking`} className="inline-flex h-9 items-center justify-center gap-1 rounded-lg bg-primary text-[10px] font-bold text-white">View / track order <ArrowRight className="h-3 w-3" /></Link></div>
+            <div className="flex items-center justify-between gap-2 px-3.5 pt-3.5 sm:px-4">
+              <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-medium ${order.status === "CANCELLED" || order.status === "RETURNED" ? "bg-rose-100 text-rose-700" : order.status === "DELIVERED" ? "bg-teal-100 text-teal-800" : "bg-blue-100 text-blue-800"}`}>
+                <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                {status}
+              </span>
+              <span className="text-[11px] text-zinc-400">#{order._id.slice(-8).toUpperCase()} <span className="ml-2">{date(order.createdAt)}</span></span>
+            </div>
+            <div className="flex gap-3 px-3.5 py-3.5 sm:px-4">
+              <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-zinc-100 text-zinc-400 sm:h-14 sm:w-14">
+                {image ? <Image src={image} alt={title} fill unoptimized sizes="56px" className="object-contain p-1" /> : appliance ? <span className="material-symbols-outlined text-2xl">devices</span> : <PackageCheck className="h-6 w-6" />}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="line-clamp-2 text-[13px] font-medium leading-snug text-zinc-900">{title}</p>
+                <p className="mt-0.5 text-[12px] text-zinc-500">
+                  {appliance
+                    ? `${order.applianceItem?.brand || "Appliance"}${order.applianceItem?.modelNumber ? ` · ${order.applianceItem.modelNumber}` : ""} · Qty ${order.applianceItem?.quantity || 1}`
+                    : `${order.items?.length || 0} item${order.items?.length === 1 ? "" : "s"} · Qty ${order.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0}`}
+                </p>
+                <div className="mt-1 flex items-center gap-2">
+                  <p className="text-[15px] font-semibold tabular-nums text-zinc-950">{total ? money(total) : "Total on invoice"}</p>
+                  {order.paymentStatus === "PAID" && <span className="text-[11px] text-teal-700">Paid</span>}
+                </div>
+                {!appliance && order.items?.[0]?.warrantyMonthsAtPurchase ? (
+                  <p className="mt-0.5 text-[11px] text-zinc-500">{order.items[0].warrantyMonthsAtPurchase} month warranty</p>
+                ) : null}
+              </div>
+            </div>
+            {order.status !== "CANCELLED" && order.status !== "RETURNED" && step >= 0 && (
+              <div className="px-4 pb-3">
+                <ol className="relative grid grid-cols-4 gap-1" aria-label="Shop order progress">
+                  <span aria-hidden="true" className="absolute left-[12.5%] right-[12.5%] top-[9px] h-0.5 bg-zinc-200">
+                    <span className="block h-full bg-teal-700" style={{ width: `${(step / 3) * 100}%` }} />
+                  </span>
+                  {orderSteps.map((label, index) => (
+                    <li key={label} className="relative text-center">
+                      <div className={`relative z-10 mx-auto flex h-5 w-5 items-center justify-center rounded-full ${index <= step ? "bg-teal-700 text-white" : "bg-zinc-200 text-zinc-400"}`}>
+                        {index <= step ? <Check className="h-3 w-3" /> : <span className="text-[9px]">{index + 1}</span>}
+                      </div>
+                      <p className={`mt-1 text-[9px] leading-tight ${index <= step ? "text-zinc-600" : "text-zinc-400"}`}>{label}</p>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
+            {order.status === "CANCELLED" || order.status === "RETURNED" ? (
+              <p className="mx-3.5 mb-3 rounded-lg bg-rose-50 px-3 py-2 text-[12px] text-rose-800 sm:mx-4">This shop order was {status.toLowerCase()}.</p>
+            ) : null}
+            {hasInstallation(order) && (
+              <div className="mx-3.5 mb-3 flex items-center gap-1.5 rounded-lg bg-teal-50 px-2.5 py-2 text-[12px] text-teal-800 sm:mx-4">
+                <Check className="h-3.5 w-3.5" /> Installation service included with this shop order
+              </div>
+            )}
+            {order.courierTracking?.trackingNumber && (
+              <div className="mx-3.5 mb-3 rounded-lg bg-emerald-50 px-3 py-2 text-[12px] text-emerald-800 sm:mx-4">
+                {order.courierTracking.courierName || "Courier"} · {order.courierTracking.trackingNumber}
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-2 border-t border-zinc-100 bg-zinc-50/70 p-2.5">
+              <button
+                type="button"
+                onClick={() => void buyAgain(order)}
+                disabled={addingOrder === order._id}
+                className="inline-flex h-9 items-center justify-center gap-1 rounded-lg bg-white text-[12px] font-medium text-zinc-700 disabled:opacity-50"
+              >
+                {addingOrder === order._id ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <ShoppingBag className="h-3.5 w-3.5" />} Buy again
+              </button>
+              <Link
+                href={`/orders/${encodeURIComponent(order._id)}#tracking`}
+                className="inline-flex h-9 items-center justify-center gap-1 rounded-lg bg-primary text-[12px] font-medium text-white"
+              >
+                View / track order <ArrowRight className="h-3 w-3" />
+              </Link>
+            </div>
           </article>;
         })}</div>}
       </main>

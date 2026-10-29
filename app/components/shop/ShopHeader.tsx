@@ -14,7 +14,7 @@ export default function ShopHero() {
 
         <div className="grid grid-cols-[1.45fr_1fr] items-center gap-3 sm:gap-6 md:grid-cols-[1.2fr_1fr] md:gap-10 lg:gap-16">
           <div className="min-w-0">
-            <h1 className="text-[26px] font-extrabold leading-[1.05] tracking-tight sm:text-4xl md:text-5xl lg:text-6xl lg:leading-[1.02]">
+            <h1 className="text-[26px] font-semibold leading-[1.05] tracking-tight sm:text-4xl md:text-5xl lg:text-6xl lg:leading-[1.02]">
               Genuine Parts.
               <span className="block text-[#ff263f]">Longer Life.</span>
             </h1>
@@ -25,7 +25,7 @@ export default function ShopHero() {
 
             <Link
               href={SHOP_SPARE_PARTS_HREF}
-              className="mt-3.5 inline-flex h-9 items-center justify-center gap-1.5 rounded-full bg-white px-3.5 text-xs font-bold text-[#171214] shadow-sm transition hover:bg-gray-100 active:scale-95 sm:mt-4 sm:h-10 sm:px-5 sm:text-sm md:mt-6 md:h-11 md:px-6 lg:mt-8 lg:h-12 lg:px-8 lg:text-base"
+              className="mt-3.5 inline-flex h-9 items-center justify-center gap-1.5 rounded-full bg-white px-3.5 text-xs font-medium text-[#171214] shadow-sm transition hover:bg-gray-100 active:scale-95 sm:mt-4 sm:h-10 sm:px-5 sm:text-sm md:mt-6 md:h-11 md:px-6 lg:mt-8 lg:h-12 lg:px-8 lg:text-base"
             >
               Shop Spare Parts
               <span aria-hidden="true">→</span>

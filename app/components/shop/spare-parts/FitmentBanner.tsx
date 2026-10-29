@@ -20,13 +20,13 @@ export default function FitmentBanner({ onCheck, result, inputId = "appliance-mo
           <ShieldCheck aria-hidden="true" className="h-[19px] w-[19px] sm:h-6 sm:w-6" strokeWidth={1.8} />
         </span>
         <div className="min-w-0 flex-1 leading-tight">
-          <p className="text-[11px] font-bold text-[#292929] sm:text-sm">Guaranteed Exact Fitment</p>
+          <p className="text-[11px] font-medium text-[#292929] sm:text-sm">Guaranteed Exact Fitment</p>
           <p className="mt-1 text-[9px] leading-snug text-[#85858B] sm:text-xs">Enter appliance model number</p>
         </div>
         <button
           type="button"
           onClick={() => onCheck(model.trim())}
-          className="inline-flex h-8 shrink-0 items-center gap-0.5 rounded-lg bg-[#D8102B] pl-2.5 pr-1.5 text-[10px] font-semibold text-white transition-colors hover:bg-[#B90D25] active:scale-[0.97] sm:h-9 sm:gap-1 sm:rounded-xl sm:pl-3.5 sm:pr-2.5 sm:text-xs"
+          className="inline-flex h-8 shrink-0 items-center gap-0.5 rounded-lg bg-[#D8102B] pl-2.5 pr-1.5 text-[10px] font-medium text-white transition-colors hover:bg-[#B90D25] active:scale-[0.97] sm:h-9 sm:gap-1 sm:rounded-xl sm:pl-3.5 sm:pr-2.5 sm:text-xs"
         >
           <span className="whitespace-nowrap">Check Model</span>
           <ChevronRight aria-hidden="true" className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -40,7 +40,7 @@ export default function FitmentBanner({ onCheck, result, inputId = "appliance-mo
         }}
         className="hidden w-full rounded-2xl border border-zinc-200 bg-white p-3 sm:p-4 md:block"
       >
-        <label htmlFor={inputId} className="block text-sm font-bold text-zinc-900">
+        <label htmlFor={inputId} className="block text-sm font-medium text-zinc-900">
           What is the model on the appliance?
         </label>
         <p className="mt-1 text-xs text-zinc-500">Example: WW70T4020EE or RT28M3022S8</p>
@@ -52,7 +52,7 @@ export default function FitmentBanner({ onCheck, result, inputId = "appliance-mo
             placeholder="Enter model number"
             className="h-11 min-w-0 flex-1 rounded-xl border border-zinc-200 px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary"
           />
-          <button type="submit" className="inline-flex h-11 items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-white">
+          <button type="submit" className="inline-flex h-11 items-center justify-center rounded-xl bg-primary px-4 text-sm font-medium text-white">
             Check
           </button>
         </div>
@@ -60,7 +60,7 @@ export default function FitmentBanner({ onCheck, result, inputId = "appliance-mo
           <p role="status" className="mt-3 text-sm text-zinc-700">
             {result}{" "}
             {result.includes("could not match") && (
-              <Link href="/shop/requests" className="font-semibold text-primary">
+              <Link href="/shop/requests" className="font-medium text-primary">
                 Request help
               </Link>
             )}

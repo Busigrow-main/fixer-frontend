@@ -10,7 +10,7 @@ export default function SpecsGrid({ specs, cols = "2" }: Props) {
       {specs.map((s) => (
         <div key={s.label} className="rounded-xl bg-zinc-100 px-3.5 py-3">
           <dt className="text-[11px] text-zinc-500">{s.label}</dt>
-          <dd className="mt-0.5 text-[13px] font-bold text-zinc-900">{s.value}</dd>
+          <dd className="mt-0.5 text-[13px] font-medium text-zinc-900">{s.value}</dd>
         </div>
       ))}
     </dl>

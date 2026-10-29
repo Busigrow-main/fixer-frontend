@@ -37,7 +37,7 @@ function ModelsSheet({
         className="flex max-h-[80dvh] w-full max-w-md flex-col rounded-3xl bg-white shadow-2xl"
       >
         <div className="flex items-center justify-between px-5 pb-3 pt-4">
-          <h3 className="text-lg font-bold text-zinc-900">
+          <h3 className="text-lg font-medium text-zinc-900">
             Compatible models <span className="text-sm font-medium text-zinc-400">({models.length})</span>
           </h3>
           <button
@@ -66,7 +66,7 @@ function ModelsSheet({
               <button
                 type="button"
                 onClick={() => onPick(m)}
-                className="flex h-12 w-full items-center justify-between text-left text-sm font-semibold text-zinc-800"
+                className="flex h-12 w-full items-center justify-between text-left text-sm font-medium text-zinc-800"
               >
                 {m}
                 <span className="material-symbols-outlined text-[18px] text-zinc-300">chevron_right</span>
@@ -107,7 +107,7 @@ export default function CompatibilityChecker({ models, previewCount = 3 }: Props
           <span className="material-symbols-outlined text-[22px]">task_alt</span>
         </span>
         <div className="min-w-0">
-          <h2 className="text-base font-bold leading-tight text-zinc-900">Check Compatibility</h2>
+          <h2 className="text-base font-medium leading-tight text-zinc-900">Check Compatibility</h2>
           <p className="mt-0.5 text-xs leading-snug text-zinc-500">
             Enter your appliance model number to confirm fitment
           </p>
@@ -173,14 +173,14 @@ export default function CompatibilityChecker({ models, previewCount = 3 }: Props
         </div>
       )}
 
-      <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.12em] text-zinc-500">Compatible models</p>
+      <p className="mt-4 text-[10px] font-medium uppercase tracking-[0.12em] text-zinc-500">Compatible models</p>
       <div className="mt-2 flex flex-wrap items-center gap-2">
         {preview.map((m) => (
           <button
             key={m}
             type="button"
             onClick={() => pick(m)}
-            className="rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-semibold text-zinc-700 transition active:scale-95"
+            className="rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-700 transition active:scale-95"
           >
             {m}
           </button>
@@ -189,7 +189,7 @@ export default function CompatibilityChecker({ models, previewCount = 3 }: Props
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="rounded-lg bg-teal-50 px-3 py-1.5 text-xs font-bold text-teal-700 transition active:scale-95"
+            className="rounded-lg bg-teal-50 px-3 py-1.5 text-xs font-medium text-teal-700 transition active:scale-95"
           >
             +{more} more models
           </button>
@@ -197,7 +197,7 @@ export default function CompatibilityChecker({ models, previewCount = 3 }: Props
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="ml-auto text-xs font-bold text-primary hover:underline"
+          className="ml-auto text-xs font-medium text-primary hover:underline"
         >
           View All
         </button>

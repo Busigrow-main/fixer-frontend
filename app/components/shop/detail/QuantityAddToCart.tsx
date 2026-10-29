@@ -25,11 +25,11 @@ export default function QuantityAddToCart({ qty, onQty, onAdd, max = 10, disable
   }, [added]);
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-200 bg-white/95 px-3 pt-3 pb-[max(.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_24px_-20px_rgba(0,0,0,.35)] backdrop-blur lg:hidden">
+    <div className="mobile-bottom-cta fixed inset-x-0 z-40 border-t border-zinc-200 bg-white/95 px-3 py-2 shadow-[0_-8px_24px_-20px_rgba(0,0,0,.35)] backdrop-blur lg:hidden">
       <div className="mx-auto flex max-w-[1280px] items-center gap-2 sm:gap-4">
       <div className="hidden min-w-0 flex-1 sm:block">
         <p className="text-[11px] font-medium text-zinc-500">Price</p>
-        <p className="truncate text-lg font-extrabold text-zinc-900">₹{price.toLocaleString("en-IN")}</p>
+        <p className="truncate text-lg font-semibold text-zinc-900">₹{price.toLocaleString("en-IN")}</p>
       </div>
       <div className="flex shrink-0 items-center rounded-xl border border-zinc-200" role="group" aria-label="Quantity">
         <button
@@ -41,7 +41,7 @@ export default function QuantityAddToCart({ qty, onQty, onAdd, max = 10, disable
         >
           <span className="material-symbols-outlined text-[22px]">remove</span>
         </button>
-        <span aria-live="polite" className="w-7 text-center text-base font-bold text-zinc-900">
+        <span aria-live="polite" className="w-7 text-center text-base font-medium tabular-nums text-zinc-900">
           {qty}
         </span>
         <button
@@ -67,7 +67,7 @@ export default function QuantityAddToCart({ qty, onQty, onAdd, max = 10, disable
             setAdding(false);
           }
         }}
-        className={`flex h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl text-[15px] font-bold transition active:scale-[0.98] disabled:cursor-not-allowed ${
+        className={`flex h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl text-[15px] font-medium transition active:scale-[0.98] disabled:cursor-not-allowed ${
           added
             ? "border border-green-200 bg-green-50 text-green-700"
             : outOfStock
@@ -78,7 +78,7 @@ export default function QuantityAddToCart({ qty, onQty, onAdd, max = 10, disable
         {outOfStock ? null : added ? <span className="material-symbols-outlined text-[20px]">check</span> : <ShoppingCart className="h-5 w-5" aria-hidden="true" />}
         {outOfStock ? "Out of stock" : adding ? "Adding…" : added ? "Added to cart" : "Add to cart"}
       </button>
-      {added && <Link href="/cart" className="whitespace-nowrap text-xs font-bold text-primary">View cart</Link>}
+      {added && <Link href="/cart" className="whitespace-nowrap text-xs font-medium text-primary">View cart</Link>}
       </div>
     </div>
   );
