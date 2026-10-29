@@ -30,7 +30,7 @@ const POINTS = [
     icon: "workspace_premium",
     eyebrow: "GUARANTEE",
     title: "60-Day Service Warranty",
-    body: "We stand by our mastery. All repairs include a 60-day service warranty and 6 months on genuine Fixxer-installed parts.",
+    body: "We stand by our mastery. All repairs include a 60-day service warranty and upto 6 months on genuine Fixxer-installed on selected parts.",
     highlight: "6 months on genuine parts",
     color: "bg-tertiary-container",
     iconColor: "text-tertiary",
@@ -274,7 +274,9 @@ export default function DifferenceSection() {
                           {eyebrow}
                         </p>
 
-                        <h3 className="max-w-[280px] text-base font-bold leading-tight tracking-[-0.02em] text-on-surface md:text-[1.7rem] md:leading-[1.05] md:tracking-[-0.035em]">
+                        {/* Two-line minimum on desktop so all three titles
+                            start their text at the same height. */}
+                        <h3 className="max-w-[300px] text-base font-bold leading-tight tracking-[-0.02em] text-on-surface md:min-h-[2.1em] md:text-[1.7rem] md:leading-[1.05] md:tracking-[-0.035em]">
                           {title}
                         </h3>
                       </div>

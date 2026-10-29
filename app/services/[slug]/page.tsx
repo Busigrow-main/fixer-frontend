@@ -139,7 +139,7 @@ export default async function ServiceDetail({ params }: { params: Promise<{ slug
                   </p>
                 </div>
                 <Link href="/warranty" className="text-xs font-black uppercase tracking-widest text-primary hover:underline">
-                  60-day warranty included
+                  60-day service warranty included
                 </Link>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
