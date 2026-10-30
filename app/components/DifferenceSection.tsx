@@ -7,7 +7,7 @@ const POINTS = [
   {
     icon: "verified_user",
     eyebrow: "EXPERTISE",
-    title: "25 Years Experience",
+    title: "25+ Years Experience",
     body: "Two decades of technical mastery. Every Fixxer pro is background-checked and highly trained for your complete peace of mind.",
     highlight: "Background-checked professionals",
     color: "bg-primary-container",
