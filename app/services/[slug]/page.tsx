@@ -5,6 +5,7 @@ import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 import BookingForm from "@/app/components/BookingForm";
 import BookRepairButton from "./BookRepairButton";
+import LazyMount from "./LazyMount";
 import { notFound } from "next/navigation";
 import { getServiceImage } from "@/app/lib/services";
 
@@ -14,13 +15,6 @@ const STEPS = [
   { icon: "request_quote", title: "Approve the price", text: "Spare parts and extra repairs are quoted first. Nothing starts without your OK." },
   { icon: "verified", title: "Fixed and covered", text: "Your repair is done and backed by a 60-day service warranty." },
 ];
-
-/* Spacing scale used across the page:
-   hero top padding : pt-14 lg:pt-32  (clears the fixed navbar, same as your original)
-   section padding  : py-10 md:py-14 lg:py-16
-   heading → content: mb-6 md:mb-8
-   card grids       : gap-4 md:gap-5
-   card padding     : p-5 md:p-6                                   */
 
 export default async function ServiceDetail({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -251,8 +245,8 @@ export default async function ServiceDetail({ params }: { params: Promise<{ slug
           </div>
         </section>
 
-        {/* ── Booking form (no overflow clipping; scroll-mt clears the fixed navbar) ── */}
-        <section id="book" className="relative bg-white py-10 md:py-14 lg:py-16 scroll-mt-28">
+        {/* ── Booking form ── */}
+        <section className="relative bg-white py-10 md:py-14 lg:py-16">
           <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
             <div className="absolute bottom-0 left-0 w-[320px] md:w-[520px] h-[320px] md:h-[520px] bg-primary/5 rounded-full blur-[90px] md:blur-[120px] -translate-x-1/3 translate-y-1/3" />
           </div>
@@ -280,7 +274,7 @@ export default async function ServiceDetail({ params }: { params: Promise<{ slug
                 </ul>
               </div>
 
-              {/* Right: form */}
+              {/* Right: form (created only when scrolled into view) */}
               <div className="min-w-0 w-full lg:col-span-7">
                 <div className="w-full rounded-3xl border border-outline bg-surface-container-low p-5 sm:p-6 lg:p-8 shadow-xl shadow-primary/5">
                   <div className="flex items-center justify-center gap-3 mb-5 md:mb-6">
@@ -290,7 +284,9 @@ export default async function ServiceDetail({ params }: { params: Promise<{ slug
                     <h3 className="font-headline text-xl text-on-surface">Fast track dispatch</h3>
                   </div>
                   <div className="min-w-0 w-full">
-                    <BookingForm initialServiceSlug={service.slug} />
+                    <LazyMount minHeight={420}>
+                      <BookingForm initialServiceSlug={service.slug} />
+                    </LazyMount>
                   </div>
                 </div>
               </div>
