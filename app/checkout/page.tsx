@@ -100,7 +100,7 @@ export default function CheckoutPage() {
         </div>
         <div className="mt-4 rounded-xl bg-zinc-50 p-3"><p className="text-xs font-medium text-zinc-800">Payment method</p><p className="mt-1 text-sm text-zinc-600">Cash on delivery</p><p className="mt-0.5 text-xs text-zinc-500">Payment is collected when your order is delivered.</p></div>
       </section>
-      <aside className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm lg:sticky lg:top-24 sm:p-5">
+      <aside className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm lg:sticky lg:top-[134px] sm:p-5">
         <h2 className="text-[15px] font-medium text-zinc-950 md:hidden">Price details</h2>
         <h2 className="hidden text-[15px] font-medium text-zinc-950 md:block">Order review</h2>
         <ul className="mt-4 hidden space-y-3 border-b border-zinc-100 pb-4 md:block">

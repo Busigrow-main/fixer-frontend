@@ -320,7 +320,7 @@ export default function ApplianceDetail({ slug }: { slug: string }) {
         </nav>
 
         <div className="lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)] lg:items-start lg:gap-12">
-          <section className="lg:sticky lg:top-8">
+          <section className="lg:sticky lg:top-[134px]">
             <ImageGallery images={images} alt={product.name} />
           </section>
 

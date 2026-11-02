@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { ArrowLeft, ClipboardList, Heart } from "lucide-react";
+import { ArrowLeft, ClipboardList, Heart, MapPin } from "lucide-react";
 import { useAuth } from "@/app/context/AuthContext";
 import { API_URL } from "@/app/config";
 import FixxerLogo from "@/app/components/FixxerLogo";
@@ -15,14 +15,21 @@ import {
   SHOP_ALL_PRODUCTS_HREF,
   SHOP_APPLIANCES_HREF,
   SHOP_SPARE_PARTS_HREF,
-  isAppliancesShopRoute,
   isSparePartsShopRoute,
 } from "@/app/lib/shop-routes";
 
-const DESKTOP_LINKS = [
+const APPLIANCE_LINK_COUNT = 5;
+
+const DEPARTMENT_LINKS: { label: string; href: string; match?: (pathname: string) => boolean }[] = [
+  { label: "All appliances", href: SHOP_APPLIANCES_HREF, match: (pathname) => pathname === SHOP_APPLIANCES_HREF },
+  { label: "Refrigerators", href: `${SHOP_APPLIANCES_HREF}?type=refrigerator` },
+  { label: "Washing machines", href: `${SHOP_APPLIANCES_HREF}?type=washing-machine` },
+  { label: "Air conditioners", href: `${SHOP_APPLIANCES_HREF}?type=ac` },
+  { label: "Microwaves", href: `${SHOP_APPLIANCES_HREF}?type=microwave` },
   { label: "Spare parts", href: SHOP_SPARE_PARTS_HREF, match: isSparePartsShopRoute },
-  { label: "Appliances", href: SHOP_APPLIANCES_HREF, match: isAppliancesShopRoute },
-] as const;
+  { label: "All products", href: SHOP_ALL_PRODUCTS_HREF, match: (pathname) => pathname === SHOP_ALL_PRODUCTS_HREF },
+  { label: "Request a part", href: "/shop/requests", match: (pathname) => pathname === "/shop/requests" },
+];
 
 export default function ShopNavbar({
   hideMobileHeader = false,
@@ -153,31 +160,14 @@ export default function ShopNavbar({
         )}
       </header>
 
-      <header className="fixed inset-x-0 top-0 z-50 hidden h-[72px] border-b border-slate-200 bg-white md:block">
-        <div className="mx-auto flex h-full w-full max-w-[1480px] items-center gap-6 px-8 lg:gap-8 lg:px-12">
+      <header className="fixed inset-x-0 top-0 z-50 hidden border-b border-slate-200 bg-white md:block">
+        <div className="mx-auto flex h-[72px] w-full max-w-[1440px] items-center gap-6 px-8 lg:gap-10 lg:px-12">
           <Link href="/shop" className="inline-flex shrink-0 items-baseline gap-1.5" aria-label="Fixxer Shop home">
             <FixxerLogo className="text-[26px] leading-none" />
             <span className="text-[20px] font-semibold tracking-tight text-zinc-800">Shop</span>
           </Link>
 
-          <nav aria-label="Shop sections" className="hidden shrink-0 items-center gap-6 lg:flex">
-            {DESKTOP_LINKS.map((item) => {
-              const active = item.match(pathname);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`text-sm font-medium transition-colors ${
-                    active ? "text-zinc-900" : "text-zinc-500 hover:text-zinc-900"
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
-
-          <div className="min-w-0 flex-1">
+          <div className="mx-auto min-w-0 max-w-[760px] flex-1">
             <SearchBar
               value={query}
               onChange={changeQuery}
@@ -206,10 +196,40 @@ export default function ShopNavbar({
             <CartLink count={visibleCartCount} />
           </div>
         </div>
+
+        <div className="border-t border-slate-100">
+          <div className="mx-auto flex h-11 w-full max-w-[1440px] items-center justify-between gap-6 px-8 lg:px-12">
+            <nav aria-label="Shop departments" className="flex min-w-0 items-center gap-1 overflow-x-auto [scrollbar-width:none]">
+              {DEPARTMENT_LINKS.map((item, index) => {
+                const active = item.match?.(pathname) ?? false;
+                return (
+                  <Fragment key={item.href}>
+                    {index === APPLIANCE_LINK_COUNT && (
+                      <span aria-hidden="true" className="mx-2 h-4 w-px shrink-0 bg-slate-200" />
+                    )}
+                    <Link
+                      href={item.href}
+                      aria-current={active ? "page" : undefined}
+                      className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors ${
+                        active ? "bg-zinc-900 text-white" : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+                      }`}
+                    >
+                      {item.label}
+                    </Link>
+                  </Fragment>
+                );
+              })}
+            </nav>
+            <p className="hidden shrink-0 items-center gap-1.5 text-[13px] text-zinc-500 lg:flex">
+              <MapPin className="h-3.5 w-3.5 text-primary" />
+              Delivery and installation across Patna
+            </p>
+          </div>
+        </div>
       </header>
 
       {!hideMobileHeader && !flowOnMobile && <div aria-hidden="true" className="h-14 md:hidden" />}
-      <div aria-hidden="true" className="hidden h-[72px] md:block" />
+      <div aria-hidden="true" className="hidden h-[118px] md:block" />
 
       <ShopSearchDialog
         open={commandOpen}

@@ -22,8 +22,8 @@ function mergePages(current: ShopHomeResponse | null, incoming: ShopHomeResponse
   };
 }
 
-export default function ShopAllProductsPage() {
-  const [search, setSearch] = useState("");
+export default function ShopAllProductsPage({ initialQuery = "" }: { initialQuery?: string }) {
+  const [search, setSearch] = useState(initialQuery);
   const [shopData, setShopData] = useState<ShopHomeResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);

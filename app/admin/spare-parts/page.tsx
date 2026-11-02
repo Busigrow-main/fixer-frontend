@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/app/context/AuthContext";
+import { formatPrice } from "@/app/lib/utils";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/v1";
 
@@ -61,10 +62,16 @@ export default function AdminSparePartsPage() {
     try {
       const method = editModal._id ? "PUT" : "POST";
       const url = editModal._id ? `${API}/spare-parts/${editModal._id}` : `${API}/spare-parts`;
+      // The form edits rupees; the catalog stores paise.
+      const rupees = Number(editModal.price);
+      const body = {
+        ...editModal,
+        price: editModal.price === "" || !Number.isFinite(rupees) ? undefined : Math.round(rupees * 100),
+      };
       await fetch(url, {
         method,
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify(editModal),
+        body: JSON.stringify(body),
       });
       setEditModal(null);
       fetchParts();
@@ -207,7 +214,7 @@ export default function AdminSparePartsPage() {
                   </td>
                   <td style={{ fontFamily: "monospace", fontSize: 11 }}>{p.partNumber || "—"}</td>
                   <td>{p.category}</td>
-                  <td style={{ fontWeight: 600 }}>{p.price}</td>
+                  <td style={{ fontWeight: 600 }}>{typeof p.price === "number" ? formatPrice(p.price) : "—"}</td>
                   <td>
                     <span style={{ color: (p.stock || 0) > 0 ? "var(--admin-success)" : "var(--admin-error)", fontWeight: 600 }}>
                       {p.stock || 0}
@@ -216,7 +223,7 @@ export default function AdminSparePartsPage() {
                   <td>{p.manufacturer || "—"}</td>
                   <td>
                     <div style={{ display: "flex", gap: 4 }}>
-                      <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => setEditModal({ ...p })}>
+                      <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => setEditModal({ ...p, price: typeof p.price === "number" ? p.price / 100 : "" })}>
                         <span className="material-symbols-outlined" style={{ fontSize: 16 }}>edit</span>
                       </button>
                       <button className="admin-btn admin-btn-danger admin-btn-sm" onClick={() => setDeleteConfirm(p._id)}>
@@ -263,7 +270,7 @@ export default function AdminSparePartsPage() {
                 { key: "partNumber", label: "Part Number", full: false },
                 { key: "category", label: "Category", full: false },
                 { key: "subCategory", label: "Sub Category", full: false },
-                { key: "price", label: "Price", full: false },
+                { key: "price", label: "Price per unit (₹)", full: false, type: "number" },
                 { key: "stock", label: "Stock", full: false, type: "number" },
                 { key: "manufacturer", label: "Manufacturer", full: false },
                 { key: "seller", label: "Seller", full: false },

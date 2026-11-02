@@ -5,12 +5,14 @@ import ShopNavbar from "@/app/components/shop/ShopNavbar";
 import ShopHero from "@/app/components/shop/ShopHero";
 import ShopCategorySwitch from "@/app/components/shop/ShopCategorySwitch";
 import ShopLandingSections from "@/app/components/shop/ShopLandingSections";
+import ShopDesktopHome from "@/app/components/shop/ShopDesktopHome";
 import SearchBar from "@/app/components/shop/spare-parts/SearchBar";
 import { useShopHome } from "@/app/lib/use-shop-home";
 
 export default function ShopHomePage() {
   const [search, setSearch] = useState("");
   const { shopData, loading, error, loadShopHome } = useShopHome();
+  const searching = Boolean(search.trim());
 
   return (
     <div className="shop-shell -mt-14 min-h-screen bg-[#f4f4f6] md:mt-0 md:bg-[#f6f6f6]">
@@ -23,17 +25,35 @@ export default function ShopHomePage() {
             placeholder="Search ACs, parts, brands…"
           />
         </div>
-        {!search.trim() && <ShopHero />}
-        {!search.trim() && <div className="w-full md:mx-auto md:max-w-xl lg:hidden">
-          <ShopCategorySwitch showActive={false} />
-        </div>}
-        <ShopLandingSections
-          searchValue={search}
-          shopData={shopData}
-          loading={loading}
-          error={error}
-          onRetry={loadShopHome}
-        />
+        {searching ? (
+          <ShopLandingSections
+            searchValue={search}
+            shopData={shopData}
+            loading={loading}
+            error={error}
+            onRetry={loadShopHome}
+          />
+        ) : (
+          <>
+            <div className="flex flex-col gap-3 md:hidden">
+              <ShopHero />
+              <ShopCategorySwitch showActive={false} />
+              <ShopLandingSections
+                shopData={shopData}
+                loading={loading}
+                error={error}
+                onRetry={loadShopHome}
+              />
+            </div>
+            <ShopDesktopHome
+              className="hidden md:flex"
+              shopData={shopData}
+              loading={loading}
+              error={error}
+              onRetry={loadShopHome}
+            />
+          </>
+        )}
       </main>
     </div>
   );

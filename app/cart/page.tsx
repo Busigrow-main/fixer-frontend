@@ -263,7 +263,7 @@ export default function CartPage() {
               {cart.coupons.map((coupon) => <div key={coupon.code} className="mt-2 flex items-center justify-between gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-800"><span><span className="font-medium">{coupon.code}</span> · {coupon.title} ({coupon.discountText})</span><button type="button" onClick={() => void removeCoupon(coupon.code)} className="font-medium underline">Remove</button></div>)}
             </section>
 
-            <aside className="space-y-3 lg:sticky lg:top-24 lg:col-start-2 lg:row-start-1">
+            <aside className="space-y-3 lg:sticky lg:top-[134px] lg:col-start-2 lg:row-start-1">
               <section className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-5">
                 <h2 className="text-[15px] font-medium text-zinc-950">Price details</h2>
                 <div className="mt-3 space-y-2.5 border-b border-zinc-100 pb-3 text-sm">

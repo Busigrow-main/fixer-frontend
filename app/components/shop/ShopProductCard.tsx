@@ -60,7 +60,8 @@ export default function ShopProductCard({ part, onRequest, inCart = false }: Sho
 
   const identifier = part.slug || part.sku || part._id || part.id || "";
   const detailHref = part.detailHref || `/shop/spare-parts/${encodeURIComponent(part.sku || identifier)}`;
-  const image = part.imageUrls?.[0] || part.imageUrl;
+  const [imageFailed, setImageFailed] = useState(false);
+  const image = imageFailed ? undefined : part.imageUrls?.[0] || part.imageUrl;
   const hasPrice = typeof part.price === "number" && part.price > 0;
   const hasMrp = typeof part.mrp === "number" && part.mrp > 0 && part.mrp > (part.price || 0);
   const discount = hasMrp && hasPrice ? Math.round(((part.mrp! - part.price!) / part.mrp!) * 100) : 0;
@@ -119,7 +120,7 @@ export default function ShopProductCard({ part, onRequest, inCart = false }: Sho
         <div className="relative aspect-[5/4] overflow-hidden rounded-[13px] bg-gradient-to-b from-[#f7f7f8] to-[#ededf0]">
           <Link href={detailHref} aria-label={`View ${part.name}`} className="absolute inset-0">
             {image ? (
-              <Image src={image} alt={part.name} fill unoptimized sizes="50vw" className="object-contain p-2.5 mix-blend-multiply" />
+              <Image src={image} alt={part.name} fill unoptimized sizes="50vw" onError={() => setImageFailed(true)} className="object-contain p-2.5 mix-blend-multiply" />
             ) : (
               <span className="flex h-full items-center justify-center text-[#c7c7cc]" aria-label="Product image unavailable">
                 <ImageIcon className="h-8 w-8" strokeWidth={1.25} />
@@ -203,7 +204,7 @@ export default function ShopProductCard({ part, onRequest, inCart = false }: Sho
         <div className="relative m-2.5 aspect-square overflow-hidden rounded-xl bg-[#f6f6f6]">
           <Link href={detailHref} aria-label={`View ${part.name}`} className="absolute inset-0">
             {image ? (
-              <Image src={image} alt={part.name} fill unoptimized sizes="280px" className="object-contain p-3 transition-transform duration-300 group-hover:scale-[1.03]" />
+              <Image src={image} alt={part.name} fill unoptimized sizes="280px" onError={() => setImageFailed(true)} className="object-contain p-3 transition-transform duration-300 group-hover:scale-[1.03]" />
             ) : (
               <span className="flex h-full items-center justify-center text-zinc-300" aria-label="Product image unavailable">
                 <ImageIcon className="h-10 w-10" strokeWidth={1.25} />
@@ -222,7 +223,7 @@ export default function ShopProductCard({ part, onRequest, inCart = false }: Sho
           {part.description && <p className="mt-1 truncate text-[12px] text-zinc-500" title={part.description}>{part.description}</p>}
           {typeof part.fitCount === "number" && part.fitCount > 0 && <p className="mt-1 text-[12px] text-zinc-600">Fits {part.fitCount} models</p>}
           <div className="mt-auto pt-2">
-            {part.rating && (
+            {hasReviews && (
               <p className="mb-1 flex items-center gap-1 text-[13px] font-medium text-zinc-700">
                 <Star className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
                 <span>{part.rating}</span>
