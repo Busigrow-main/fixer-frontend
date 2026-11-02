@@ -104,7 +104,14 @@ export function AdminOrderDetail({
       }
       const data = await res.json();
       setOrder(data);
-      setLineItems(data.invoiceData?.lineItems ?? lineItems);
+      setLineItems(
+        data.invoiceData?.lineItems
+          ? normalizeBillLines(
+              data.invoiceData.lineItems,
+              data.orderType === "appliance" ? data.applianceItem?.quantity : 1,
+            )
+          : lineItems,
+      );
       setMessage("Bill saved.");
     } catch (e: unknown) {
       setMessage(e instanceof Error ? e.message : "Failed to save bill");
@@ -134,7 +141,14 @@ export function AdminOrderDetail({
       }
       const data = await res.json();
       setOrder(data);
-      setLineItems(data.invoiceData?.lineItems ?? lineItems);
+      setLineItems(
+        data.invoiceData?.lineItems
+          ? normalizeBillLines(
+              data.invoiceData.lineItems,
+              data.orderType === "appliance" ? data.applianceItem?.quantity : 1,
+            )
+          : lineItems,
+      );
       setTaxPercent(data.invoiceData?.taxPercent ?? 0);
       setMessage("Payment marked complete. Invoice is now available to the customer.");
     } catch (e: unknown) {
@@ -395,13 +409,19 @@ export function AdminOrderDetail({
                   </td>
                   <td>
                     <input
-                      type="number"
-                      min={1}
+                      type="text"
+                      inputMode="numeric"
                       className="admin-input"
-                      value={row.quantity}
-                      onChange={(e) =>
-                        updateLine(index, { quantity: Math.max(1, Number(e.target.value) || 1) })
-                      }
+                      style={{ textAlign: "center", color: "var(--admin-text)" }}
+                      value={String(Math.max(1, Number(row.quantity) || 1))}
+                      onChange={(e) => {
+                        const nextQuantity = Number.parseInt(e.target.value, 10);
+                        updateLine(index, {
+                          quantity: Number.isFinite(nextQuantity) && nextQuantity > 0
+                            ? nextQuantity
+                            : 1,
+                        });
+                      }}
                     />
                   </td>
                   <td>
