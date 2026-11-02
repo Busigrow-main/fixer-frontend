@@ -169,12 +169,18 @@ function FilterOptions({
 
 /* ---------- page ---------- */
 
-export default function SparePartsPage() {
+export default function SparePartsPage({
+  initialQuery = "",
+  initialCategory = "all",
+}: {
+  initialQuery?: string;
+  initialCategory?: string;
+}) {
   const router = useRouter();
   const { openBooking } = useBooking();
 
-  const [query, setQuery] = useState("");
-  const [category, setCategory] = useState("all");
+  const [query, setQuery] = useState(initialQuery);
+  const [category, setCategory] = useState(initialCategory);
   const [sort, setSort] = useState<SortKey>("relevance");
 
   const [filters, setFilters] = useState<Filters>({
@@ -190,12 +196,6 @@ export default function SparePartsPage() {
   const [loadError, setLoadError] = useState(false);
   const [retry, setRetry] = useState(0);
   const [fitmentResult, setFitmentResult] = useState("");
-
-  useEffect(() => {
-    const initial = new URLSearchParams(window.location.search).get("q");
-
-    if (initial) setQuery(initial);
-  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -415,7 +415,7 @@ export default function SparePartsPage() {
         {/* Main content grid */}
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-[230px_minmax(0,1fr)] lg:gap-6">
           {/* Desktop filters */}
-          <aside className="hidden self-start rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_2px_8px_rgba(15,23,42,0.03)] lg:sticky lg:top-6 lg:block">
+          <aside className="hidden self-start rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_2px_8px_rgba(15,23,42,0.03)] lg:sticky lg:top-[134px] lg:block">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
                 <h2 className="text-base font-medium text-slate-900">

@@ -11,5 +11,5 @@ const categoryKeys: Record<string, string> = {
 
 export default async function Page({ searchParams }: { searchParams: Promise<{ type?: string }> }) {
   const { type } = await searchParams;
-  return <ApplianceShopPage initialCategory={categoryKeys[type ?? ""] ?? "all"} />;
+  return <ApplianceShopPage key={type ?? ""} initialCategory={categoryKeys[type ?? ""] ?? "all"} />;
 }

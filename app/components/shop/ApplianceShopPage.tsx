@@ -143,7 +143,7 @@ export default function ApplianceShopPage({ initialCategory = "all" }: { initial
       <div className="md:hidden"><SpareHeader title="Appliances" location="Patna - 800001" onBack={() => router.push("/shop")} /></div>
 
       <main className="mx-auto flex w-full max-w-[560px] flex-col gap-2 px-3 pb-28 pt-[52px] sm:max-w-[720px] sm:px-4 sm:pt-14 md:max-w-[1480px] md:gap-5 md:px-8 md:pb-16 md:pt-8 lg:px-12">
-        <div className="sticky top-[52px] z-40 -mx-3 bg-[#f4f4f6] px-3 sm:top-14 md:hidden"><SearchBar value={query} onChange={setQuery} placeholder="Search for appliances, brands, or models..." /></div>
+        <div className="sticky top-[52px] z-40 -mx-3 bg-[#f4f4f6] px-3 sm:top-14 md:hidden"><SearchBar value={query} onChange={setQuery} placeholder="Search appliances, brands…" /></div>
         <div className="w-full md:mx-auto md:max-w-[520px]"><ShopCategorySwitch /></div>
         <section className="hidden border-b border-slate-200 pb-5 md:block">
           <div>
@@ -154,7 +154,7 @@ export default function ApplianceShopPage({ initialCategory = "all" }: { initial
         </section>
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[230px_minmax(0,1fr)] lg:gap-6">
-          <aside className="hidden self-start rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_2px_8px_rgba(15,23,42,0.03)] lg:sticky lg:top-6 lg:block">
+          <aside className="hidden self-start rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_2px_8px_rgba(15,23,42,0.03)] lg:sticky lg:top-[134px] lg:block">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div><h2 className="text-base font-medium text-slate-900">Categories</h2><p className="mt-0.5 text-xs text-slate-500">Shop by appliance</p></div>
               <button type="button" onClick={clearAll} className="text-xs font-medium text-primary hover:underline">Clear</button>

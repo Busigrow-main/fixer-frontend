@@ -335,7 +335,7 @@ export default function SparePartDetail({ id }: { id: string }) {
         </nav>
 
         <div className="grid items-start gap-3 sm:gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(420px,.92fr)] lg:gap-8 xl:gap-12">
-          <section className="rounded-2xl border border-zinc-200 bg-white p-2 shadow-sm sm:p-5 lg:sticky lg:top-20">
+          <section className="rounded-2xl border border-zinc-200 bg-white p-2 shadow-sm sm:p-5 lg:sticky lg:top-[134px]">
             <ImageGallery images={images} alt={part.name} />
           </section>
 

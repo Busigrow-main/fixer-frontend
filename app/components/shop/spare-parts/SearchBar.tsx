@@ -1,5 +1,6 @@
-
 "use client";
+
+import { Search, X } from "lucide-react";
 
 type Props = {
   value: string;
@@ -15,59 +16,52 @@ export default function SearchBar({
   onChange,
   onSubmit,
   onVoice,
-  placeholder = "Search for genuine spare parts, model no...",
+  placeholder = "Search ACs, parts, brands…",
   className = "",
 }: Props) {
   return (
     <form
       role="search"
-      onSubmit={(e) => {
-        e.preventDefault();
+      onSubmit={(event) => {
+        event.preventDefault();
         onSubmit?.();
       }}
       className={`relative w-full ${className}`}
     >
-      {/* Search icon */}
       <span
         aria-hidden="true"
-        className="material-symbols-outlined pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[17px] text-[#9A9BA1] sm:left-3 sm:text-[19px]"
+        className="pointer-events-none absolute left-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-[#e9002d]/10 text-[#e9002d] sm:left-2.5"
       >
-        search
+        <Search className="h-[15px] w-[15px]" strokeWidth={2.25} />
       </span>
 
-      {/* Search input */}
       <input
         data-shop-search
         type="search"
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         aria-label="Search products"
-        className="h-[38px] w-full rounded-[10px] border border-[#E5E5E9] bg-white pl-9 pr-9 text-[11px] font-normal text-[#292929] outline-none transition placeholder:text-[#999AA0] focus:border-primary focus:ring-2 focus:ring-primary sm:h-10 sm:rounded-xl sm:pl-10 sm:text-sm [&::-webkit-search-cancel-button]:hidden"
+        className="h-11 w-full rounded-full border-0 bg-white pl-[42px] pr-11 text-[13px] font-medium tracking-[-0.01em] text-[#1d1d1f] outline-none shadow-[0_1px_2px_rgba(16,16,20,0.06),0_0_0_1px_rgba(16,16,20,0.05)] placeholder:font-normal placeholder:text-[#8e8e93] transition focus:shadow-[0_1px_3px_rgba(233,0,45,0.12),0_0_0_1.5px_rgba(233,0,45,0.38)] sm:h-12 sm:pl-12 sm:text-sm [&::-webkit-search-cancel-button]:hidden"
       />
 
-      {/* Microphone / clear button */}
       {value ? (
         <button
           type="button"
           aria-label="Clear search"
           onClick={() => onChange("")}
-          className="absolute right-1 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-[#77787D] transition hover:bg-[#F5F5F6] active:scale-95"
+          className="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-[#6e6e73] transition hover:bg-[#f2f2f4] active:scale-95"
         >
-          <span className="material-symbols-outlined text-[17px]">
-            close
-          </span>
+          <X className="h-4 w-4" strokeWidth={2.2} />
         </button>
       ) : onVoice ? (
         <button
           type="button"
           aria-label="Search by voice"
           onClick={onVoice}
-          className="absolute right-1 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-[#77787D] transition hover:bg-[#F5F5F6] active:scale-95"
+          className="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-[#6e6e73] transition hover:bg-[#f2f2f4] active:scale-95"
         >
-          <span className="material-symbols-outlined text-[17px]">
-            mic
-          </span>
+          <span className="material-symbols-outlined text-[17px]">mic</span>
         </button>
       ) : null}
     </form>
