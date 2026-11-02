@@ -55,7 +55,7 @@ export default function ShopRequestsPage() {
   return (
     <div className="shop-shell -mt-14 min-h-screen bg-[#f5f6f8] md:mt-0 md:bg-[#f6f6f6]">
       <ShopNavbar />
-      <main className="mx-auto w-full max-w-3xl px-4 pb-24 pt-3 sm:pt-6 md:pb-28 md:pt-8">
+      <main className="mx-auto w-full max-w-3xl px-4 pb-24 pt-3 sm:pt-6 md:pb-16 md:pt-8">
         <p className="text-xs font-medium uppercase tracking-widest text-zinc-500">Fixxer Shop</p>
         <h1 className="mt-1 text-2xl font-semibold text-zinc-950 sm:text-3xl">Part help requests</h1>
         <p className="mt-1 text-sm text-zinc-600">Track requests for help identifying a compatible spare part.</p>

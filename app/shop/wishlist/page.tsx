@@ -19,7 +19,7 @@ export default function ShopWishlistPage() {
   return (
     <div className="shop-shell -mt-14 min-h-screen bg-[#f4f4f6] md:mt-0 md:bg-[#f6f6f6]">
       <ShopNavbar />
-      <main className="mx-auto flex w-full max-w-[560px] flex-col gap-3 px-3 pb-28 pt-3 sm:max-w-[720px] sm:px-4 md:max-w-[1440px] md:gap-8 md:px-8 md:pb-28 md:pt-10">
+      <main className="mx-auto flex w-full max-w-[560px] flex-col gap-3 px-3 pb-28 pt-3 sm:max-w-[720px] sm:px-4 md:max-w-[1440px] md:gap-8 md:px-8 md:pb-16 md:pt-8">
         <h1 className="text-[16px] font-medium text-slate-900 md:text-2xl md:font-semibold">Wishlist</h1>
         {items.length === 0 ? (
           <div className="rounded-[20px] bg-white px-4 py-10 text-center">

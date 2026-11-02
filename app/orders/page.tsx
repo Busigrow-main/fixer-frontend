@@ -122,7 +122,7 @@ export default function OrdersPage() {
   return (
     <div className="shop-shell -mt-14 min-h-screen bg-[#f5f6f8] md:mt-0 md:bg-[#f6f6f6]">
       <ShopNavbar mobileTitle="Orders" mobileBackHref="/shop" />
-      <main className="mx-auto w-full max-w-3xl px-3 pb-24 pt-2 sm:px-5 md:pb-28 md:pt-8">
+      <main className="mx-auto w-full max-w-3xl px-3 pb-24 pt-2 sm:px-5 md:pb-16 md:pt-8">
         <div className="mb-4 hidden items-end justify-between gap-3 md:flex">
           <div>
             <p className="text-xs font-medium uppercase tracking-[.14em] text-zinc-500">Fixxer Shop</p>
