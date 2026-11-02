@@ -79,7 +79,7 @@ export default function Footer() {
               Professional grade technical mastery for the modern home.
 
               <span className="block mt-2 font-bold text-zinc-900 italic">
-                25 Years of Experience
+                25+ Years of Experience
               </span>
 
               <span className="block mt-1 text-primary font-medium">

@@ -946,7 +946,7 @@ export default function BookingForm({
           <span className="material-symbols-outlined text-[13px]">lock</span>
           {isLast && !user
             ? "We use your mobile number to save and manage this booking."
-            : "60 days service warranty"}
+            : "60 Days Service Warranty"}
         </p>
       </div>
     </form>
