@@ -1,3 +1,5 @@
+import { normalizeBillLines } from "@/app/lib/order-bill";
+
 /** E-commerce style tax invoice (Flipkart / Amazon inspired) for print & PDF. */
 
 const SELLER = {
@@ -103,12 +105,16 @@ type LineRow = {
 function resolveLineItems(order: any): LineRow[] {
   const inv = order.invoiceData;
   if (inv?.lineItems?.length) {
-    return inv.lineItems.map((row: LineRow) => ({
+    const applianceQuantity =
+      order.orderType === "appliance" ? order.applianceItem?.quantity : 1;
+    return normalizeBillLines(inv.lineItems, applianceQuantity).map((row, index) => ({
       description: row.description,
       quantity: row.quantity,
       unitPrice: row.unitPrice,
       amount: row.amount ?? row.quantity * row.unitPrice,
-      hsn: row.hsn ?? (order.orderType === "appliance" ? "8415" : "9987"),
+      hsn:
+        inv.lineItems[index]?.hsn ??
+        (order.orderType === "appliance" ? "8415" : "9987"),
     }));
   }
   if (order.orderType === "appliance" && order.applianceItem) {

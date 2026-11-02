@@ -5,6 +5,20 @@ export type BillLineItem = {
   amount?: number;
 };
 
+export function normalizeBillLines(
+  lineItems: Array<Partial<BillLineItem>>,
+  fallbackQuantity = 1,
+): BillLineItem[] {
+  const defaultQuantity = Math.max(1, Number(fallbackQuantity) || 1);
+
+  return lineItems.map((row) => ({
+    description: row.description ?? "",
+    quantity: Math.max(1, Number(row.quantity) || defaultQuantity),
+    unitPrice: Math.max(0, Number(row.unitPrice) || 0),
+    ...(row.amount != null ? { amount: Number(row.amount) || 0 } : {}),
+  }));
+}
+
 export function formatInr(amount: number): string {
   return `₹${amount.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }
@@ -26,7 +40,7 @@ export function computeBillTotals(
 export function buildDefaultBillLines(order: any): BillLineItem[] {
   if (order.orderType === "appliance" && order.applianceItem) {
     const item = order.applianceItem;
-    return [
+    return normalizeBillLines([
       {
         description: item.modelNumber
           ? `${item.name} (${item.modelNumber})`
@@ -34,10 +48,10 @@ export function buildDefaultBillLines(order: any): BillLineItem[] {
         quantity: item.quantity ?? 1,
         unitPrice: Number(item.price) || 0,
       },
-    ];
+    ]);
   }
 
-  return (order.items ?? []).map((row: any) => {
+  return normalizeBillLines((order.items ?? []).map((row: any) => {
     const part = row.partId;
     const pricePaise = typeof part?.price === "number" ? part.price : 0;
     return {
@@ -45,5 +59,5 @@ export function buildDefaultBillLines(order: any): BillLineItem[] {
       quantity: row.quantity ?? 1,
       unitPrice: Math.round((pricePaise / 100) * 100) / 100,
     };
-  });
+  }));
 }

@@ -7,8 +7,8 @@ import { useBooking } from "@/app/context/BookingContext";
 const TRUST_ITEMS = [
   {
     icon: "verified_user",
-    value: "60-Day",
-    label: "Warranty",
+    value: "60 Days",
+    label: "Service Warranty",
   },
   {
     icon: "schedule",
@@ -332,6 +332,7 @@ export default function Hero() {
               grid
               w-full
               grid-cols-3
+              gap-2
               border-t border-outline/60
               pt-4
               lg:hidden
@@ -349,7 +350,7 @@ export default function Hero() {
                     items-center
                     justify-start
                     gap-1.5
-                    px-1
+                    px-2
                     py-1
                     transition-colors
                     hover:text-primary

@@ -10,6 +10,7 @@ import {
   buildDefaultBillLines,
   computeBillTotals,
   formatInr,
+  normalizeBillLines,
 } from "@/app/lib/order-bill";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/v1";
@@ -44,7 +45,9 @@ export function AdminOrderDetail({
       const data = await res.json();
       setOrder(data);
       if (data.invoiceData?.lineItems?.length) {
-        setLineItems(data.invoiceData.lineItems);
+        const applianceQuantity =
+          data.orderType === "appliance" ? data.applianceItem?.quantity : 1;
+        setLineItems(normalizeBillLines(data.invoiceData.lineItems, applianceQuantity));
         setTaxPercent(data.invoiceData.taxPercent ?? 0);
         setNotes(data.invoiceData.notes ?? "");
       } else {

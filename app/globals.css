@@ -101,7 +101,6 @@
 /* ─── Base ───────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
 html {
-  scroll-behavior: smooth;
   /* Reserve scrollbar space so nothing jumps when a dialog locks scrolling */
   scrollbar-gutter: stable;
 }

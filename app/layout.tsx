@@ -41,7 +41,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${newsreader.variable} scroll-smooth`}
+      className={`${inter.variable} ${newsreader.variable}`}
     >
       <head>
         <link
