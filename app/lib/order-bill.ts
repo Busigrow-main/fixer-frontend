@@ -1,8 +1,16 @@
+import {
+  breakdownGstInvoice,
+  type GstPriceMode,
+  type GstSupplyType,
+} from "@/app/lib/gst";
+
 export type BillLineItem = {
   description: string;
   quantity: number;
   unitPrice: number;
   amount?: number;
+  taxableAmount?: number;
+  taxAmount?: number;
 };
 
 export function formatInr(amount: number): string {
@@ -22,15 +30,40 @@ export function normalizeBillLines(lineItems: Partial<BillLineItem>[] = []): Bil
   });
 }
 
+/**
+ * Bill totals for GST-inclusive catalog prices.
+ * Grand total stays the displayed amount; GST is reverse-calculated (Rule 35).
+ */
 export function computeBillTotals(
   lineItems: BillLineItem[],
   taxPercent = 0,
-): { lineItems: BillLineItem[]; subtotal: number; taxAmount: number; totalAmount: number } {
-  const normalized = normalizeBillLines(lineItems);
-  const subtotal = normalized.reduce((sum, row) => sum + (row.amount ?? 0), 0);
-  const taxAmount = Math.round(subtotal * (taxPercent / 100) * 100) / 100;
-  const totalAmount = Math.round((subtotal + taxAmount) * 100) / 100;
-  return { lineItems: normalized, subtotal, taxAmount, totalAmount };
+  options?: {
+    priceMode?: GstPriceMode;
+    supplyType?: GstSupplyType;
+  },
+) {
+  const invoice = breakdownGstInvoice({
+    lineItems: normalizeBillLines(lineItems),
+    taxPercent,
+    priceMode: options?.priceMode ?? "INCLUSIVE",
+    supplyType: options?.supplyType ?? "INTRA",
+  });
+
+  return {
+    lineItems: invoice.lineItems,
+    subtotal: invoice.subtotal,
+    taxAmount: invoice.taxAmount,
+    totalAmount: invoice.totalAmount,
+    taxableValue: invoice.taxableValue,
+    cgstAmount: invoice.cgstAmount,
+    sgstAmount: invoice.sgstAmount,
+    igstAmount: invoice.igstAmount,
+    cgstRate: invoice.cgstRate,
+    sgstRate: invoice.sgstRate,
+    igstRate: invoice.igstRate,
+    priceMode: invoice.priceMode,
+    supplyType: invoice.supplyType,
+  };
 }
 
 export function buildDefaultBillLines(order: any): BillLineItem[] {

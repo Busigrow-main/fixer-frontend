@@ -4,7 +4,15 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/app/context/AuthContext";
-import { openOrderInvoice } from "@/app/admin/utils/order-invoice";
+import {
+  DEFAULT_INVOICE_SELLER,
+  DEFAULT_PLACE_OF_SUPPLY,
+  DEFAULT_SUPPLY_TYPE,
+  type InvoiceSoldBy,
+  type InvoiceSupplyType,
+  openOrderInvoice,
+  resolveInvoiceSeller,
+} from "@/app/admin/utils/order-invoice";
 import {
   BillLineItem,
   buildDefaultBillLines,
@@ -32,6 +40,10 @@ export function AdminOrderDetail({
   const [lineItems, setLineItems] = useState<BillLineItem[]>([]);
   const [taxPercent, setTaxPercent] = useState(0);
   const [notes, setNotes] = useState("");
+  const [placeOfSupply, setPlaceOfSupply] = useState(DEFAULT_PLACE_OF_SUPPLY);
+  const [supplyType, setSupplyType] = useState<InvoiceSupplyType>(DEFAULT_SUPPLY_TYPE);
+  const [soldBy, setSoldBy] = useState<InvoiceSoldBy>(DEFAULT_INVOICE_SELLER);
+  const [editSoldBy, setEditSoldBy] = useState(false);
   const [message, setMessage] = useState("");
   const [courierName, setCourierName] = useState("");
   const [trackingNumber, setTrackingNumber] = useState("");
@@ -59,6 +71,14 @@ export function AdminOrderDetail({
         setTaxPercent(0);
         setNotes("");
       }
+      setPlaceOfSupply(
+        data.invoiceData?.placeOfSupply?.trim() || DEFAULT_PLACE_OF_SUPPLY,
+      );
+      setSupplyType(
+        data.invoiceData?.supplyType === "INTER" ? "INTER" : DEFAULT_SUPPLY_TYPE,
+      );
+      setSoldBy(resolveInvoiceSeller(data));
+      setEditSoldBy(false);
     } catch {
       setMessage("Could not load order.");
     } finally {
@@ -71,8 +91,12 @@ export function AdminOrderDetail({
   }, [loadOrder]);
 
   const totals = useMemo(
-    () => computeBillTotals(lineItems, taxPercent),
-    [lineItems, taxPercent],
+    () =>
+      computeBillTotals(lineItems, taxPercent, {
+        priceMode: "INCLUSIVE",
+        supplyType,
+      }),
+    [lineItems, taxPercent, supplyType],
   );
 
   const updateLine = (index: number, patch: Partial<BillLineItem>) => {
@@ -89,33 +113,97 @@ export function AdminOrderDetail({
     setLineItems((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const saveBill = async () => {
-    if (!token || !id) return;
+  const billPayload = () => ({
+    lineItems: normalizeBillLines(lineItems),
+    taxPercent,
+    notes,
+    placeOfSupply: placeOfSupply.trim() || DEFAULT_PLACE_OF_SUPPLY,
+    supplyType,
+    priceMode: "INCLUSIVE" as const,
+    soldBy: {
+      name: soldBy.name.trim(),
+      address: soldBy.address.trim(),
+      gstin: soldBy.gstin.trim(),
+      pan: soldBy.pan.trim(),
+      phone: soldBy.phone.trim(),
+      email: soldBy.email.trim(),
+      website: soldBy.website.trim(),
+    },
+  });
+
+  const applyInvoiceForm = (data: any, fallbackLines?: BillLineItem[]) => {
+    setOrder(data);
+    setLineItems(
+      normalizeBillLines(data.invoiceData?.lineItems ?? fallbackLines ?? lineItems),
+    );
+    setTaxPercent(data.invoiceData?.taxPercent ?? taxPercent);
+    setNotes(data.invoiceData?.notes ?? notes);
+    setPlaceOfSupply(
+      data.invoiceData?.placeOfSupply?.trim() || placeOfSupply || DEFAULT_PLACE_OF_SUPPLY,
+    );
+    setSupplyType(
+      data.invoiceData?.supplyType === "INTER" ? "INTER" : "INTRA",
+    );
+    setSoldBy(resolveInvoiceSeller(data));
+  };
+
+  const previewOrderSnapshot = (base: any = order) => ({
+    ...base,
+    invoiceData: {
+      ...(base?.invoiceData || {}),
+      ...billPayload(),
+      ...computeBillTotals(lineItems, taxPercent),
+    },
+  });
+
+  const saveBill = async (quiet = false) => {
+    if (!token || !id) return null;
     setSaving(true);
-    setMessage("");
+    if (!quiet) setMessage("");
     try {
-      const normalized = normalizeBillLines(lineItems);
+      const payload = billPayload();
       const res = await fetch(`${API}/admin/part-orders/${id}/bill`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ lineItems: normalized, taxPercent, notes }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         const err = await res.json();
         throw new Error(err.message || "Failed to save bill");
       }
       const data = await res.json();
-      setOrder(data);
-      setLineItems(normalizeBillLines(data.invoiceData?.lineItems ?? normalized));
-      setMessage("Bill saved.");
+      applyInvoiceForm(data, payload.lineItems);
+      if (!quiet) setMessage("Bill saved.");
+      return data;
     } catch (e: unknown) {
       setMessage(e instanceof Error ? e.message : "Failed to save bill");
+      return null;
     } finally {
       setSaving(false);
     }
+  };
+
+  const previewInvoice = async () => {
+    const saved = await saveBill(true);
+    openOrderInvoice(previewOrderSnapshot(saved || order));
+  };
+
+  const markDeliveredWithPreview = async () => {
+    if (!token || !id || savingStatus) return;
+    const saved = await saveBill(true);
+    if (!saved && !order) return;
+    openOrderInvoice(previewOrderSnapshot(saved || order));
+    const ok = window.confirm(
+      "Invoice preview opened. Mark this order as delivered and post the tax invoice to the customer?",
+    );
+    if (!ok) {
+      setMessage("Delivery not marked. Preview is still available — adjust the bill and try again.");
+      return;
+    }
+    await confirmDelivered();
   };
 
   const saveTracking = async () => {
@@ -163,6 +251,10 @@ export function AdminOrderDetail({
   const updateStatus = async (nextStatus: string) => {
     if (!token || !id || savingStatus) return;
     if (nextStatus === order?.status) return;
+    if (nextStatus === "DELIVERED") {
+      await markDeliveredWithPreview();
+      return;
+    }
     setSavingStatus(true);
     setMessage("");
     try {
@@ -183,12 +275,37 @@ export function AdminOrderDetail({
       setMessage(
         nextStatus === "DISPATCHED"
           ? "Marked as sent to customer. Customer order page now shows Dispatched."
-          : nextStatus === "DELIVERED"
-            ? "Marked as delivered. Tax invoice is now available to the customer."
-            : `Status updated to ${nextStatus}.`,
+          : `Status updated to ${nextStatus}.`,
       );
     } catch (e: unknown) {
       setMessage(e instanceof Error ? e.message : "Failed to update status");
+    } finally {
+      setSavingStatus(false);
+    }
+  };
+
+  const confirmDelivered = async () => {
+    if (!token || !id) return;
+    setSavingStatus(true);
+    setMessage("");
+    try {
+      const res = await fetch(`${API}/admin/part-orders/${id}/status`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: "DELIVERED" }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Failed to mark delivered");
+      }
+      const data = await res.json();
+      applyInvoiceForm(data);
+      setMessage("Marked as delivered. Tax invoice is now available to the customer.");
+    } catch (e: unknown) {
+      setMessage(e instanceof Error ? e.message : "Failed to mark delivered");
     } finally {
       setSavingStatus(false);
     }
@@ -214,9 +331,7 @@ export function AdminOrderDetail({
         throw new Error(err.message || "Failed to mark paid");
       }
       const data = await res.json();
-      setOrder(data);
-      setLineItems(normalizeBillLines(data.invoiceData?.lineItems ?? lineItems));
-      setTaxPercent(data.invoiceData?.taxPercent ?? 0);
+      applyInvoiceForm(data);
       setMessage("Payment marked complete. The invoice will be posted to the customer after delivery.");
     } catch (e: unknown) {
       setMessage(e instanceof Error ? e.message : "Failed to mark paid");
@@ -532,11 +647,16 @@ export function AdminOrderDetail({
       )}
 
       <section className="admin-card" style={{ padding: 20 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 12, flexWrap: "wrap" }}>
           <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>Bill / Invoice</h3>
-          <div style={{ display: "flex", gap: 8 }}>
-            <button type="button" className="admin-btn admin-btn-secondary admin-btn-sm" onClick={() => openOrderInvoice(order)}>
-              Preview / Print
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <button
+              type="button"
+              className="admin-btn admin-btn-secondary admin-btn-sm"
+              disabled={saving}
+              onClick={() => void previewInvoice()}
+            >
+              Preview invoice
             </button>
             {order.status === "DELIVERED" ? (
               <span className="admin-badge admin-badge-delivered">Invoice posted to customer</span>
@@ -616,20 +736,56 @@ export function AdminOrderDetail({
           + Add line
         </button>
 
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 16, alignItems: "flex-end", marginBottom: 16 }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+            gap: 12,
+            marginBottom: 16,
+          }}
+        >
           <div>
-            <label className="admin-label">GST %</label>
+            <label className="admin-label">GST % (included in price)</label>
             <input
               type="number"
               min={0}
               max={100}
               className="admin-input"
-              style={{ width: 100 }}
               value={taxPercent}
               onChange={(e) => setTaxPercent(Number(e.target.value) || 0)}
+              list="gst-standard-rates"
+            />
+            <datalist id="gst-standard-rates">
+              <option value="0" />
+              <option value="5" />
+              <option value="12" />
+              <option value="18" />
+              <option value="28" />
+            </datalist>
+          </div>
+          <div>
+            <label className="admin-label">Supply type</label>
+            <select
+              className="admin-input admin-select"
+              value={supplyType}
+              onChange={(e) =>
+                setSupplyType(e.target.value === "INTER" ? "INTER" : "INTRA")
+              }
+            >
+              <option value="INTRA">Intra-state (CGST + SGST)</option>
+              <option value="INTER">Inter-state (IGST)</option>
+            </select>
+          </div>
+          <div>
+            <label className="admin-label">Place of supply</label>
+            <input
+              className="admin-input"
+              value={placeOfSupply}
+              onChange={(e) => setPlaceOfSupply(e.target.value)}
+              placeholder="e.g. Bihar, West Bengal"
             />
           </div>
-          <div style={{ flex: 1, minWidth: 200 }}>
+          <div>
             <label className="admin-label">Invoice notes</label>
             <input
               className="admin-input"
@@ -638,18 +794,131 @@ export function AdminOrderDetail({
               placeholder="Optional note on invoice"
             />
           </div>
+        </div>
+
+        <div
+          className="admin-card"
+          style={{
+            padding: 16,
+            marginBottom: 16,
+            background: "var(--admin-surface-2)",
+            boxShadow: "none",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: 12,
+              marginBottom: editSoldBy ? 12 : 0,
+            }}
+          >
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700 }}>Sold by</div>
+              {!editSoldBy && (
+                <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--admin-text-dim)", lineHeight: 1.5 }}>
+                  {soldBy.name}
+                  <br />
+                  {soldBy.address}
+                  <br />
+                  GSTIN: {soldBy.gstin || "—"} · PAN: {soldBy.pan || "—"}
+                  <br />
+                  {soldBy.phone} · {soldBy.email}
+                </p>
+              )}
+            </div>
+            <button
+              type="button"
+              className="admin-btn admin-btn-ghost admin-btn-sm"
+              onClick={() => setEditSoldBy((current) => !current)}
+            >
+              {editSoldBy ? "Done" : "Edit"}
+            </button>
+          </div>
+          {editSoldBy && (
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+                gap: 10,
+              }}
+            >
+              {(
+                [
+                  ["name", "Business name"],
+                  ["address", "Address"],
+                  ["gstin", "GSTIN"],
+                  ["pan", "PAN"],
+                  ["phone", "Phone"],
+                  ["email", "Email"],
+                  ["website", "Website"],
+                ] as const
+              ).map(([key, label]) => (
+                <div key={key} style={key === "address" ? { gridColumn: "1 / -1" } : undefined}>
+                  <label className="admin-label">{label}</label>
+                  <input
+                    className="admin-input"
+                    value={soldBy[key]}
+                    onChange={(e) =>
+                      setSoldBy((current) => ({ ...current, [key]: e.target.value }))
+                    }
+                    placeholder={
+                      key === "gstin" || key === "pan"
+                        ? "Enter official value"
+                        : DEFAULT_INVOICE_SELLER[key]
+                    }
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 16,
+            alignItems: "flex-end",
+            marginBottom: 16,
+          }}
+        >
           <div style={{ marginLeft: "auto", textAlign: "right", fontSize: 14 }}>
-            <p style={{ margin: "4px 0" }}>Subtotal: {formatInr(totals.subtotal)}</p>
-            {totals.taxAmount > 0 && <p style={{ margin: "4px 0" }}>Tax: {formatInr(totals.taxAmount)}</p>}
+            <p style={{ margin: "4px 0", color: "var(--admin-text-dim)" }}>
+              Display / charged total stays inclusive
+            </p>
+            <p style={{ margin: "4px 0" }}>Taxable value: {formatInr(totals.taxableValue)}</p>
+            {totals.taxAmount > 0 && (
+              <p style={{ margin: "4px 0" }}>
+                {supplyType === "INTER"
+                  ? `IGST @ ${totals.igstRate}%`
+                  : `CGST ${formatInr(totals.cgstAmount)} + SGST ${formatInr(totals.sgstAmount)}`}
+                : {formatInr(totals.taxAmount)}
+              </p>
+            )}
             <p style={{ margin: "8px 0 0", fontWeight: 800, fontSize: 18 }}>
-              Total: {formatInr(totals.totalAmount)}
+              Grand total (incl. GST): {formatInr(totals.totalAmount)}
             </p>
           </div>
         </div>
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-          <button type="button" className="admin-btn admin-btn-secondary" disabled={saving} onClick={saveBill}>
+          <button
+            type="button"
+            className="admin-btn admin-btn-secondary"
+            disabled={saving}
+            onClick={() => void saveBill()}
+          >
             Save bill draft
+          </button>
+          <button
+            type="button"
+            className="admin-btn admin-btn-secondary"
+            disabled={saving}
+            onClick={() => void previewInvoice()}
+          >
+            Preview invoice
           </button>
           <button
             type="button"
@@ -659,10 +928,22 @@ export function AdminOrderDetail({
           >
             Mark payment complete
           </button>
+          {order.status !== "DELIVERED" &&
+            order.status !== "CANCELLED" &&
+            order.status !== "RETURNED" && (
+              <button
+                type="button"
+                className="admin-btn admin-btn-primary"
+                disabled={saving || savingStatus}
+                onClick={() => void markDeliveredWithPreview()}
+              >
+                Preview & mark delivered
+              </button>
+            )}
         </div>
         <p style={{ fontSize: 11, color: "var(--admin-text-muted)", marginTop: 12 }}>
-          Saving the draft stores line items. Marking payment records collection. The tax invoice is posted to the
-          customer on Orders after the order is marked delivered.
+          Line amounts are GST-inclusive (same as shop display). The engine reverse-calculates taxable value
+          and CGST/SGST or IGST (CGST Rule 35) — grand total does not increase. Preview before marking delivered.
         </p>
       </section>
     </div>

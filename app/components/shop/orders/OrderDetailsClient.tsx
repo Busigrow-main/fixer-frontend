@@ -154,22 +154,42 @@ export default function OrderDetailsClient({ id }: { id: string }) {
 
       {order.contactData && <section className="mt-3 rounded-2xl border border-zinc-200 bg-white p-4 sm:p-5"><h2 className="text-[15px] font-medium text-zinc-900">Delivery details</h2><p className="mt-2 text-sm font-medium text-zinc-800">{order.contactData.name}</p><p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-zinc-600">{order.contactData.address}</p><p className="mt-1 text-sm text-zinc-600">{order.contactData.phone}{order.contactData.email ? ` · ${order.contactData.email}` : ""}</p>{order.contactData.notes && <p className="mt-2 text-xs text-zinc-500">{order.contactData.notes}</p>}</section>}
       {actionError && <p role="alert" className="mt-3 rounded-xl bg-rose-50 p-3 text-sm text-rose-700">{actionError}</p>}
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-4 space-y-2">
         {canCancel && (
-          <button type="button" onClick={() => setCancelOpen(true)} className="inline-flex h-11 flex-1 items-center justify-center rounded-xl border border-rose-200 bg-white px-4 text-sm font-medium text-rose-700 sm:flex-none">
+          <button
+            type="button"
+            onClick={() => setCancelOpen(true)}
+            className="inline-flex h-11 w-full items-center justify-center rounded-xl border border-rose-200 bg-white px-4 text-sm font-medium text-rose-700"
+          >
             Cancel order
           </button>
         )}
         {invoiceAvailable && (
-          <button type="button" onClick={() => openOrderInvoice(order)} className="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-800 sm:flex-none">
+          <button
+            type="button"
+            onClick={() => openOrderInvoice(order)}
+            className="inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-800"
+          >
             <FileText className="h-4 w-4" /> Download invoice
           </button>
         )}
         {!invoiceAvailable && status !== "CANCELLED" && status !== "RETURNED" && (
-          <p className="w-full text-[12px] text-zinc-500">The tax invoice is posted here after delivery.</p>
+          <p className="text-[12px] text-zinc-500">The tax invoice is posted here after delivery.</p>
         )}
-        <Link href="/shop" className="inline-flex h-11 flex-1 items-center justify-center rounded-xl border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-800 sm:flex-none">Continue shopping</Link>
-        <Link href="/orders" className="inline-flex h-11 flex-1 items-center justify-center rounded-xl bg-primary px-4 text-sm font-medium text-white sm:flex-none">All orders</Link>
+        <div className="grid grid-cols-2 gap-2">
+          <Link
+            href="/shop"
+            className="inline-flex h-11 items-center justify-center rounded-xl border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-800 whitespace-nowrap"
+          >
+            Continue shopping
+          </Link>
+          <Link
+            href="/orders"
+            className="inline-flex h-11 items-center justify-center rounded-xl bg-primary px-3 text-sm font-medium text-white whitespace-nowrap"
+          >
+            All orders
+          </Link>
+        </div>
       </div>
       <OrderCancelDialog
         open={cancelOpen}
