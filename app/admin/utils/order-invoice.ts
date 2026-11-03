@@ -2,15 +2,50 @@ import { normalizeBillLines } from "@/app/lib/order-bill";
 
 /** E-commerce style tax invoice (Flipkart / Amazon inspired) for print & PDF. */
 
-const SELLER = {
+import { breakdownGstInvoice } from "@/app/lib/gst";
+
+export type InvoiceSoldBy = {
+  name: string;
+  address: string;
+  gstin: string;
+  pan: string;
+  phone: string;
+  email: string;
+  website: string;
+};
+
+export type InvoiceSupplyType = "INTRA" | "INTER";
+
+/** Default Sold By block — admin can override per order before posting. */
+export const DEFAULT_INVOICE_SELLER: InvoiceSoldBy = {
   name: "Fixxer Service Platform",
   address: "Kolkata, West Bengal, India",
-  gstin: "19AABCF1234A1Z5",
-  pan: "AABCF1234A",
+  gstin: "",
+  pan: "",
   phone: "+91 70047 71388",
   email: "support@fixxer.in",
   website: "www.fixxer.in",
 };
+
+export const DEFAULT_PLACE_OF_SUPPLY = "West Bengal";
+export const DEFAULT_SUPPLY_TYPE: InvoiceSupplyType = "INTRA";
+
+export function resolveInvoiceSeller(order: any): InvoiceSoldBy {
+  const soldBy = order?.invoiceData?.soldBy || {};
+  return {
+    name: String(soldBy.name || DEFAULT_INVOICE_SELLER.name).trim() || DEFAULT_INVOICE_SELLER.name,
+    address:
+      String(soldBy.address || DEFAULT_INVOICE_SELLER.address).trim() ||
+      DEFAULT_INVOICE_SELLER.address,
+    gstin: String(soldBy.gstin ?? DEFAULT_INVOICE_SELLER.gstin).trim(),
+    pan: String(soldBy.pan ?? DEFAULT_INVOICE_SELLER.pan).trim(),
+    phone: String(soldBy.phone || DEFAULT_INVOICE_SELLER.phone).trim() || DEFAULT_INVOICE_SELLER.phone,
+    email: String(soldBy.email || DEFAULT_INVOICE_SELLER.email).trim() || DEFAULT_INVOICE_SELLER.email,
+    website:
+      String(soldBy.website || DEFAULT_INVOICE_SELLER.website).trim() ||
+      DEFAULT_INVOICE_SELLER.website,
+  };
+}
 
 function escapeHtml(value: unknown): string {
   return String(value ?? "")
@@ -172,24 +207,58 @@ export function openOrderInvoice(order: any) {
     order.orderType === "appliance" ? "Appliance Enquiry" : "Spare Parts";
 
   const inv = order.invoiceData;
-  const lines = resolveLineItems(order);
-  const subtotal = inv?.subtotal ?? lines.reduce((s, r) => s + r.amount, 0);
-  const taxPercent = inv?.taxPercent ?? 0;
-  const taxAmount = inv?.taxAmount ?? Math.round(subtotal * (taxPercent / 100) * 100) / 100;
-  const totalAmount = inv?.totalAmount ?? subtotal + taxAmount;
-  const halfGst = taxAmount / 2;
-  const cgstRate = taxPercent ? taxPercent / 2 : 0;
-  const sgstRate = taxPercent ? taxPercent / 2 : 0;
+  const seller = resolveInvoiceSeller(order);
+  const placeOfSupply = String(inv?.placeOfSupply || DEFAULT_PLACE_OF_SUPPLY).trim() || DEFAULT_PLACE_OF_SUPPLY;
+  const supplyType: InvoiceSupplyType =
+    inv?.supplyType === "INTER" ? "INTER" : DEFAULT_SUPPLY_TYPE;
+  const supplyTypeLabel =
+    supplyType === "INTER" ? "Inter-State (IGST)" : "Intra-State (CGST + SGST)";
+
+  const rawLines = resolveLineItems(order);
+  const taxPercent = Number(inv?.taxPercent) || 0;
+  const priceMode = inv?.priceMode === "EXCLUSIVE" ? "EXCLUSIVE" : "INCLUSIVE";
+  const gst = breakdownGstInvoice({
+    lineItems: rawLines,
+    taxPercent,
+    priceMode,
+    supplyType,
+  });
+
+  // Prefer persisted invoice totals when present; recompute for preview drafts.
+  const subtotal = Number(inv?.subtotal) || gst.taxableValue;
+  const taxAmount = Number(inv?.taxAmount) || gst.taxAmount;
+  const totalAmount = Number(inv?.totalAmount) || gst.totalAmount;
+  const isInter = supplyType === "INTER";
+  const cgstAmount = Number(inv?.cgstAmount) || gst.cgstAmount;
+  const sgstAmount = Number(inv?.sgstAmount) || gst.sgstAmount;
+  const igstAmount = Number(inv?.igstAmount) || gst.igstAmount;
+  const cgstRate = gst.cgstRate;
+  const sgstRate = gst.sgstRate;
+  const igstRate = gst.igstRate;
+  const lines = gst.lineItems.map((row, index) => ({
+    ...row,
+    hsn: rawLines[index]?.hsn,
+  }));
 
   const isPaid = order.paymentStatus === "PAID" || order.isBilled;
   const paymentMode = isPaid ? "Paid" : "Pending";
 
   const itemsHtml = lines
     .map((row, index) => {
-      const lineShare = subtotal > 0 ? row.amount / subtotal : 0;
-      const lineCgst = Math.round(lineShare * halfGst * 100) / 100;
-      const lineSgst = Math.round(lineShare * halfGst * 100) / 100;
-      const lineTotal = Math.round((row.amount + lineCgst + lineSgst) * 100) / 100;
+      if (isInter) {
+        return `
+        <tr>
+          <td class="c">${index + 1}</td>
+          <td class="l">${escapeHtml(row.description)}</td>
+          <td class="c">${escapeHtml(row.hsn)}</td>
+          <td class="c">${row.quantity}</td>
+          <td class="r">${formatInrPlain(row.unitPrice)}</td>
+          <td class="r">${formatInrPlain(row.taxableAmount)}</td>
+          <td class="c">${igstRate ? `${igstRate}%` : "—"}</td>
+          <td class="r">${igstRate ? formatInrPlain(row.igstAmount) : "—"}</td>
+          <td class="r b">${formatInrPlain(row.amount)}</td>
+        </tr>`;
+      }
 
       return `
         <tr>
@@ -198,15 +267,45 @@ export function openOrderInvoice(order: any) {
           <td class="c">${escapeHtml(row.hsn)}</td>
           <td class="c">${row.quantity}</td>
           <td class="r">${formatInrPlain(row.unitPrice)}</td>
-          <td class="r">${formatInrPlain(row.amount)}</td>
+          <td class="r">${formatInrPlain(row.taxableAmount)}</td>
           <td class="c">${cgstRate ? `${cgstRate}%` : "—"}</td>
-          <td class="r">${cgstRate ? formatInrPlain(lineCgst) : "—"}</td>
+          <td class="r">${cgstRate ? formatInrPlain(row.cgstAmount) : "—"}</td>
           <td class="c">${sgstRate ? `${sgstRate}%` : "—"}</td>
-          <td class="r">${sgstRate ? formatInrPlain(lineSgst) : "—"}</td>
-          <td class="r b">${formatInrPlain(lineTotal)}</td>
+          <td class="r">${sgstRate ? formatInrPlain(row.sgstAmount) : "—"}</td>
+          <td class="r b">${formatInrPlain(row.amount)}</td>
         </tr>`;
     })
     .join("");
+
+  const taxHeadings = isInter
+    ? `<th style="width:44px">IGST</th>
+          <th style="width:64px">Amt (₹)</th>`
+    : `<th style="width:44px">CGST</th>
+          <th style="width:64px">Amt (₹)</th>
+          <th style="width:44px">SGST</th>
+          <th style="width:64px">Amt (₹)</th>`;
+
+  const taxSummaryRows =
+    taxAmount > 0
+      ? isInter
+        ? `<tr><td>IGST @ ${igstRate}%</td><td>₹${formatInrPlain(igstAmount)}</td></tr>
+        <tr><td>Total Tax (included)</td><td>₹${formatInrPlain(taxAmount)}</td></tr>`
+        : `<tr><td>CGST @ ${cgstRate}%</td><td>₹${formatInrPlain(cgstAmount)}</td></tr>
+        <tr><td>SGST @ ${sgstRate}%</td><td>₹${formatInrPlain(sgstAmount)}</td></tr>
+        <tr><td>Total Tax (included)</td><td>₹${formatInrPlain(taxAmount)}</td></tr>`
+      : `<tr><td>GST</td><td>₹0.00</td></tr>`;
+
+  const emptyCols = isInter ? 9 : 11;
+  const gstinRow = seller.gstin
+    ? `<p><strong>GSTIN:</strong> ${escapeHtml(seller.gstin)}</p>`
+    : `<p><strong>GSTIN:</strong> —</p>`;
+  const panRow = seller.pan
+    ? `<p><strong>PAN:</strong> ${escapeHtml(seller.pan)}</p>`
+    : `<p><strong>PAN:</strong> —</p>`;
+  const inclusiveNote =
+    priceMode === "INCLUSIVE"
+      ? `<p style="font-size:10px;color:#565959;margin:0 0 10px;">Prices are GST-inclusive. Taxable value and GST below are reverse-calculated (CGST Rule 35). Grand total matches the amount charged.</p>`
+      : "";
 
   const notesBlock = inv?.notes
     ? `<div class="notes"><strong>Remarks:</strong> ${escapeHtml(inv.notes)}</div>`
@@ -446,19 +545,19 @@ export function openOrderInvoice(order: any) {
       <div><label>Order Date</label><strong>${orderDate}</strong></div>
       <div><label>Order Type</label><strong>${orderTypeLabel}</strong></div>
       <div><label>Payment Status</label><strong>${paymentMode}</strong></div>
-      <div><label>Place of Supply</label><strong>West Bengal</strong></div>
-      <div><label>Supply Type</label><strong>Intra-State (B2C)</strong></div>
+      <div><label>Place of Supply</label><strong>${escapeHtml(placeOfSupply)}</strong></div>
+      <div><label>Supply Type</label><strong>${escapeHtml(supplyTypeLabel)}</strong></div>
     </div>
 
     <div class="meta-grid">
       <div class="meta-box">
         <h3>Sold By</h3>
-        <p class="name">${escapeHtml(SELLER.name)}</p>
-        <p>${escapeHtml(SELLER.address)}</p>
-        <p><strong>GSTIN:</strong> ${SELLER.gstin}</p>
-        <p><strong>PAN:</strong> ${SELLER.pan}</p>
-        <p>Phone: ${SELLER.phone}</p>
-        <p>Email: ${SELLER.email}</p>
+        <p class="name">${escapeHtml(seller.name)}</p>
+        <p>${escapeHtml(seller.address)}</p>
+        ${gstinRow}
+        ${panRow}
+        <p>Phone: ${escapeHtml(seller.phone)}</p>
+        <p>Email: ${escapeHtml(seller.email)}</p>
       </div>
       <div class="meta-box">
         <h3>Bill To / Ship To</h3>
@@ -474,6 +573,7 @@ export function openOrderInvoice(order: any) {
       </div>
     </div>
 
+    ${inclusiveNote}
     <table class="items">
       <thead>
         <tr>
@@ -483,30 +583,20 @@ export function openOrderInvoice(order: any) {
           <th style="width:36px">Qty</th>
           <th style="width:72px">Unit Price (₹)</th>
           <th style="width:80px">Taxable (₹)</th>
-          <th style="width:44px">CGST</th>
-          <th style="width:64px">Amt (₹)</th>
-          <th style="width:44px">SGST</th>
-          <th style="width:64px">Amt (₹)</th>
+          ${taxHeadings}
           <th style="width:72px">Total (₹)</th>
         </tr>
       </thead>
       <tbody>
-        ${itemsHtml || '<tr><td colspan="11" style="text-align:center;padding:20px;">No line items</td></tr>'}
+        ${itemsHtml || `<tr><td colspan="${emptyCols}" style="text-align:center;padding:20px;">No line items</td></tr>`}
       </tbody>
     </table>
 
     <div class="summary-wrap">
       <table class="summary">
         <tr><td>Taxable Value</td><td>₹${formatInrPlain(subtotal)}</td></tr>
-        ${
-          taxAmount > 0
-            ? `
-        <tr><td>CGST @ ${cgstRate}%</td><td>₹${formatInrPlain(halfGst)}</td></tr>
-        <tr><td>SGST @ ${sgstRate}%</td><td>₹${formatInrPlain(halfGst)}</td></tr>
-        <tr><td>Total Tax</td><td>₹${formatInrPlain(taxAmount)}</td></tr>`
-            : `<tr><td>GST</td><td>₹0.00</td></tr>`
-        }
-        <tr class="grand"><td>Grand Total</td><td>₹${formatInrPlain(totalAmount)}</td></tr>
+        ${taxSummaryRows}
+        <tr class="grand"><td>Grand Total${priceMode === "INCLUSIVE" ? " (incl. GST)" : ""}</td><td>₹${formatInrPlain(totalAmount)}</td></tr>
       </table>
     </div>
 
@@ -524,14 +614,14 @@ export function openOrderInvoice(order: any) {
       </div>
       <div>
         <h4>Customer Support</h4>
-        <p>${SELLER.website} · ${SELLER.email}</p>
-        <p>${SELLER.phone}</p>
+        <p>${escapeHtml(seller.website)} · ${escapeHtml(seller.email)}</p>
+        <p>${escapeHtml(seller.phone)}</p>
         <p style="margin-top:8px;">For returns, warranty, or service queries, quote Invoice <strong>${invoiceNo}</strong> and Order <strong>${orderId}</strong>.</p>
       </div>
     </div>
 
     <div class="sign">
-      <div class="line">For ${escapeHtml(SELLER.name)}</div>
+      <div class="line">For ${escapeHtml(seller.name)}</div>
       <div style="font-size:9px;color:#878787;margin-top:4px;">Authorised Signatory</div>
     </div>
   </div>

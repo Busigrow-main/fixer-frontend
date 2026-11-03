@@ -4,10 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Check, LoaderCircle, PackageCheck, ShoppingBag } from "lucide-react";
+import { ArrowRight, Check, FileText, LoaderCircle, PackageCheck, ShoppingBag } from "lucide-react";
 import ShopNavbar from "@/app/components/shop/ShopNavbar";
+import OrderCancelDialog from "@/app/components/shop/orders/OrderCancelDialog";
 import { useAuth } from "@/app/context/AuthContext";
 import { API_URL } from "@/app/config";
+import { openOrderInvoice } from "@/app/admin/utils/order-invoice";
+import { applianceProductHref } from "@/app/lib/shop-copy";
 
 type OrderItem = { partId?: { _id?: string; name?: string; imageUrls?: string[]; price?: number; sku?: string; compatibility?: string[] }; quantity?: number; warrantyMonthsAtPurchase?: number };
 type Order = {
@@ -18,17 +21,26 @@ type Order = {
   createdAt?: string;
   updatedAt?: string;
   items?: OrderItem[];
-  applianceItem?: { applianceId?: string; name?: string; brand?: string; modelNumber?: string; quantity?: number; price?: number; slug?: string };
+  applianceItem?: { applianceId?: string; name?: string; brand?: string; modelNumber?: string; quantity?: number; price?: number; slug?: string; applianceCategory?: string };
   invoiceData?: { totalAmount?: number; lineItems?: { description?: string }[] };
   courierTracking?: { courierName?: string; trackingNumber?: string };
+  canCancel?: boolean;
+  invoiceAvailable?: boolean;
+  contactData?: { name?: string; phone?: string; email?: string; address?: string };
 };
 type Filter = "all" | "part" | "appliance" | "installation";
 
 const money = (value: number) => `\u20B9${Number(value || 0).toLocaleString("en-IN")}`;
 const date = (value?: string) => value ? new Date(value).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "";
 const hasInstallation = (order: Order) => Boolean(order.invoiceData?.lineItems?.some((line) => /installation|install/i.test(line.description || "")));
-const orderSteps = ["Order received", "Processing", "Dispatched", "Delivered"];
+const orderSteps = ["Order received", "Processing", "Sent to you", "Delivered"];
 const statusStep: Record<string, number> = { PENDING: 0, PROCESSING: 1, DISPATCHED: 2, DELIVERED: 3 };
+const statusLabel = (status: string) => {
+  const value = String(status || "PENDING").toUpperCase();
+  if (value === "DISPATCHED") return "Sent to you";
+  if (value === "PENDING") return "Order placed";
+  return value.replaceAll("_", " ");
+};
 
 function responseOrders(payload: unknown): Order[] {
   if (Array.isArray(payload)) return payload as Order[];
@@ -49,6 +61,9 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [addingOrder, setAddingOrder] = useState("");
+  const [cancelTarget, setCancelTarget] = useState<Order | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -119,6 +134,30 @@ export default function OrdersPage() {
     finally { setAddingOrder(""); }
   };
 
+  const submitCancel = async () => {
+    if (!token || !cancelTarget || cancelling) return;
+    const reason = cancelReason.trim();
+    if (!reason) return;
+    setCancelling(true);
+    setError("");
+    try {
+      const response = await fetch(`${API_URL}/user/part-orders/${encodeURIComponent(cancelTarget._id)}/cancel`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ reason }),
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body.message || "Could not cancel this order.");
+      setOrders((current) => current.map((order) => order._id === body._id ? { ...order, ...body, canCancel: false, invoiceAvailable: false } : order));
+      setCancelTarget(null);
+      setCancelReason("");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not cancel this order.");
+    } finally {
+      setCancelling(false);
+    }
+  };
+
   return (
     <div className="shop-shell -mt-14 min-h-screen bg-[#f5f6f8] md:mt-0 md:bg-[#f6f6f6]">
       <ShopNavbar mobileTitle="Orders" mobileBackHref="/shop" />
@@ -181,18 +220,18 @@ export default function OrdersPage() {
           const firstPart = order.items?.[0]?.partId;
           const title = appliance ? order.applianceItem?.name || "Appliance order" : firstPart?.name || "Spare part order";
           const image = appliance ? applianceImages[order.applianceItem?.slug || ""] : firstPart?.imageUrls?.[0];
-          const status = String(order.status || "PENDING").replaceAll("_", " ");
-          const step = statusStep[order.status] ?? -1;
+          const status = statusLabel(order.status);
+          const step = statusStep[String(order.status || "PENDING").toUpperCase()] ?? -1;
           const total = Number(order.invoiceData?.totalAmount || (appliance ? (order.applianceItem?.price || 0) * (order.applianceItem?.quantity || 1) : 0));
-          return <article key={order._id} className="overflow-hidden rounded-2xl border border-zinc-100 bg-white shadow-[0_2px_10px_rgba(15,23,42,.05)]">
-            <div className="flex items-center justify-between gap-2 px-3.5 pt-3.5 sm:px-4">
-              <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-medium ${order.status === "CANCELLED" || order.status === "RETURNED" ? "bg-rose-100 text-rose-700" : order.status === "DELIVERED" ? "bg-teal-100 text-teal-800" : "bg-blue-100 text-blue-800"}`}>
-                <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                {status}
-              </span>
-              <span className="text-[11px] text-zinc-400">#{order._id.slice(-8).toUpperCase()} <span className="ml-2">{date(order.createdAt)}</span></span>
-            </div>
-            <div className="flex gap-3 px-3.5 py-3.5 sm:px-4">
+          const productHref = appliance
+            ? (order.applianceItem?.slug
+              ? applianceProductHref(order.applianceItem.slug, order.applianceItem.applianceCategory)
+              : null)
+            : (firstPart?.sku
+              ? `/shop/spare-parts/${encodeURIComponent(firstPart.sku)}`
+              : null);
+          const productBlock = (
+            <>
               <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-zinc-100 text-zinc-400 sm:h-14 sm:w-14">
                 {image ? <Image src={image} alt={title} fill unoptimized sizes="56px" className="object-contain p-1" /> : appliance ? <span className="material-symbols-outlined text-2xl">devices</span> : <PackageCheck className="h-6 w-6" />}
               </div>
@@ -211,7 +250,25 @@ export default function OrdersPage() {
                   <p className="mt-0.5 text-[11px] text-zinc-500">{order.items[0].warrantyMonthsAtPurchase} month warranty</p>
                 ) : null}
               </div>
+            </>
+          );
+          return <article key={order._id} className="overflow-hidden rounded-2xl border border-zinc-100 bg-white shadow-[0_2px_10px_rgba(15,23,42,.05)]">
+            <div className="flex items-center justify-between gap-2 px-3.5 pt-3.5 sm:px-4">
+              <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-medium ${order.status === "CANCELLED" || order.status === "RETURNED" ? "bg-rose-100 text-rose-700" : order.status === "DELIVERED" ? "bg-teal-100 text-teal-800" : order.status === "DISPATCHED" ? "bg-teal-100 text-teal-800" : "bg-blue-100 text-blue-800"}`}>
+                <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                {status}
+              </span>
+              <span className="text-[11px] text-zinc-400">#{order._id.slice(-8).toUpperCase()} <span className="ml-2">{date(order.createdAt)}</span></span>
             </div>
+            {productHref ? (
+              <Link href={productHref} aria-label={`View ${title}`} className="flex gap-3 px-3.5 py-3.5 transition hover:bg-zinc-50/80 sm:px-4">
+                {productBlock}
+              </Link>
+            ) : (
+              <div className="flex gap-3 px-3.5 py-3.5 sm:px-4">
+                {productBlock}
+              </div>
+            )}
             {order.status !== "CANCELLED" && order.status !== "RETURNED" && step >= 0 && (
               <div className="px-4 pb-3">
                 <ol className="relative grid grid-cols-4 gap-1" aria-label="Shop order progress">
@@ -243,14 +300,32 @@ export default function OrdersPage() {
               </div>
             )}
             <div className="grid grid-cols-2 gap-2 border-t border-zinc-100 bg-zinc-50/70 p-2.5">
-              <button
-                type="button"
-                onClick={() => void buyAgain(order)}
-                disabled={addingOrder === order._id}
-                className="inline-flex h-9 items-center justify-center gap-1 rounded-lg bg-white text-[12px] font-medium text-zinc-700 disabled:opacity-50"
-              >
-                {addingOrder === order._id ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <ShoppingBag className="h-3.5 w-3.5" />} Buy again
-              </button>
+              {order.canCancel ? (
+                <button
+                  type="button"
+                  onClick={() => { setCancelTarget(order); setCancelReason(""); }}
+                  className="inline-flex h-9 items-center justify-center gap-1 rounded-lg bg-white text-[12px] font-medium text-rose-700"
+                >
+                  Cancel order
+                </button>
+              ) : order.invoiceAvailable ? (
+                <button
+                  type="button"
+                  onClick={() => openOrderInvoice(order)}
+                  className="inline-flex h-9 items-center justify-center gap-1 rounded-lg bg-white text-[12px] font-medium text-zinc-700"
+                >
+                  <FileText className="h-3.5 w-3.5" /> Invoice
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => void buyAgain(order)}
+                  disabled={addingOrder === order._id}
+                  className="inline-flex h-9 items-center justify-center gap-1 rounded-lg bg-white text-[12px] font-medium text-zinc-700 disabled:opacity-50"
+                >
+                  {addingOrder === order._id ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <ShoppingBag className="h-3.5 w-3.5" />} Buy again
+                </button>
+              )}
               <Link
                 href={`/orders/${encodeURIComponent(order._id)}#tracking`}
                 className="inline-flex h-9 items-center justify-center gap-1 rounded-lg bg-primary text-[12px] font-medium text-white"
@@ -260,6 +335,14 @@ export default function OrdersPage() {
             </div>
           </article>;
         })}</div>}
+        <OrderCancelDialog
+          open={Boolean(cancelTarget)}
+          reason={cancelReason}
+          submitting={cancelling}
+          onReasonChange={setCancelReason}
+          onClose={() => { if (!cancelling) setCancelTarget(null); }}
+          onConfirm={() => void submitCancel()}
+        />
       </main>
     </div>
   );

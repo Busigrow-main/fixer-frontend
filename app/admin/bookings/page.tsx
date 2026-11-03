@@ -149,7 +149,8 @@ export default function AdminBookingsPage() {
 
   const handleStatusChange = async (
     id: string,
-    newStatus: string
+    newStatus: string,
+    booking?: { technicianId?: unknown },
   ) => {
     if (!token) return;
 
@@ -160,6 +161,16 @@ export default function AdminBookingsPage() {
     if (newStatus === "CANCELLED") {
       setCancellationModal(id);
       setCancellationReason("");
+      return;
+    }
+
+    const needsTechnician = ["ASSIGNED", "EN_ROUTE", "IN_PROGRESS"].includes(
+      newStatus,
+    );
+    if (needsTechnician && !booking?.technicianId) {
+      alert(
+        "Assign a technician before setting status to ASSIGNED. Use the Assigned Technician control.",
+      );
       return;
     }
 
@@ -290,10 +301,11 @@ export default function AdminBookingsPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data?.message ||
-            "Failed to assign technician"
-        );
+        const message =
+          (typeof data?.message === "string" && data.message) ||
+          (Array.isArray(data?.message) ? data.message.join(", ") : "") ||
+          "Failed to assign technician";
+        throw new Error(message);
       }
 
       await fetchBookings();
@@ -842,7 +854,8 @@ export default function AdminBookingsPage() {
                         onChange={(event) =>
                           handleStatusChange(
                             booking._id,
-                            event.target.value
+                            event.target.value,
+                            booking,
                           )
                         }
                         disabled={

@@ -21,9 +21,21 @@ export const CUSTOMER_STATUS_STEPS = [
   "PAYMENT_COLLECTED",
 ] as const;
 
+const STATUSES_REQUIRING_TECHNICIAN = ["ASSIGNED", "EN_ROUTE", "IN_PROGRESS"] as const;
+
+function statusRequiresTechnician(status: string | undefined | null): boolean {
+  return (STATUSES_REQUIRING_TECHNICIAN as readonly string[]).includes(
+    String(status || "").toUpperCase(),
+  );
+}
+
 export function getCustomerStatusView(
   status: string | undefined | null,
-  opts: { isWarrantyClaim?: boolean; arrivalAt?: Date | string | null } = {},
+  opts: {
+    isWarrantyClaim?: boolean;
+    arrivalAt?: Date | string | null;
+    hasTechnicianAssigned?: boolean;
+  } = {},
 ): CustomerStatusView {
   if (opts.isWarrantyClaim) {
     return {
@@ -35,6 +47,29 @@ export function getCustomerStatusView(
   }
 
   const code = String(status || "PENDING").toUpperCase();
+  const hasTech = opts.hasTechnicianAssigned === true;
+
+  if (code === "CANCELLED") {
+    return { code, label: "Cancelled", tone: "danger", stepIndex: -1 };
+  }
+
+  if (!hasTech && (code === "CONFIRMED" || statusRequiresTechnician(code))) {
+    return {
+      code: "CONFIRMED",
+      label: "Awaiting assignment",
+      tone: "pending",
+      stepIndex: 1,
+    };
+  }
+
+  if (!hasTech && code === "RESCHEDULED") {
+    return {
+      code,
+      label: "Awaiting assignment",
+      tone: "pending",
+      stepIndex: 1,
+    };
+  }
 
   switch (code) {
     case "PENDING":
@@ -53,8 +88,6 @@ export function getCustomerStatusView(
       return { code, label: "Service completed", tone: "success", stepIndex: 5 };
     case "PAYMENT_COLLECTED":
       return { code, label: "Payment received", tone: "success", stepIndex: 6 };
-    case "CANCELLED":
-      return { code, label: "Cancelled", tone: "danger", stepIndex: -1 };
     case "RESCHEDULED":
       return { code, label: "Rescheduled", tone: "neutral", stepIndex: 1 };
     default:

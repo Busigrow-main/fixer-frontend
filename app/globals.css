@@ -97,6 +97,26 @@
   from { opacity: 0; transform: translateX(-20px); }
   to   { opacity: 1; transform: translateX(0); }
 }
+@keyframes shop-maint-enter {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.shop-maint-enter {
+  animation: shop-maint-enter 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.shop-maint-enter-delay { animation-delay: 0.06s; }
+.shop-maint-enter-delay-2 { animation-delay: 0.12s; }
+.shop-maint-tile {
+  animation: shop-maint-enter 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shop-maint-enter,
+  .shop-maint-tile {
+    animation: none;
+  }
+}
 
 /* ─── Base ───────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }

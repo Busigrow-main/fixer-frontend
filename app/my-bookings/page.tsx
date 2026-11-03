@@ -830,6 +830,7 @@ function RepairBookingCard({
         booking.isWarrantyClaim ||
         booking.serviceType === "WARRANTY_CHECK",
       arrivalAt: booking.arrivalAt,
+      hasTechnicianAssigned,
     });
 
   const tone = statusToneClasses(statusView.tone);
@@ -921,13 +922,15 @@ function RepairBookingCard({
                   </a>
                 ) : null}
               </div>
-            ) : hasTechnicianAssigned ||
-              (booking.status &&
-                booking.status !== "PENDING" &&
-                booking.status !== "CANCELLED") ? (
+            ) : hasTechnicianAssigned ? (
               <span className="text-zinc-500">
                 Master technician assigned
               </span>
+            ) : booking.status === "CANCELLED" ? (
+              <span className="text-zinc-500">No technician assigned</span>
+            ) : booking.status === "COMPLETED" ||
+              booking.status === "PAYMENT_COLLECTED" ? (
+              <span className="text-zinc-500">Technician details unavailable</span>
             ) : (
               <span className="font-medium text-amber-700">
                 Awaiting assignment

@@ -22,6 +22,7 @@ export default function BookingDetailPage() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [fixxerCode, setFixxerCode] = useState("");
+  const [assignError, setAssignError] = useState("");
   
   const [visitModalVisible, setVisitModalVisible] = useState(false);
   const [addPartModalVisible, setAddPartModalVisible] = useState(false);
@@ -263,11 +264,20 @@ export default function BookingDetailPage() {
   };
 
   const handleStatusChange = async (newStatus: string) => {
+    const needsTechnician = ["ASSIGNED", "EN_ROUTE", "IN_PROGRESS"].includes(newStatus);
+    const hasTechnician = !!(booking?.technicianId?._id || booking?.technicianId);
+    if (needsTechnician && !hasTechnician) {
+      setAssignError(
+        "Assign a technician before setting status to ASSIGNED. Use the Assigned Technician control.",
+      );
+      return;
+    }
     if (newStatus === "COMPLETED" && !/^\d{6}$/.test(fixxerCode.replace(/\D/g, ""))) {
       alert("Enter the customer's 6-digit FIXXER CODE before closing the job.");
       return;
     }
     setUpdating(true);
+    setAssignError("");
     try {
       const res = await fetch(`${API}/admin/bookings/${id}/status`, {
         method: "PUT",
@@ -291,16 +301,31 @@ export default function BookingDetailPage() {
   };
 
   const handleAssignTechnician = async (technicianId: string) => {
+    if (!technicianId) {
+      setAssignError("Select a technician to assign. Clearing assignment is not available from this control.");
+      return;
+    }
     setUpdating(true);
+    setAssignError("");
     try {
-      await fetch(`${API}/admin/bookings/${id}/assign`, {
+      const res = await fetch(`${API}/admin/bookings/${id}/assign`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({ technicianId }),
       });
-      fetchBookingInfo();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const message =
+          (typeof data?.message === "string" && data.message) ||
+          (Array.isArray(data?.message) ? data.message.join(", ") : "") ||
+          "Could not assign technician.";
+        setAssignError(message);
+        return;
+      }
+      await fetchBookingInfo({ silent: true });
     } catch (err) {
       console.error(err);
+      setAssignError(err instanceof Error ? err.message : "Could not assign technician.");
     } finally {
       setUpdating(false);
     }
@@ -1150,6 +1175,23 @@ export default function BookingDetailPage() {
                   <option key={t._id} value={t._id}>{t.name}</option>
                 ))}
               </select>
+              {assignError && (
+                <p
+                  role="alert"
+                  style={{
+                    marginTop: 8,
+                    padding: "10px 12px",
+                    borderRadius: 8,
+                    background: "rgba(200, 16, 46, 0.12)",
+                    border: "1px solid rgba(200, 16, 46, 0.35)",
+                    color: "#ffb4c0",
+                    fontSize: 13,
+                    lineHeight: 1.45,
+                  }}
+                >
+                  {assignError}
+                </p>
+              )}
             </div>
 
             {!booking.isBilled && (

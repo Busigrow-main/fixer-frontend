@@ -224,6 +224,39 @@ export function AdminOrdersList({
     }
   };
 
+  const closeTrackingModal = () => {
+    setTrackingModal(null);
+    setTrackingData({ courierName: "", trackingNumber: "" });
+  };
+
+  const handleMarkSentOnly = async () => {
+    if (!token || !trackingModal) return;
+    try {
+      const response = await fetch(
+        `${API}/admin/part-orders/${trackingModal}/status`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ status: "DISPATCHED" }),
+        }
+      );
+      const data = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(
+          data?.message || `Failed to mark sent: ${response.status}`
+        );
+      }
+      closeTrackingModal();
+      fetchOrders();
+    } catch (err) {
+      console.error("Failed to mark sent:", err);
+      alert(err instanceof Error ? err.message : "Failed to mark sent");
+    }
+  };
+
   const handleTrackingSubmit = async () => {
     if (!token || !trackingModal) return;
 
@@ -231,7 +264,7 @@ export function AdminOrdersList({
     const trackingNumber = trackingData.trackingNumber.trim();
 
     if (!courierName || !trackingNumber) {
-      alert("Please enter courier name and tracking number.");
+      alert("Please enter courier name and tracking number, or use Mark sent without tracking.");
       return;
     }
 
@@ -260,12 +293,7 @@ export function AdminOrdersList({
         );
       }
 
-      setTrackingModal(null);
-      setTrackingData({
-        courierName: "",
-        trackingNumber: "",
-      });
-
+      closeTrackingModal();
       fetchOrders();
     } catch (err) {
       console.error("Failed to update tracking:", err);
@@ -292,6 +320,7 @@ export function AdminOrdersList({
   };
 
   const getStatusLabel = (value: string) => {
+    if (value === "DISPATCHED") return "Sent to customer";
     return value?.replace(/_/g, " ") || "—";
   };
 
@@ -597,7 +626,9 @@ export function AdminOrdersList({
                           "PROCESSING",
                           "DISPATCHED",
                           "DELIVERED",
-                          "CANCELLED",
+                          ...((o.status === "PENDING" || o.status === "PROCESSING")
+                            ? ["CANCELLED"]
+                            : []),
                           "RETURNED",
                         ].map((s) => (
                           <option key={s} value={s}>
@@ -606,10 +637,11 @@ export function AdminOrdersList({
                         ))}
                       </select>
 
-                      {/* Tracking */}
-                      {orderType === "part" &&
-                        !o.courierTracking &&
-                        o.status !== "CANCELLED" && (
+                      {/* Tracking / send */}
+                      {!o.courierTracking &&
+                        o.status !== "CANCELLED" &&
+                        o.status !== "RETURNED" &&
+                        o.status !== "DELIVERED" && (
                           <button
                             type="button"
                             className="admin-btn admin-btn-ghost admin-btn-sm"
@@ -617,7 +649,9 @@ export function AdminOrdersList({
                               setTrackingModal(o._id)
                             }
                           >
-                            Add tracking
+                            {o.status === "DISPATCHED"
+                              ? "Add tracking"
+                              : "Sent to customer"}
                           </button>
                         )}
                     </div>
@@ -804,7 +838,7 @@ export function AdminOrdersList({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="admin-modal-header">
-              <h2>Add Tracking Info</h2>
+              <h2>Send to customer / tracking</h2>
 
               <button
                 type="button"
@@ -862,21 +896,34 @@ export function AdminOrdersList({
               </div>
             </div>
 
-            <div className="admin-modal-footer">
+            <p style={{ fontSize: 12, color: "var(--admin-text-dim)", margin: "0 20px 8px" }}>
+              Marks the order as <strong>Sent to customer</strong>. Customer order page moves to the Dispatched step.
+              Courier fields are optional for hand delivery.
+            </p>
+
+            <div className="admin-modal-footer" style={{ flexWrap: "wrap", gap: 8 }}>
               <button
                 type="button"
                 className="admin-btn admin-btn-secondary"
-                onClick={() => setTrackingModal(null)}
+                onClick={closeTrackingModal}
               >
                 Cancel
               </button>
 
               <button
                 type="button"
-                className="admin-btn admin-btn-primary"
-                onClick={handleTrackingSubmit}
+                className="admin-btn admin-btn-ghost"
+                onClick={() => void handleMarkSentOnly()}
               >
-                Save & Mark Dispatched
+                Mark sent without tracking
+              </button>
+
+              <button
+                type="button"
+                className="admin-btn admin-btn-primary"
+                onClick={() => void handleTrackingSubmit()}
+              >
+                Save tracking & mark sent
               </button>
             </div>
           </div>
