@@ -26,14 +26,21 @@ describe("customer-booking helpers", () => {
       expect(
         getCustomerStatusView("ASSIGNED", { isWarrantyClaim: true }).label,
       ).toBe("Warranty claim");
-      expect(getCustomerStatusView("EN_ROUTE", { arrivalAt: null }).label).toContain(
-        "on the way",
-      );
       expect(
         getCustomerStatusView("EN_ROUTE", {
+          hasTechnicianAssigned: true,
+          arrivalAt: null,
+        }).label,
+      ).toContain("on the way");
+      expect(
+        getCustomerStatusView("EN_ROUTE", {
+          hasTechnicianAssigned: true,
           arrivalAt: "2026-09-23T10:00:00.000Z",
         }).label,
       ).toContain("arrived");
+      expect(getCustomerStatusView("ASSIGNED").label).toBe("Awaiting assignment");
+      expect(getCustomerStatusView("CONFIRMED").label).toBe("Awaiting assignment");
+      expect(getCustomerStatusView("CANCELLED").label).toBe("Cancelled");
     });
   });
 

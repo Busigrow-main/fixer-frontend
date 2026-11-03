@@ -264,11 +264,20 @@ export default function BookingDetailPage() {
   };
 
   const handleStatusChange = async (newStatus: string) => {
+    const needsTechnician = ["ASSIGNED", "EN_ROUTE", "IN_PROGRESS"].includes(newStatus);
+    const hasTechnician = !!(booking?.technicianId?._id || booking?.technicianId);
+    if (needsTechnician && !hasTechnician) {
+      setAssignError(
+        "Assign a technician before setting status to ASSIGNED. Use the Assigned Technician control.",
+      );
+      return;
+    }
     if (newStatus === "COMPLETED" && !/^\d{6}$/.test(fixxerCode.replace(/\D/g, ""))) {
       alert("Enter the customer's 6-digit FIXXER CODE before closing the job.");
       return;
     }
     setUpdating(true);
+    setAssignError("");
     try {
       const res = await fetch(`${API}/admin/bookings/${id}/status`, {
         method: "PUT",
