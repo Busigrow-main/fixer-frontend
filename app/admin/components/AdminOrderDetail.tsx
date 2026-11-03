@@ -10,6 +10,7 @@ import {
   buildDefaultBillLines,
   computeBillTotals,
   formatInr,
+  normalizeBillLines,
 } from "@/app/lib/order-bill";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/v1";
@@ -32,6 +33,10 @@ export function AdminOrderDetail({
   const [taxPercent, setTaxPercent] = useState(0);
   const [notes, setNotes] = useState("");
   const [message, setMessage] = useState("");
+  const [courierName, setCourierName] = useState("");
+  const [trackingNumber, setTrackingNumber] = useState("");
+  const [savingTracking, setSavingTracking] = useState(false);
+  const [savingStatus, setSavingStatus] = useState(false);
 
   const loadOrder = useCallback(async () => {
     if (!token || !id) return;
@@ -43,8 +48,10 @@ export function AdminOrderDetail({
       if (!res.ok) throw new Error("Failed to load order");
       const data = await res.json();
       setOrder(data);
+      setCourierName(data.courierTracking?.courierName || "");
+      setTrackingNumber(data.courierTracking?.trackingNumber || "");
       if (data.invoiceData?.lineItems?.length) {
-        setLineItems(data.invoiceData.lineItems);
+        setLineItems(normalizeBillLines(data.invoiceData.lineItems));
         setTaxPercent(data.invoiceData.taxPercent ?? 0);
         setNotes(data.invoiceData.notes ?? "");
       } else {
@@ -87,13 +94,14 @@ export function AdminOrderDetail({
     setSaving(true);
     setMessage("");
     try {
+      const normalized = normalizeBillLines(lineItems);
       const res = await fetch(`${API}/admin/part-orders/${id}/bill`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ lineItems, taxPercent, notes }),
+        body: JSON.stringify({ lineItems: normalized, taxPercent, notes }),
       });
       if (!res.ok) {
         const err = await res.json();
@@ -101,7 +109,7 @@ export function AdminOrderDetail({
       }
       const data = await res.json();
       setOrder(data);
-      setLineItems(data.invoiceData?.lineItems ?? lineItems);
+      setLineItems(normalizeBillLines(data.invoiceData?.lineItems ?? normalized));
       setMessage("Bill saved.");
     } catch (e: unknown) {
       setMessage(e instanceof Error ? e.message : "Failed to save bill");
@@ -110,11 +118,87 @@ export function AdminOrderDetail({
     }
   };
 
+  const saveTracking = async () => {
+    if (!token || !id) return;
+    const nextCourier = courierName.trim();
+    const nextTracking = trackingNumber.trim();
+    if (!nextCourier || !nextTracking) {
+      setMessage("Enter courier name and tracking number.");
+      return;
+    }
+    setSavingTracking(true);
+    setMessage("");
+    try {
+      const res = await fetch(`${API}/admin/part-orders/${id}/tracking`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          courierName: nextCourier,
+          trackingNumber: nextTracking,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Failed to update tracking");
+      }
+      const data = await res.json();
+      setOrder(data);
+      setCourierName(data.courierTracking?.courierName || nextCourier);
+      setTrackingNumber(data.courierTracking?.trackingNumber || nextTracking);
+      setMessage(
+        data.status === "DISPATCHED"
+          ? "Tracking saved. Order marked as dispatched."
+          : "Tracking saved.",
+      );
+    } catch (e: unknown) {
+      setMessage(e instanceof Error ? e.message : "Failed to update tracking");
+    } finally {
+      setSavingTracking(false);
+    }
+  };
+
+  const updateStatus = async (nextStatus: string) => {
+    if (!token || !id || savingStatus) return;
+    if (nextStatus === order?.status) return;
+    setSavingStatus(true);
+    setMessage("");
+    try {
+      const res = await fetch(`${API}/admin/part-orders/${id}/status`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Failed to update status");
+      }
+      const data = await res.json();
+      setOrder(data);
+      setMessage(
+        nextStatus === "DISPATCHED"
+          ? "Marked as sent to customer. Customer order page now shows Dispatched."
+          : nextStatus === "DELIVERED"
+            ? "Marked as delivered. Tax invoice is now available to the customer."
+            : `Status updated to ${nextStatus}.`,
+      );
+    } catch (e: unknown) {
+      setMessage(e instanceof Error ? e.message : "Failed to update status");
+    } finally {
+      setSavingStatus(false);
+    }
+  };
+
   const markPaid = async () => {
     if (!token || !id) return;
     if (
       !confirm(
-        "Mark payment as complete? The customer will be able to download the invoice in My Bookings.",
+        "Mark payment as complete? The tax invoice is posted to the customer after delivery.",
       )
     )
       return;
@@ -131,9 +215,9 @@ export function AdminOrderDetail({
       }
       const data = await res.json();
       setOrder(data);
-      setLineItems(data.invoiceData?.lineItems ?? lineItems);
+      setLineItems(normalizeBillLines(data.invoiceData?.lineItems ?? lineItems));
       setTaxPercent(data.invoiceData?.taxPercent ?? 0);
-      setMessage("Payment marked complete. Invoice is now available to the customer.");
+      setMessage("Payment marked complete. The invoice will be posted to the customer after delivery.");
     } catch (e: unknown) {
       setMessage(e instanceof Error ? e.message : "Failed to mark paid");
     } finally {
@@ -265,13 +349,104 @@ export function AdminOrderDetail({
               ))}
             </ul>
           )}
-          {order.courierTracking && (
-            <p style={{ marginTop: 12, fontSize: 12 }}>
-              Tracking: {order.courierTracking.courierName} — {order.courierTracking.trackingNumber}
-            </p>
-          )}
         </section>
       </div>
+
+      {order.status !== "CANCELLED" && order.status !== "RETURNED" && (
+        <section className="admin-card" style={{ padding: 20, marginBottom: 24 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 12, flexWrap: "wrap" }}>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>Fulfillment</h3>
+            <span
+              className={`admin-badge ${
+                order.status === "DISPATCHED" || order.status === "DELIVERED"
+                  ? "admin-badge-dispatched"
+                  : "admin-badge-pending"
+              }`}
+            >
+              {order.status === "DISPATCHED"
+                ? "SENT TO CUSTOMER"
+                : order.status === "DELIVERED"
+                  ? "DELIVERED"
+                  : order.status}
+            </span>
+          </div>
+
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+            {(order.status === "PENDING" || order.status === "PROCESSING") && (
+              <button
+                type="button"
+                className="admin-btn admin-btn-primary admin-btn-sm"
+                disabled={savingStatus}
+                onClick={() => void updateStatus("DISPATCHED")}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: 16 }}>local_shipping</span>
+                {savingStatus ? "Updating…" : "Mark sent to customer"}
+              </button>
+            )}
+            {(order.status === "DISPATCHED" || order.status === "PROCESSING") && (
+              <button
+                type="button"
+                className="admin-btn admin-btn-secondary admin-btn-sm"
+                disabled={savingStatus}
+                onClick={() => void updateStatus("DELIVERED")}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: 16 }}>package_2</span>
+                {savingStatus ? "Updating…" : "Mark delivered"}
+              </button>
+            )}
+            {order.status === "PENDING" && (
+              <button
+                type="button"
+                className="admin-btn admin-btn-ghost admin-btn-sm"
+                disabled={savingStatus}
+                onClick={() => void updateStatus("PROCESSING")}
+              >
+                Start processing
+              </button>
+            )}
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 12, alignItems: "end" }}>
+            <div>
+              <label className="admin-label">Courier name</label>
+              <input
+                className="admin-input"
+                value={courierName}
+                onChange={(e) => setCourierName(e.target.value)}
+                placeholder="e.g. Delhivery, BlueDart (optional for hand delivery)"
+                disabled={savingTracking || order.status === "DELIVERED"}
+              />
+            </div>
+            <div>
+              <label className="admin-label">Tracking number</label>
+              <input
+                className="admin-input"
+                value={trackingNumber}
+                onChange={(e) => setTrackingNumber(e.target.value)}
+                placeholder="AWB / tracking no. (optional for hand delivery)"
+                disabled={savingTracking || order.status === "DELIVERED"}
+              />
+            </div>
+            <button
+              type="button"
+              className="admin-btn admin-btn-primary"
+              disabled={
+                savingTracking ||
+                order.status === "DELIVERED" ||
+                !courierName.trim() ||
+                !trackingNumber.trim()
+              }
+              onClick={() => void saveTracking()}
+            >
+              {savingTracking ? "Saving…" : order.courierTracking ? "Update tracking" : "Add tracking"}
+            </button>
+          </div>
+          <p style={{ fontSize: 11, color: "var(--admin-text-muted)", marginTop: 12, marginBottom: 0 }}>
+            “Mark sent to customer” sets status to DISPATCHED on the customer order page.
+            Adding courier tracking also marks it dispatched and shows the tracking number to the customer.
+          </p>
+        </section>
+      )}
 
       {order.status === "CANCELLED" && (
         <section
@@ -363,8 +538,10 @@ export function AdminOrderDetail({
             <button type="button" className="admin-btn admin-btn-secondary admin-btn-sm" onClick={() => openOrderInvoice(order)}>
               Preview / Print
             </button>
-            {order.isBilled && (
-              <span className="admin-badge admin-badge-delivered">Sent to customer</span>
+            {order.status === "DELIVERED" ? (
+              <span className="admin-badge admin-badge-delivered">Invoice posted to customer</span>
+            ) : (
+              <span className="admin-badge admin-badge-pending">Invoice posts after delivery</span>
             )}
           </div>
         </div>
@@ -374,7 +551,7 @@ export function AdminOrderDetail({
             <thead>
               <tr>
                 <th>Description</th>
-                <th style={{ width: 80 }}>Qty</th>
+                <th style={{ width: 96 }}>Qty</th>
                 <th style={{ width: 120 }}>Rate (₹)</th>
                 <th style={{ width: 100 }}>Amount</th>
                 <th style={{ width: 40 }} />
@@ -394,8 +571,10 @@ export function AdminOrderDetail({
                     <input
                       type="number"
                       min={1}
+                      inputMode="numeric"
                       className="admin-input"
-                      value={row.quantity}
+                      style={{ padding: "0 10px", textAlign: "center", fontVariantNumeric: "tabular-nums" }}
+                      value={Number(row.quantity) || 1}
                       onChange={(e) =>
                         updateLine(index, { quantity: Math.max(1, Number(e.target.value) || 1) })
                       }
@@ -407,14 +586,15 @@ export function AdminOrderDetail({
                       min={0}
                       step="0.01"
                       className="admin-input"
-                      value={row.unitPrice}
+                      style={{ padding: "0 10px", textAlign: "right", fontVariantNumeric: "tabular-nums" }}
+                      value={Number(row.unitPrice) || 0}
                       onChange={(e) =>
                         updateLine(index, { unitPrice: Math.max(0, Number(e.target.value) || 0) })
                       }
                     />
                   </td>
-                  <td style={{ fontWeight: 600, verticalAlign: "middle" }}>
-                    {formatInr(row.quantity * row.unitPrice)}
+                  <td style={{ fontWeight: 600, verticalAlign: "middle", fontVariantNumeric: "tabular-nums" }}>
+                    {formatInr((Number(row.quantity) || 1) * (Number(row.unitPrice) || 0))}
                   </td>
                   <td>
                     <button
@@ -477,12 +657,12 @@ export function AdminOrderDetail({
             disabled={saving || order.paymentStatus === "PAID"}
             onClick={markPaid}
           >
-            Mark payment complete & send to customer
+            Mark payment complete
           </button>
         </div>
         <p style={{ fontSize: 11, color: "var(--admin-text-muted)", marginTop: 12 }}>
-          Saving the draft stores line items. Marking payment complete publishes the invoice to the customer&apos;s My
-          Bookings page.
+          Saving the draft stores line items. Marking payment records collection. The tax invoice is posted to the
+          customer on Orders after the order is marked delivered.
         </p>
       </section>
     </div>

@@ -44,6 +44,11 @@ const NAV_ITEMS = [
     icon: "ac_unit",
     label: "Appliance Orders",
   },
+  {
+    href: "/admin/shop-settings",
+    icon: "storefront",
+    label: "Shop Maintenance",
+  },
   { href: "/admin/users", icon: "group", label: "Users" },
 ];
 
