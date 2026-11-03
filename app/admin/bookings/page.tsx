@@ -290,10 +290,11 @@ export default function AdminBookingsPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data?.message ||
-            "Failed to assign technician"
-        );
+        const message =
+          (typeof data?.message === "string" && data.message) ||
+          (Array.isArray(data?.message) ? data.message.join(", ") : "") ||
+          "Failed to assign technician";
+        throw new Error(message);
       }
 
       await fetchBookings();
