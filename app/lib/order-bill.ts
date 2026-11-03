@@ -13,6 +13,20 @@ export type BillLineItem = {
   taxAmount?: number;
 };
 
+export function normalizeBillLines(
+  lineItems: Array<Partial<BillLineItem>>,
+  fallbackQuantity = 1,
+): BillLineItem[] {
+  const defaultQuantity = Math.max(1, Number(fallbackQuantity) || 1);
+
+  return lineItems.map((row) => ({
+    description: row.description ?? "",
+    quantity: Math.max(1, Number(row.quantity) || defaultQuantity),
+    unitPrice: Math.max(0, Number(row.unitPrice) || 0),
+    ...(row.amount != null ? { amount: Number(row.amount) || 0 } : {}),
+  }));
+}
+
 export function formatInr(amount: number): string {
   return `₹${amount.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }
@@ -80,18 +94,13 @@ export function buildDefaultBillLines(order: any): BillLineItem[] {
     ]);
   }
 
-  return normalizeBillLines(
-    (order.items ?? []).map((row: any) => {
-      const part = row.partId;
-      const purchased = Number(row.priceAtPurchase);
-      const pricePaise = typeof part?.price === "number" ? part.price : 0;
-      return {
-        description: part?.name || "Spare Part",
-        quantity: row.quantity ?? 1,
-        unitPrice: Number.isFinite(purchased) && purchased > 0
-          ? purchased
-          : Math.round((pricePaise / 100) * 100) / 100,
-      };
-    }),
-  );
+  return normalizeBillLines((order.items ?? []).map((row: any) => {
+    const part = row.partId;
+    const pricePaise = typeof part?.price === "number" ? part.price : 0;
+    return {
+      description: part?.name || "Spare Part",
+      quantity: row.quantity ?? 1,
+      unitPrice: Math.round((pricePaise / 100) * 100) / 100,
+    };
+  }));
 }

@@ -46,7 +46,7 @@ export const SERVICES: Service[] = [
     startingPrice: "₹249",
     icon: "ac_unit",
     image: "https://images.unsplash.com/photo-1584568694244-14fbdf83bd30?q=80&w=2000&auto=format&fit=crop",
-    description: "Professional grade technical mastery for your kitchen's heart. Fixed base service charges depending on appliance type and category.",
+    description: "Reliable fridge repair with fixed service charges by type.",
     features: ["60 Days Service Warranty", "6 Months Part Warranty", "Transparent Pricing", "Genuine Spare Parts"],
     subCategories: [
       { id: "single-door", name: "Single Door Refrigerator", price: "₹249" },
@@ -62,7 +62,7 @@ export const SERVICES: Service[] = [
     startingPrice: "₹249",
     icon: "local_laundry_service",
     image: "https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?q=80&w=2000&auto=format&fit=crop",
-    description: "Don't let laundry pile up. We provide fast, reliable repairs with transparent pricing and standardized service experience.",
+    description: "Fast washing machine repairs with clear, upfront pricing.",
     features: ["60 Days Service Warranty", "6 Months Part Warranty", "Transparent Pricing", "Vibration & Noise Diagnosis"],
     subCategories: [
       { id: "semi-auto", name: "Semi-Automatic Washing Machine", price: "₹249" },
@@ -78,7 +78,7 @@ export const SERVICES: Service[] = [
     startingPrice: "₹249",
     icon: "cooking",
     image: "https://images.unsplash.com/photo-1574269909862-7e1d70bb8078?q=80&w=2000&auto=format&fit=crop",
-    description: "Keep your kitchen running perfectly. Service pricing is based on appliance volume and capacity. Our technicians are factory-trained for all models.",
+    description: "Factory-trained technicians, with pricing based on capacity.",
     features: ["60 Days Service Warranty", "6 Months Part Warranty", "Transparent Pricing", "Safety Radiation Checks"],
     subCategories: [
       { id: "standard", name: "Microwave Repair (Based on Volume)", price: "Starting ₹249" },
@@ -92,7 +92,7 @@ export const SERVICES: Service[] = [
     startingPrice: "₹249",
     icon: "thermostat",
     image: SERVICE_IMAGES.ac,
-    description: "Climate master for your home. From installation to complex repairs, we restore your comfort quickly.",
+    description: "AC installation, service and repair to restore your comfort fast.",
     features: ["60 Days Service Warranty", "6 Months Part Warranty", "Transparent Pricing", "Installation & Uninstallation"],
     subCategories: [
       { id: "ac-install", name: "AC Installation", price: "₹1149" },

@@ -7,8 +7,8 @@ import { useBooking } from "@/app/context/BookingContext";
 const TRUST_ITEMS = [
   {
     icon: "verified_user",
-    value: "60-Day",
-    label: "Warranty",
+    value: "60 Days",
+    label: "Service Warranty",
   },
   {
     icon: "schedule",
@@ -90,7 +90,7 @@ export default function Hero() {
               "
             >
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
-              25 Years of Technical Mastery
+              25+ Years of Technical Mastery
             </span>
 
             {/* Main headline */}
@@ -141,13 +141,13 @@ export default function Hero() {
             className="
               mt-auto
               hidden
-              pt-12
+              pt-[1.5625rem]
               lg:block
-              xl:pt-16
+              xl:pt-[2.8125rem]
             "
           >
           {/* Trust stats */}
-          <div className="grid grid-cols-3">
+          <div className="grid min-w-0 grid-cols-3">
               {TRUST_ITEMS.map(({ icon, value, label }) => (
                       <div
                         key={label}
@@ -155,41 +155,39 @@ export default function Hero() {
                         group
                         relative
                         flex min-w-0
+                        flex-col
                         items-center
-                        gap-4
-                        px-5 py-6
+                        gap-2
+                        px-2 py-4
                         focus-visible:z-10
                         focus-visible:outline-none
                         focus-visible:ring-2
                         focus-visible:ring-inset
                         focus-visible:ring-primary
-                        xl:px-6
+                        xl:px-4
                         xl:py-7
                       `}
                     >
                       <span
                         className="
                           flex
-                          h-12
-                          w-12
+                          h-[4.25rem]
+                          w-[4.25rem]
                           shrink-0
                           items-center
                           justify-center
                           rounded-2xl
                           bg-primary-container
-                          text-[38px]
+                          text-[52px]
                           leading-none
                           text-primary
                           transition-transform
                           duration-300
                           group-hover:scale-110
-                          lg:h-14
-                          lg:w-14
-                          lg:text-[44px]
-                          xl:h-16
-                          xl:w-16
+                          xl:h-[4.75rem]
+                          xl:w-[4.75rem]
+                          xl:text-[60px]
                           xl:rounded-[1.25rem]
-                          xl:text-[50px]
                         "
                       >
                         <span className="material-symbols-outlined">
@@ -201,6 +199,8 @@ export default function Hero() {
                         <span
                           className="
                             block
+                            whitespace-nowrap
+                            text-center
                             text-sm
                             font-extrabold
                             leading-tight
@@ -217,6 +217,7 @@ export default function Hero() {
                           className="
                             mt-1
                             block
+                            whitespace-nowrap
                             text-[10px]
                             font-medium
                             leading-tight
@@ -328,12 +329,13 @@ export default function Hero() {
           ================================================= */}
           <div
             className="
-              mt-4
+              mt-2
               grid
               w-full
               grid-cols-3
+              gap-1
               border-t border-outline/60
-              pt-4
+              pt-3
               lg:hidden
             "
           >
@@ -348,9 +350,9 @@ export default function Hero() {
                     flex-col
                     items-center
                     justify-start
-                    gap-1.5
+                    gap-0
                     px-1
-                    py-1
+                    py-0.5
                     transition-colors
                     hover:text-primary
                     focus-visible:outline-none
@@ -367,22 +369,22 @@ export default function Hero() {
                   <span
                     className="
                       flex
-                      h-8
-                      w-8
+                      h-7
+                      w-7
                       shrink-0
                       items-center
                       justify-center
                       rounded-xl
                       bg-primary-container
-                      text-[26px]
+                      text-[22px]
                       leading-none
                       text-primary
                       transition-transform
                       duration-200
                       group-hover:scale-105
-                      sm:h-9
-                      sm:w-9
-                      sm:text-[28px]
+                      sm:h-8
+                      sm:w-8
+                      sm:text-[24px]
                     "
                   >
                     <span className="material-symbols-outlined">

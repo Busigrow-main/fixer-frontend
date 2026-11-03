@@ -8,7 +8,7 @@ import BookingForm from "./BookingForm";
 const DESKTOP_POINTS = [
   { icon: "notifications_active", title: "Assigned right away", text: "Nearby technicians are notified as soon as you book." },
   { icon: "call", title: "They call to confirm", text: "Your technician contacts you before arriving." },
-  { icon: "verified_user", title: "60-day warranty", text: "Warranty starts when the job is completed." },
+  { icon: "verified_user", title: "60-day service warranty", text: "Warranty starts when the job is completed." },
 ];
 
 export default function BookingModal() {

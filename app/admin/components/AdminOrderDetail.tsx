@@ -63,7 +63,9 @@ export function AdminOrderDetail({
       setCourierName(data.courierTracking?.courierName || "");
       setTrackingNumber(data.courierTracking?.trackingNumber || "");
       if (data.invoiceData?.lineItems?.length) {
-        setLineItems(normalizeBillLines(data.invoiceData.lineItems));
+        const applianceQuantity =
+          data.orderType === "appliance" ? data.applianceItem?.quantity : 1;
+        setLineItems(normalizeBillLines(data.invoiceData.lineItems, applianceQuantity));
         setTaxPercent(data.invoiceData.taxPercent ?? 0);
         setNotes(data.invoiceData.notes ?? "");
       } else {
@@ -175,9 +177,16 @@ export function AdminOrderDetail({
         throw new Error(err.message || "Failed to save bill");
       }
       const data = await res.json();
-      applyInvoiceForm(data, payload.lineItems);
-      if (!quiet) setMessage("Bill saved.");
-      return data;
+      setOrder(data);
+      setLineItems(
+        data.invoiceData?.lineItems
+          ? normalizeBillLines(
+              data.invoiceData.lineItems,
+              data.orderType === "appliance" ? data.applianceItem?.quantity : 1,
+            )
+          : lineItems,
+      );
+      setMessage("Bill saved.");
     } catch (e: unknown) {
       setMessage(e instanceof Error ? e.message : "Failed to save bill");
       return null;
@@ -331,8 +340,17 @@ export function AdminOrderDetail({
         throw new Error(err.message || "Failed to mark paid");
       }
       const data = await res.json();
-      applyInvoiceForm(data);
-      setMessage("Payment marked complete. The invoice will be posted to the customer after delivery.");
+      setOrder(data);
+      setLineItems(
+        data.invoiceData?.lineItems
+          ? normalizeBillLines(
+              data.invoiceData.lineItems,
+              data.orderType === "appliance" ? data.applianceItem?.quantity : 1,
+            )
+          : lineItems,
+      );
+      setTaxPercent(data.invoiceData?.taxPercent ?? 0);
+      setMessage("Payment marked complete. Invoice is now available to the customer.");
     } catch (e: unknown) {
       setMessage(e instanceof Error ? e.message : "Failed to mark paid");
     } finally {
@@ -689,15 +707,19 @@ export function AdminOrderDetail({
                   </td>
                   <td>
                     <input
-                      type="number"
-                      min={1}
+                      type="text"
                       inputMode="numeric"
                       className="admin-input"
-                      style={{ padding: "0 10px", textAlign: "center", fontVariantNumeric: "tabular-nums" }}
-                      value={Number(row.quantity) || 1}
-                      onChange={(e) =>
-                        updateLine(index, { quantity: Math.max(1, Number(e.target.value) || 1) })
-                      }
+                      style={{ textAlign: "center", color: "var(--admin-text)" }}
+                      value={String(Math.max(1, Number(row.quantity) || 1))}
+                      onChange={(e) => {
+                        const nextQuantity = Number.parseInt(e.target.value, 10);
+                        updateLine(index, {
+                          quantity: Number.isFinite(nextQuantity) && nextQuantity > 0
+                            ? nextQuantity
+                            : 1,
+                        });
+                      }}
                     />
                   </td>
                   <td>

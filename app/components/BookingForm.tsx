@@ -27,7 +27,7 @@ const SLOTS = [
 const NEXT_STEPS = [
   { icon: "notifications_active", title: "Technician assigned right away", text: "Nearby pros are notified the moment you book." },
   { icon: "call", title: "They call you to confirm", text: "Your technician contacts you before the visit." },
-  { icon: "verified_user", title: "Repair + 60-day warranty", text: "Warranty starts when the job is done." },
+  { icon: "verified_user", title: "Repair + 60-day service warranty", text: "Warranty starts when the job is done." },
 ];
 
 const BRAND_PREVIEW = 8;
@@ -894,7 +894,7 @@ export default function BookingForm({
                   </div>
                   <div className="flex items-center gap-1.5 rounded-xl bg-emerald-50 px-3 py-2 text-emerald-700">
                     <span className="material-symbols-outlined icon-filled text-[16px]">verified_user</span>
-                    60-day warranty included
+                    60-day service warranty included
                   </div>
                 </div>
               </div>
@@ -946,7 +946,7 @@ export default function BookingForm({
           <span className="material-symbols-outlined text-[13px]">lock</span>
           {isLast && !user
             ? "We use your mobile number to save and manage this booking."
-            : "60 days service warranty"}
+            : "60 Days Service Warranty"}
         </p>
       </div>
     </form>

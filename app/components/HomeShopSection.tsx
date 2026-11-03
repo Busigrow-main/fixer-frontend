@@ -57,9 +57,7 @@ export default function HomeShopSection() {
             <span className="italic text-primary">appliances</span>, one trusted place
           </h2>
           <p className="mx-auto mt-4 max-w-2xl font-body text-base leading-relaxed text-on-surface-variant md:text-lg">
-            Beyond repairs, Fixxer supplies the parts technicians trust and sells
-            home appliances with installation included — the same mastery, from
-            catalog to your doorstep.
+          Fixxer supplies trusted repair parts and home appliances, with installation included.
           </p>
           <div className="mx-auto mt-5 h-0.5 w-12 rounded-full bg-primary md:w-16" />
         </div>
