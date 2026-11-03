@@ -139,6 +139,7 @@ export default function MyBookingsPage() {
 function MyBookingsContent() {
   const { token, loading: authLoading } = useAuth();
   const searchParams = useSearchParams();
+  const refreshKey = searchParams.get("refresh");
 
   const [showSuccess, setShowSuccess] = useState(
     searchParams.get("success") === "true",
@@ -194,7 +195,7 @@ function MyBookingsContent() {
     } else if (!authLoading) {
       setLoading(false);
     }
-  }, [token, authLoading]);
+  }, [token, authLoading, refreshKey]);
 
   const fetchAllHistory = async () => {
     setLoading(true);
@@ -227,7 +228,7 @@ function MyBookingsContent() {
     const confirmed = confirm(
       "Claim warranty for this completed service?\n\n" +
         "We will create a warranty-check visit with a master technician.\n\n" +
-        "Coverage: labour for the same fault (60 days from completion) and genuine Fixxer-installed parts (6 months), subject to exclusions in the Warranty Policy.\n\n" +
+        "Coverage: labour for the same fault (60 days from completion) and the part-specific warranty shown on the bill for genuine Fixxer-installed parts, subject to exclusions in the Warranty Policy.\n\n" +
         "Open /warranty for full terms before confirming.",
     );
 

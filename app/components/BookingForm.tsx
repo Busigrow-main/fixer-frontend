@@ -24,6 +24,13 @@ const SLOTS = [
   { value: "EVENING", label: "Evening", hint: "4pm – 8pm", icon: "bedtime" },
 ];
 
+const SLOT_END_MINUTES: Record<string, number> = {
+  MORNING: 12 * 60,
+  AFTERNOON: 16 * 60,
+  EVENING: 20 * 60,
+};
+const BOOKING_LEAD_TIME_MINUTES = 2 * 60;
+
 const NEXT_STEPS = [
   { icon: "notifications_active", title: "Technician assigned right away", text: "Nearby pros are notified the moment you book." },
   { icon: "call", title: "They call you to confirm", text: "Your technician contacts you before the visit." },
@@ -59,6 +66,34 @@ const fromISO = (s: string) => {
   return new Date(y, m - 1, d);
 };
 
+function getServiceNow() {
+  const parts = new Intl.DateTimeFormat("en-IN", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  })
+    .formatToParts(new Date())
+    .reduce<Record<string, number>>((result, part) => {
+      if (part.type !== "literal") result[part.type] = Number(part.value);
+      return result;
+    }, {});
+
+  return {
+    date: `${parts.year}-${String(parts.month).padStart(2, "0")}-${String(parts.day).padStart(2, "0")}`,
+    minutes: parts.hour * 60 + parts.minute,
+    dateValue: new Date(parts.year, parts.month - 1, parts.day),
+  };
+}
+
+function isSlotAvailable(slot: string, date: string, serviceNow: ReturnType<typeof getServiceNow>) {
+  if (!slot || date !== serviceNow.date) return true;
+  return SLOT_END_MINUTES[slot] > serviceNow.minutes + BOOKING_LEAD_TIME_MINUTES;
+}
+
 /* ---------- building blocks ---------- */
 
 function Label({ children, optional }: { children: React.ReactNode; optional?: boolean }) {
@@ -83,17 +118,20 @@ function Choice({
   onClick,
   children,
   className = "",
+  disabled = false,
 }: {
   active: boolean;
   onClick: () => void;
   children: React.ReactNode;
   className?: string;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       aria-pressed={active}
       onClick={onClick}
+      disabled={disabled}
       className={`relative rounded-2xl border text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 active:scale-[0.985] ${
         active
           ? "border-primary bg-primary/[0.05] shadow-[0_0_0_1px_var(--primary,#C8102E),0_8px_20px_-10px_rgba(200,16,46,0.5)]"
@@ -176,11 +214,11 @@ export default function BookingForm({
   const errorRef = useRef<HTMLDivElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
 
-  const now = new Date();
-  const minVisitDate = toISO(now);
+  const serviceNow = getServiceNow();
+  const minVisitDate = serviceNow.date;
   const quickDays = [0, 1, 2].map((i) => {
-    const d = new Date(now);
-    d.setDate(now.getDate() + i);
+    const d = new Date(serviceNow.dateValue);
+    d.setDate(serviceNow.dateValue.getDate() + i);
     return {
       iso: toISO(d),
       top: i === 0 ? "Today" : i === 1 ? "Tomorrow" : d.toLocaleDateString("en-IN", { weekday: "short" }),
@@ -282,6 +320,11 @@ export default function BookingForm({
     if (s === 1) {
       if (formData.preferredVisitDate && formData.preferredVisitDate < minVisitDate)
         return "Please select today or a future visit date.";
+      if (
+        formData.preferredVisitDate &&
+        !isSlotAvailable(formData.preferredVisitSlot, formData.preferredVisitDate, serviceNow)
+      )
+        return "That visit window has ended. Please choose another time.";
     }
     if (s === 2) {
       if (!formData.name.trim()) return "Enter your name.";
@@ -426,7 +469,7 @@ export default function BookingForm({
 
         <button
           type="button"
-          onClick={() => router.push("/my-bookings")}
+          onClick={() => router.push(`/my-bookings?success=true&refresh=${Date.now()}`)}
           className="mt-6 h-[52px] w-full rounded-2xl bg-primary text-sm font-semibold text-white shadow-[0_10px_20px_-12px_rgba(200,16,46,0.9)] transition hover:bg-[#a80d26] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 active:scale-[0.99]"
         >
           View my bookings
@@ -745,12 +788,18 @@ export default function BookingForm({
               <div className="grid grid-cols-2 gap-2.5">
                 {SLOTS.map((slot) => {
                   const active = formData.preferredVisitSlot === slot.value;
+                  const available = isSlotAvailable(slot.value, formData.preferredVisitDate, serviceNow);
                   return (
                     <Choice
                       key={slot.label}
                       active={active}
-                      onClick={() => set({ preferredVisitSlot: slot.value })}
-                      className="flex items-center gap-2.5 p-3"
+                      onClick={() => {
+                        if (available) set({ preferredVisitSlot: slot.value });
+                      }}
+                      className={`flex min-h-[76px] items-center gap-3 p-3 ${
+                        available ? "" : "cursor-not-allowed opacity-45"
+                      }`}
+                      disabled={!available}
                     >
                       <span
                         className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors ${

@@ -18,16 +18,16 @@ export type InvoiceSupplyType = "INTRA" | "INTER";
 
 /** Default Sold By block — admin can override per order before posting. */
 export const DEFAULT_INVOICE_SELLER: InvoiceSoldBy = {
-  name: "Fixxer Service Platform",
-  address: "Kolkata, West Bengal, India",
+  name: "Cool Air Refrigeration (Fixxer)",
+  address: "MLA Colony, Raja Bazar, Patna 800014, Bihar, India",
   gstin: "",
   pan: "",
   phone: "+91 70047 71388",
-  email: "support@fixxer.in",
+  email: "busigrowindia@gmail.com",
   website: "www.fixxer.in",
 };
 
-export const DEFAULT_PLACE_OF_SUPPLY = "West Bengal";
+export const DEFAULT_PLACE_OF_SUPPLY = "Bihar";
 export const DEFAULT_SUPPLY_TYPE: InvoiceSupplyType = "INTRA";
 
 export function resolveInvoiceSeller(order: any): InvoiceSoldBy {
@@ -610,7 +610,7 @@ export function openOrderInvoice(order: any) {
       <div>
         <h4>Declaration</h4>
         <p>We declare that this invoice shows the actual price of the goods/services described and that all particulars are true and correct. This is a computer-generated invoice and does not require a physical signature unless stamped by the seller.</p>
-        <p style="margin-top:8px;">Subject to Kolkata jurisdiction. E. &amp; O.E.</p>
+        <p style="margin-top:8px;">Subject to Patna, Bihar jurisdiction. E. &amp; O.E.</p>
       </div>
       <div>
         <h4>Customer Support</h4>

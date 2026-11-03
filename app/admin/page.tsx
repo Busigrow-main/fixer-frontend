@@ -10,9 +10,14 @@ interface DashboardStats {
     total: number;
     byStatus: Record<string, number>;
     needsAdminAssignment?: number;
+    recent?: Array<Record<string, any>>;
   };
   spareParts: { total: number };
-  orders: { total: number; byStatus: Record<string, number> };
+  orders: {
+    total: number;
+    byStatus: Record<string, number>;
+    recentAppliance?: Array<Record<string, any>>;
+  };
   revenue?: {
     daily: RevenueBucket;
     weekly: RevenueBucket;
@@ -47,6 +52,18 @@ function formatStatus(status: string) {
 
 function statusClass(status: string) {
   return status.toLowerCase().replace(/\s+/g, "-");
+}
+
+function formatDate(value?: string) {
+  return value
+    ? new Date(value).toLocaleString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "—";
 }
 
 export default function AdminDashboardPage() {
@@ -140,6 +157,20 @@ export default function AdminDashboardPage() {
 
   const bookingStatuses = Object.entries(stats.bookings.byStatus || {});
   const orderStatuses = Object.entries(stats.orders.byStatus || {});
+  const recentBookings = [...(stats.bookings.recent || [])]
+    .sort(
+      (a, b) =>
+        new Date(String(b.createdAt || 0)).getTime() -
+        new Date(String(a.createdAt || 0)).getTime(),
+    )
+    .slice(0, 10);
+  const recentApplianceOrders = [...(stats.orders.recentAppliance || [])]
+    .sort(
+      (a, b) =>
+        new Date(String(b.createdAt || 0)).getTime() -
+        new Date(String(a.createdAt || 0)).getTime(),
+    )
+    .slice(0, 10);
 
   const revenuePeriods = stats.revenue
     ? ([
@@ -211,6 +242,117 @@ export default function AdminDashboardPage() {
             );
           })}
         </section>
+
+        {(recentBookings.length > 0 || recentApplianceOrders.length > 0) && (
+          <section className="recent-grid">
+            {recentBookings.length > 0 && (
+              <div className="recent-panel admin-card">
+                <div className="recent-panel-heading">
+                  <div>
+                    <div className="dashboard-section-kicker">LATEST ACTIVITY</div>
+                    <h2>Recent bookings</h2>
+                    <p>Newest service bookings first</p>
+                  </div>
+                  <Link href="/admin/bookings" className="recent-panel-link">
+                    View all
+                  </Link>
+                </div>
+                <div className="recent-list">
+                  {recentBookings.map((booking) => {
+                    const id = String(booking._id || booking.id || "");
+                    return (
+                      <Link
+                        key={id}
+                        href={`/admin/bookings/${id}`}
+                        className="recent-row"
+                      >
+                        <span className="recent-row-icon">
+                          <span className="material-symbols-outlined">
+                            calendar_month
+                          </span>
+                        </span>
+                        <span className="recent-row-main">
+                          <strong>
+                            {booking.serviceId?.name || "Service booking"}
+                          </strong>
+                          <span>
+                            {booking.userId?.fullName ||
+                              booking.userId?.phone ||
+                              "Customer"}{" "}
+                            · {formatDate(booking.createdAt)}
+                          </span>
+                        </span>
+                        <span
+                          className={`admin-badge admin-badge-${statusClass(
+                            String(booking.status || "PENDING"),
+                          )}`}
+                        >
+                          {formatStatus(String(booking.status || "PENDING"))}
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {recentApplianceOrders.length > 0 && (
+              <div className="recent-panel admin-card">
+                <div className="recent-panel-heading">
+                  <div>
+                    <div className="dashboard-section-kicker">LATEST ACTIVITY</div>
+                    <h2>Recent appliance bookings</h2>
+                    <p>Newest appliance enquiries first</p>
+                  </div>
+                  <Link
+                    href="/admin/appliance-orders"
+                    className="recent-panel-link"
+                  >
+                    View all
+                  </Link>
+                </div>
+                <div className="recent-list">
+                  {recentApplianceOrders.map((order) => {
+                    const id = String(order._id || order.id || "");
+                    return (
+                      <Link
+                        key={id}
+                        href={`/admin/appliance-orders/${id}`}
+                        className="recent-row"
+                      >
+                        <span className="recent-row-icon">
+                          <span className="material-symbols-outlined">
+                            home_repair_service
+                          </span>
+                        </span>
+                        <span className="recent-row-main">
+                          <strong>
+                            {order.applianceItem?.name ||
+                              order.applianceItem?.title ||
+                              "Appliance enquiry"}
+                          </strong>
+                          <span>
+                            {order.userId?.fullName ||
+                              order.contactData?.name ||
+                              "Customer"}{" "}
+                            · {formatDate(order.createdAt)}
+                          </span>
+                        </span>
+                        <span
+                          className={`admin-badge admin-badge-${statusClass(
+                            String(order.status || "PENDING"),
+                          )}`}
+                        >
+                          {formatStatus(String(order.status || "PENDING"))}
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </section>
+        )}
 
         {/* Revenue */}
         {stats.revenue && (
@@ -484,6 +626,106 @@ export default function AdminDashboardPage() {
           grid-template-columns: repeat(4, minmax(0, 1fr));
           gap: 12px;
           margin-bottom: 28px;
+        }
+
+        .recent-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 16px;
+          margin-bottom: 28px;
+        }
+
+        .recent-panel {
+          min-width: 0;
+        }
+
+        .recent-panel-heading {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 16px;
+          margin-bottom: 14px;
+        }
+
+        .recent-panel-heading h2 {
+          margin: 6px 0 3px;
+          color: var(--admin-text);
+          font-size: 18px;
+        }
+
+        .recent-panel-heading p {
+          margin: 0;
+          color: var(--admin-text-muted);
+          font-size: 12px;
+        }
+
+        .recent-panel-link {
+          flex-shrink: 0;
+          color: var(--admin-accent);
+          font-size: 11px;
+          font-weight: 700;
+          text-decoration: none;
+        }
+
+        .recent-list {
+          display: flex;
+          flex-direction: column;
+        }
+
+        .recent-row {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          min-width: 0;
+          padding: 10px 0;
+          border-bottom: 1px solid var(--admin-border);
+          color: inherit;
+          text-decoration: none;
+        }
+
+        .recent-row:last-child {
+          border-bottom: 0;
+        }
+
+        .recent-row-icon {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 32px;
+          height: 32px;
+          flex-shrink: 0;
+          border-radius: 9px;
+          background: var(--admin-surface-2);
+          color: var(--admin-accent);
+        }
+
+        .recent-row-icon .material-symbols-outlined {
+          font-size: 17px;
+        }
+
+        .recent-row-main {
+          display: flex;
+          flex: 1;
+          flex-direction: column;
+          min-width: 0;
+          gap: 3px;
+        }
+
+        .recent-row-main strong,
+        .recent-row-main span {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .recent-row-main strong {
+          color: var(--admin-text);
+          font-size: 12px;
+        }
+
+        .recent-row-main span {
+          color: var(--admin-text-muted);
+          font-size: 10px;
         }
 
         .dashboard-kpi-link {
@@ -975,6 +1217,10 @@ export default function AdminDashboardPage() {
         @media (max-width: 900px) {
           .dashboard-metrics {
             grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+
+          .recent-grid {
+            grid-template-columns: 1fr;
           }
 
           .revenue-grid {

@@ -14,6 +14,7 @@ import SpecsGrid, { type Spec } from "./SpecsGrid";
 import ShopNavbar from "@/app/components/shop/ShopNavbar";
 import { API_URL } from "@/app/config";
 import { useAuth } from "@/app/context/AuthContext";
+import { warrantyInWords } from "@/app/lib/shop-copy";
 
 type Part = {
   _id: string;
@@ -281,7 +282,7 @@ export default function SparePartDetail({ id }: { id: string }) {
     ["Installation", part.installationDifficulty?.type],
     [
       "Warranty",
-      part.warrantyMonths ? `${part.warrantyMonths} months` : undefined,
+      warrantyInWords(part.warrantyMonths) || "No warranty",
     ],
     ["Alternate Part Numbers", part.alternatePartNumbers?.join(", ")],
     [
@@ -299,7 +300,7 @@ export default function SparePartDetail({ id }: { id: string }) {
     part.warrantyMonths
       ? {
           icon: "verified_user",
-          label: `${part.warrantyMonths} Month Warranty`,
+          label: warrantyInWords(part.warrantyMonths) || "No Warranty",
         }
       : null,
     part.partType?.type

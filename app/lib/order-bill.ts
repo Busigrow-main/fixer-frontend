@@ -19,29 +19,23 @@ export function normalizeBillLines(
 ): BillLineItem[] {
   const defaultQuantity = Math.max(1, Number(fallbackQuantity) || 1);
 
-  return lineItems.map((row) => ({
-    description: row.description ?? "",
-    quantity: Math.max(1, Number(row.quantity) || defaultQuantity),
-    unitPrice: Math.max(0, Number(row.unitPrice) || 0),
-    ...(row.amount != null ? { amount: Number(row.amount) || 0 } : {}),
-  }));
-}
-
-export function formatInr(amount: number): string {
-  return `₹${amount.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
-}
-
-export function normalizeBillLines(lineItems: Partial<BillLineItem>[] = []): BillLineItem[] {
   return lineItems.map((row) => {
-    const quantity = Math.max(1, Number(row.quantity) || 1);
+    const quantity = Math.max(1, Number(row.quantity) || defaultQuantity);
     const unitPrice = Math.max(0, Number(row.unitPrice) || 0);
+
     return {
       description: String(row.description || "").trim() || "Item",
       quantity,
       unitPrice,
-      amount: Math.round(quantity * unitPrice * 100) / 100,
+      amount: row.amount != null
+        ? Number(row.amount) || 0
+        : Math.round(quantity * unitPrice * 100) / 100,
     };
   });
+}
+
+export function formatInr(amount: number): string {
+  return `₹${amount.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }
 
 /**
