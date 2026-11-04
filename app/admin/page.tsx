@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/app/context/AuthContext";
 
@@ -40,6 +40,17 @@ interface RevenueBucket {
   technicianNet: number;
 }
 
+interface BookingSearchResult {
+  _id: string;
+  status?: string;
+  createdAt?: string;
+  contactPhone?: string;
+  productDetails?: { serialNumber?: string };
+  jobDetails?: { invoiceNumber?: string };
+  userId?: { fullName?: string; phone?: string };
+  serviceId?: { name?: string };
+}
+
 function inr(n?: number) {
   return `₹${Number(n || 0).toLocaleString("en-IN", {
     maximumFractionDigits: 2,
@@ -70,6 +81,43 @@ export default function AdminDashboardPage() {
   const { token } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [bookingResults, setBookingResults] = useState<BookingSearchResult[]>(
+    [],
+  );
+  const [bookingTotal, setBookingTotal] = useState(0);
+  const [bookingSearch, setBookingSearch] = useState("");
+  const [bookingDatePreset, setBookingDatePreset] = useState("all");
+  const [bookingFromDate, setBookingFromDate] = useState("");
+  const [bookingToDate, setBookingToDate] = useState("");
+  const [bookingPage, setBookingPage] = useState(1);
+  const [bookingLoading, setBookingLoading] = useState(false);
+
+  const bookingPageSize = 8;
+
+  const bookingDateRange = useMemo(() => {
+    if (bookingDatePreset === "custom") {
+      return {
+        fromDate: bookingFromDate,
+        toDate: bookingToDate,
+      };
+    }
+
+    if (bookingDatePreset === "all") {
+      return { fromDate: "", toDate: "" };
+    }
+
+    const from = new Date();
+    if (bookingDatePreset === "last-week") {
+      from.setDate(from.getDate() - 7);
+    } else {
+      from.setMonth(from.getMonth() - 1);
+    }
+
+    return {
+      fromDate: from.toISOString().slice(0, 10),
+      toDate: new Date().toISOString().slice(0, 10),
+    };
+  }, [bookingDatePreset, bookingFromDate, bookingToDate]);
 
   useEffect(() => {
     if (!token) return;
@@ -85,6 +133,74 @@ export default function AdminDashboardPage() {
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [token]);
+
+  useEffect(() => {
+    if (!token) return;
+
+    const timer = window.setTimeout(async () => {
+      setBookingLoading(true);
+      try {
+        const params = new URLSearchParams({
+          page: String(bookingPage),
+          limit: String(bookingPageSize),
+        });
+        if (bookingSearch.trim()) params.set("search", bookingSearch.trim());
+        if (bookingDateRange.fromDate) {
+          params.set("fromDate", bookingDateRange.fromDate);
+        }
+        if (bookingDateRange.toDate) {
+          params.set("toDate", bookingDateRange.toDate);
+        }
+
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/v1"}/admin/bookings?${params.toString()}`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data?.message || "Failed to search bookings");
+        }
+
+        setBookingResults(Array.isArray(data.data) ? data.data : []);
+        setBookingTotal(Number(data.total) || 0);
+      } catch (error) {
+        console.error("Failed to search bookings:", error);
+        setBookingResults([]);
+        setBookingTotal(0);
+      } finally {
+        setBookingLoading(false);
+      }
+    }, 350);
+
+    return () => window.clearTimeout(timer);
+  }, [
+    token,
+    bookingPage,
+    bookingSearch,
+    bookingDatePreset,
+    bookingFromDate,
+    bookingToDate,
+    bookingDateRange,
+  ]);
+
+  const bookingTotalPages = Math.max(
+    1,
+    Math.ceil(bookingTotal / bookingPageSize),
+  );
+
+  const updateBookingDatePreset = (preset: string) => {
+    setBookingDatePreset(preset);
+    setBookingPage(1);
+  };
+
+  const clearBookingFilters = () => {
+    setBookingSearch("");
+    setBookingDatePreset("all");
+    setBookingFromDate("");
+    setBookingToDate("");
+    setBookingPage(1);
+  };
 
   if (loading) {
     return (
@@ -353,6 +469,217 @@ export default function AdminDashboardPage() {
             )}
           </section>
         )}
+
+        <section className="booking-search-section dashboard-section">
+          <div className="dashboard-section-heading booking-search-heading">
+            <div>
+              <div className="dashboard-section-kicker">BOOKING LOOKUP</div>
+              <h2>Find a booking</h2>
+              <p>
+                Search by customer number, booking/order number, or appliance
+                serial number.
+              </p>
+            </div>
+            <Link href="/admin/bookings" className="recent-panel-link">
+              Manage bookings
+            </Link>
+          </div>
+
+          <div className="booking-search-controls">
+            <label className="booking-search-input">
+              <span className="material-symbols-outlined">search</span>
+              <input
+                type="search"
+                value={bookingSearch}
+                onChange={(event) => {
+                  setBookingSearch(event.target.value);
+                  setBookingPage(1);
+                }}
+                placeholder="Phone, booking/order number, serial number"
+                aria-label="Search bookings"
+              />
+            </label>
+
+            <div className="booking-date-presets" aria-label="Booking date range">
+              {[
+                ["all", "All time"],
+                ["last-week", "Last 7 days"],
+                ["last-month", "Last month"],
+                ["custom", "Custom range"],
+              ].map(([value, label]) => (
+                <button
+                  type="button"
+                  key={value}
+                  className={`booking-date-chip ${
+                    bookingDatePreset === value ? "active" : ""
+                  }`}
+                  onClick={() => updateBookingDatePreset(value)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {bookingDatePreset === "custom" && (
+              <div className="booking-custom-dates">
+                <label>
+                  <span>From</span>
+                  <input
+                    type="date"
+                    value={bookingFromDate}
+                    onChange={(event) => {
+                      setBookingFromDate(event.target.value);
+                      setBookingPage(1);
+                    }}
+                  />
+                </label>
+                <span className="booking-date-separator">to</span>
+                <label>
+                  <span>To</span>
+                  <input
+                    type="date"
+                    value={bookingToDate}
+                    min={bookingFromDate || undefined}
+                    onChange={(event) => {
+                      setBookingToDate(event.target.value);
+                      setBookingPage(1);
+                    }}
+                  />
+                </label>
+              </div>
+            )}
+
+            {(bookingSearch || bookingDatePreset !== "all") && (
+              <button
+                type="button"
+                className="booking-clear-button"
+                onClick={clearBookingFilters}
+              >
+                Clear
+              </button>
+            )}
+          </div>
+
+          <div className="booking-results-meta">
+            <span>
+              {bookingLoading
+                ? "Searching bookings…"
+                : `${bookingTotal.toLocaleString("en-IN")} ${
+                    bookingTotal === 1 ? "booking" : "bookings"
+                  } found`}
+            </span>
+            <span className="booking-search-hint">
+              Search updates automatically
+            </span>
+          </div>
+
+          <div className="booking-results-wrap">
+            {bookingLoading ? (
+              <div className="booking-results-state">
+                <div className="admin-spinner" />
+                <span>Searching across all bookings</span>
+              </div>
+            ) : bookingResults.length === 0 ? (
+              <div className="booking-results-state">
+                <span className="material-symbols-outlined">search_off</span>
+                <strong>No bookings match these filters</strong>
+                <span>Try a different number, identifier, or date range.</span>
+              </div>
+            ) : (
+              <div className="booking-results-table-wrap">
+                <table className="booking-results-table">
+                  <thead>
+                    <tr>
+                      <th>Booking / order</th>
+                      <th>Customer</th>
+                      <th>Service</th>
+                      <th>Serial number</th>
+                      <th>Status</th>
+                      <th>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {bookingResults.map((booking) => (
+                      <tr key={booking._id}>
+                        <td>
+                          <Link
+                            href={`/admin/bookings/${booking._id}`}
+                            className="booking-result-id"
+                          >
+                            #{booking._id.slice(-8).toUpperCase()}
+                          </Link>
+                          {booking.jobDetails?.invoiceNumber && (
+                            <span className="booking-result-subvalue">
+                              {booking.jobDetails.invoiceNumber}
+                            </span>
+                          )}
+                        </td>
+                        <td>
+                          <span className="booking-result-customer">
+                            {booking.userId?.fullName || "Customer"}
+                          </span>
+                          <span className="booking-result-subvalue">
+                            {booking.userId?.phone ||
+                              booking.contactPhone ||
+                              "No number"}
+                          </span>
+                        </td>
+                        <td>{booking.serviceId?.name || "Service booking"}</td>
+                        <td>
+                          {booking.productDetails?.serialNumber || "—"}
+                        </td>
+                        <td>
+                          <span
+                            className={`admin-badge admin-badge-${statusClass(
+                              String(booking.status || "PENDING"),
+                            )}`}
+                          >
+                            {formatStatus(String(booking.status || "PENDING"))}
+                          </span>
+                        </td>
+                        <td className="booking-result-date">
+                          {formatDate(booking.createdAt)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {bookingTotalPages > 1 && (
+            <div className="booking-pagination">
+              <span>
+                Page {bookingPage} of {bookingTotalPages}
+              </span>
+              <div>
+                <button
+                  type="button"
+                  className="booking-page-button"
+                  disabled={bookingPage === 1 || bookingLoading}
+                  onClick={() => setBookingPage((page) => page - 1)}
+                  aria-label="Previous page"
+                >
+                  <span className="material-symbols-outlined">
+                    chevron_left
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  className="booking-page-button"
+                  disabled={bookingPage === bookingTotalPages || bookingLoading}
+                  onClick={() => setBookingPage((page) => page + 1)}
+                  aria-label="Next page"
+                >
+                  <span className="material-symbols-outlined">
+                    chevron_right
+                  </span>
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
 
         {/* Revenue */}
         {stats.revenue && (
@@ -726,6 +1053,275 @@ export default function AdminDashboardPage() {
         .recent-row-main span {
           color: var(--admin-text-muted);
           font-size: 10px;
+        }
+
+        .booking-search-section {
+          margin-bottom: 28px;
+        }
+
+        .booking-search-heading {
+          margin-bottom: 16px;
+        }
+
+        .booking-search-controls {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          flex-wrap: wrap;
+          padding: 12px;
+          border: 1px solid var(--admin-border);
+          border-radius: 13px;
+          background: var(--admin-surface-2);
+        }
+
+        .booking-search-input {
+          display: flex;
+          align-items: center;
+          flex: 1 1 280px;
+          min-width: 220px;
+          height: 38px;
+          gap: 8px;
+          padding: 0 11px;
+          border: 1px solid var(--admin-border);
+          border-radius: 9px;
+          background: var(--admin-surface);
+          color: var(--admin-text-muted);
+        }
+
+        .booking-search-input:focus-within {
+          border-color: var(--admin-accent);
+          box-shadow: 0 0 0 3px var(--admin-accent-soft);
+        }
+
+        .booking-search-input .material-symbols-outlined {
+          font-size: 18px;
+        }
+
+        .booking-search-input input {
+          width: 100%;
+          min-width: 0;
+          border: 0;
+          outline: 0;
+          background: transparent;
+          color: var(--admin-text);
+          font: inherit;
+          font-size: 12px;
+        }
+
+        .booking-search-input input::placeholder {
+          color: var(--admin-text-muted);
+        }
+
+        .booking-date-presets {
+          display: flex;
+          gap: 5px;
+          flex-wrap: wrap;
+        }
+
+        .booking-date-chip,
+        .booking-clear-button,
+        .booking-page-button {
+          border: 1px solid var(--admin-border);
+          border-radius: 8px;
+          background: var(--admin-surface);
+          color: var(--admin-text-dim);
+          cursor: pointer;
+          font: inherit;
+          font-size: 10px;
+          font-weight: 700;
+          transition:
+            border-color 160ms ease,
+            background 160ms ease,
+            color 160ms ease;
+        }
+
+        .booking-date-chip {
+          min-height: 34px;
+          padding: 0 10px;
+          white-space: nowrap;
+        }
+
+        .booking-date-chip:hover,
+        .booking-clear-button:hover,
+        .booking-page-button:hover:not(:disabled) {
+          border-color: var(--admin-border-hover);
+          color: var(--admin-text);
+        }
+
+        .booking-date-chip.active {
+          border-color: var(--admin-accent);
+          background: var(--admin-accent-soft);
+          color: var(--admin-accent);
+        }
+
+        .booking-custom-dates {
+          display: flex;
+          align-items: end;
+          gap: 7px;
+        }
+
+        .booking-custom-dates label {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          color: var(--admin-text-muted);
+          font-size: 9px;
+          font-weight: 700;
+        }
+
+        .booking-custom-dates input {
+          height: 34px;
+          padding: 0 7px;
+          border: 1px solid var(--admin-border);
+          border-radius: 8px;
+          background: var(--admin-surface);
+          color: var(--admin-text);
+          font: inherit;
+          font-size: 10px;
+        }
+
+        .booking-date-separator {
+          padding-bottom: 9px;
+          color: var(--admin-text-muted);
+          font-size: 10px;
+        }
+
+        .booking-clear-button {
+          min-height: 34px;
+          padding: 0 11px;
+          color: var(--admin-accent);
+        }
+
+        .booking-results-meta,
+        .booking-pagination {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          margin: 14px 0 10px;
+          color: var(--admin-text-dim);
+          font-size: 10px;
+          font-weight: 700;
+        }
+
+        .booking-search-hint {
+          color: var(--admin-text-muted);
+          font-weight: 500;
+        }
+
+        .booking-results-wrap {
+          overflow: hidden;
+          border: 1px solid var(--admin-border);
+          border-radius: 12px;
+        }
+
+        .booking-results-table-wrap {
+          overflow-x: auto;
+        }
+
+        .booking-results-table {
+          width: 100%;
+          min-width: 760px;
+          border-collapse: collapse;
+          font-size: 11px;
+        }
+
+        .booking-results-table th {
+          padding: 10px 12px;
+          background: var(--admin-surface-2);
+          color: var(--admin-text-muted);
+          font-size: 9px;
+          font-weight: 800;
+          letter-spacing: 0.6px;
+          text-align: left;
+          text-transform: uppercase;
+          white-space: nowrap;
+        }
+
+        .booking-results-table td {
+          padding: 11px 12px;
+          border-top: 1px solid var(--admin-border);
+          color: var(--admin-text-dim);
+          white-space: nowrap;
+        }
+
+        .booking-results-table tbody tr:hover td {
+          background: var(--admin-surface-2);
+        }
+
+        .booking-result-id {
+          display: block;
+          color: var(--admin-accent);
+          font-family: monospace;
+          font-size: 11px;
+          font-weight: 800;
+          text-decoration: none;
+        }
+
+        .booking-result-customer {
+          display: block;
+          color: var(--admin-text);
+          font-weight: 700;
+        }
+
+        .booking-result-subvalue {
+          display: block;
+          margin-top: 3px;
+          color: var(--admin-text-muted);
+          font-size: 10px;
+        }
+
+        .booking-result-date {
+          color: var(--admin-text-muted) !important;
+        }
+
+        .booking-results-state {
+          display: flex;
+          min-height: 150px;
+          align-items: center;
+          justify-content: center;
+          flex-direction: column;
+          gap: 7px;
+          padding: 24px;
+          color: var(--admin-text-muted);
+          font-size: 11px;
+          text-align: center;
+        }
+
+        .booking-results-state .material-symbols-outlined {
+          font-size: 25px;
+          color: var(--admin-text-dim);
+        }
+
+        .booking-results-state strong {
+          color: var(--admin-text);
+          font-size: 12px;
+        }
+
+        .booking-pagination {
+          margin: 12px 0 0;
+        }
+
+        .booking-pagination > div {
+          display: flex;
+          gap: 6px;
+        }
+
+        .booking-page-button {
+          display: flex;
+          width: 30px;
+          height: 30px;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .booking-page-button .material-symbols-outlined {
+          font-size: 17px;
+        }
+
+        .booking-page-button:disabled {
+          cursor: not-allowed;
+          opacity: 0.45;
         }
 
         .dashboard-kpi-link {
