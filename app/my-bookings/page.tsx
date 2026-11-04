@@ -1041,11 +1041,59 @@ function RepairBookingCard({
                         </div>
                       ) : null,
                   )}
+
+                  {Number(booking.invoiceData?.taxAmount) > 0 && (
+                    <>
+                      {booking.invoiceData?.sacCode ? (
+                        <div className="flex justify-between gap-3 text-zinc-500">
+                          <span>SAC</span>
+                          <span>{booking.invoiceData.sacCode}</span>
+                        </div>
+                      ) : null}
+                      <div className="flex justify-between gap-3 text-zinc-500">
+                        <span>Taxable value</span>
+                        <span>
+                          {formatInr(Number(booking.invoiceData?.taxableValue || 0))}
+                        </span>
+                      </div>
+                      {Number(booking.invoiceData?.igstAmount) > 0 ? (
+                        <div className="flex justify-between gap-3 text-zinc-500">
+                          <span>
+                            IGST {Number(booking.invoiceData?.taxPercent) || 18}%
+                          </span>
+                          <span>
+                            {formatInr(Number(booking.invoiceData?.igstAmount || 0))}
+                          </span>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex justify-between gap-3 text-zinc-500">
+                            <span>
+                              CGST{" "}
+                              {(Number(booking.invoiceData?.taxPercent) || 18) / 2}%
+                            </span>
+                            <span>
+                              {formatInr(Number(booking.invoiceData?.cgstAmount || 0))}
+                            </span>
+                          </div>
+                          <div className="flex justify-between gap-3 text-zinc-500">
+                            <span>
+                              SGST{" "}
+                              {(Number(booking.invoiceData?.taxPercent) || 18) / 2}%
+                            </span>
+                            <span>
+                              {formatInr(Number(booking.invoiceData?.sgstAmount || 0))}
+                            </span>
+                          </div>
+                        </>
+                      )}
+                    </>
+                  )}
                 </div>
 
                 <p className="mt-2 text-xs leading-relaxed text-zinc-500">
                   {pricing.isFinal
-                    ? "Final amount after approved work. No upfront payment required at booking."
+                    ? "Final amount after approved work. Service charges are pre-GST; GST is added on top."
                     : pricing.hasExtras
                       ? "Includes approved parts or extras. Final bill available after job close."
                       : "Base estimate includes visit. Parts or extra repairs are confirmed before charge."}
