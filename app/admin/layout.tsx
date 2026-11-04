@@ -7,50 +7,79 @@ import { useAuth } from "@/app/context/AuthContext";
 import "./admin.css";
 import FixxerLogo from "@/app/components/FixxerLogo";
 
-const NAV_ITEMS = [
-  { href: "/admin", icon: "dashboard", label: "Dashboard", exact: true },
-  { href: "/admin/bookings", icon: "calendar_month", label: "Bookings" },
-  { href: "/admin/offers", icon: "local_offer", label: "Offers" },
+type NavItem = {
+  href: string;
+  icon: string;
+  label: string;
+  exact?: boolean;
+};
+
+type NavSection = {
+  title: string;
+  items: NavItem[];
+};
+
+const NAV_SECTIONS: NavSection[] = [
   {
-    href: "/admin/appliance-mappings",
-    icon: "qr_code_2",
-    label: "Serial Mapping",
+    title: "Main",
+    items: [
+      { href: "/admin", icon: "dashboard", label: "Dashboard", exact: true },
+      { href: "/admin/users", icon: "group", label: "Users" },
+    ],
   },
   {
-    href: "/admin/serviceable-pincodes",
-    icon: "location_on",
-    label: "Serviceable Pincodes",
-  },
-  { href: "/admin/leads", icon: "contact_page", label: "Leads" },
-  { href: "/admin/technicians", icon: "engineering", label: "Technicians" },
-  { href: "/admin/spare-parts", icon: "build", label: "Spare Parts" },
-  {
-    href: "/admin/spare-parts/bulk-upload",
-    icon: "upload_file",
-    label: "Bulk Upload",
-  },
-  {
-    href: "/admin/orders",
-    icon: "package_2",
-    label: "Spare Part Orders",
-  },
-  {
-    href: "/admin/part-help",
-    icon: "support_agent",
-    label: "Part Help Requests",
+    title: "Fixxer Service",
+    items: [
+      { href: "/admin/bookings", icon: "calendar_month", label: "Bookings" },
+      { href: "/admin/offers", icon: "local_offer", label: "Offers" },
+      {
+        href: "/admin/appliance-mappings",
+        icon: "qr_code_2",
+        label: "Serial Mapping",
+      },
+      {
+        href: "/admin/serviceable-pincodes",
+        icon: "location_on",
+        label: "Serviceable Pincodes",
+      },
+      { href: "/admin/leads", icon: "contact_page", label: "Leads" },
+      { href: "/admin/technicians", icon: "engineering", label: "Technicians" },
+    ],
   },
   {
-    href: "/admin/appliance-orders",
-    icon: "ac_unit",
-    label: "Appliance Orders",
+    title: "Fixxer Shop",
+    items: [
+      { href: "/admin/spare-parts", icon: "build", label: "Spare Parts" },
+      {
+        href: "/admin/spare-parts/bulk-upload",
+        icon: "upload_file",
+        label: "Bulk Upload",
+      },
+      {
+        href: "/admin/orders",
+        icon: "package_2",
+        label: "Spare Part Orders",
+      },
+      {
+        href: "/admin/part-help",
+        icon: "support_agent",
+        label: "Part Help Requests",
+      },
+      {
+        href: "/admin/appliance-orders",
+        icon: "ac_unit",
+        label: "Appliance Orders",
+      },
+      {
+        href: "/admin/shop-settings",
+        icon: "storefront",
+        label: "Shop Maintenance",
+      },
+    ],
   },
-  {
-    href: "/admin/shop-settings",
-    icon: "storefront",
-    label: "Shop Maintenance",
-  },
-  { href: "/admin/users", icon: "group", label: "Users" },
 ];
+
+const NAV_ITEMS = NAV_SECTIONS.flatMap((section) => section.items);
 
 type Theme = "light" | "dark";
 
@@ -171,7 +200,16 @@ export default function AdminLayout({
 
   const isActive = (href: string, exact?: boolean) => {
     if (exact) return pathname === href;
-    return pathname.startsWith(href);
+    if (pathname === href) return true;
+    if (!pathname.startsWith(`${href}/`)) return false;
+    // Prefer the longest matching href so nested routes don't dual-highlight.
+    const longerMatch = NAV_ITEMS.some(
+      (item) =>
+        item.href !== href &&
+        item.href.startsWith(`${href}/`) &&
+        (pathname === item.href || pathname.startsWith(`${item.href}/`)),
+    );
+    return !longerMatch;
   };
 
   const activeNavItem = NAV_ITEMS.find((item) =>
@@ -203,42 +241,25 @@ export default function AdminLayout({
         </div>
 
         <nav className="admin-nav">
-          <div className="admin-nav-section">Main</div>
-
-          {NAV_ITEMS.slice(0, 1).map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`admin-nav-item ${
-                isActive(item.href, item.exact) ? "active" : ""
-              }`}
-              onClick={() => setSidebarOpen(false)}
-            >
-              <span className="material-symbols-outlined">
-                {item.icon}
-              </span>
-
-              <span>{item.label}</span>
-            </Link>
-          ))}
-
-          <div className="admin-nav-section">Management</div>
-
-          {NAV_ITEMS.slice(1).map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`admin-nav-item ${
-                isActive(item.href, item.exact) ? "active" : ""
-              }`}
-              onClick={() => setSidebarOpen(false)}
-            >
-              <span className="material-symbols-outlined">
-                {item.icon}
-              </span>
-
-              <span>{item.label}</span>
-            </Link>
+          {NAV_SECTIONS.map((section) => (
+            <div key={section.title}>
+              <div className="admin-nav-section">{section.title}</div>
+              {section.items.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`admin-nav-item ${
+                    isActive(item.href, item.exact) ? "active" : ""
+                  }`}
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <span className="material-symbols-outlined">
+                    {item.icon}
+                  </span>
+                  <span>{item.label}</span>
+                </Link>
+              ))}
+            </div>
           ))}
         </nav>
 
