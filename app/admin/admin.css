@@ -127,6 +127,7 @@ html[data-admin-theme="dark"] {
 .admin-sidebar-brand {
   padding: 24px 24px 20px;
   border-bottom: 1px solid var(--admin-border);
+  flex: 0 0 auto;
 }
 
 .admin-sidebar-brand h1 {
@@ -150,10 +151,28 @@ html[data-admin-theme="dark"] {
 
 .admin-nav {
   flex: 1;
+  min-height: 0;
   padding: 16px 12px;
   display: flex;
   flex-direction: column;
   gap: 2px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--admin-border-hover) transparent;
+}
+
+.admin-nav::-webkit-scrollbar {
+  width: 6px;
+}
+
+.admin-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-nav::-webkit-scrollbar-thumb {
+  background: var(--admin-border-hover);
+  border-radius: 999px;
 }
 
 .admin-nav-item {
@@ -201,6 +220,7 @@ html[data-admin-theme="dark"] {
 .admin-sidebar-footer {
   padding: 16px 12px;
   border-top: 1px solid var(--admin-border);
+  flex: 0 0 auto;
 }
 
 /* ─── Main Content ───────────────────────────────────────────── */

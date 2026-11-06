@@ -22,6 +22,7 @@ export interface SubCategory {
   id: string;
   name: string;
   price: string;
+  priceNumeric?: number;
 }
 
 export interface Service {
@@ -95,6 +96,8 @@ export const SERVICES: Service[] = [
     description: "AC installation, service and repair to restore your comfort fast.",
     features: ["60 Days Service Warranty", "Up to 1 Year Part Warranty", "Transparent Pricing", "Installation & Uninstallation"],
     subCategories: [
+      { id: "window-ac", name: "Window AC", price: "₹249", priceNumeric: 24900 },
+      { id: "split-ac", name: "Split AC", price: "₹449", priceNumeric: 44900 },
       { id: "ac-install", name: "AC Installation", price: "₹1149" },
       { id: "ac-uninstall", name: "AC Uninstallation", price: "₹749" },
       { id: "ac-cleaning", name: "AC Cleaning & Repair", price: "₹549" },
