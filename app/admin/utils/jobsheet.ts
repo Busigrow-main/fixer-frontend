@@ -391,10 +391,10 @@ export function openJobSheet(booking: any) {
     <table style="border:none; margin-top:4px; font-size:8.5px;">
       <tr>
         <td style="border:none; padding:0; line-height: 1.4;">
-          <strong>Authorised Service Provider : FIXXER SERVICE PLATFORM</strong><br>
-          <span style="color:#555;">Contact Center Number :</span> 1800-FIXX-NOW | Mobile Number Select 1 for Appliances Division<br>
-          <span style="color:#555;">Website :</span> www.fixxer.in | <span style="color:#555;">Fixxer Services Email ID :</span> support@fixxer.in | <span style="color:#555;">WhatsApp :</span> +91 99999 99999<br>
-          <div style="margin-top:2px; font-style: italic; color:#777;">Note: This is a record rendered and is for usage by Authorised service provider only. Service GST ${gst?.taxPercent || FIXXER_SERVICE_GST_PERCENT}% added on top (SAC ${sacCode}).</div>
+          <strong>Authorised Service Provider : Cool Air Refrigeration (Fixxer)</strong><br>
+          <span style="color:#555;">Contact Number :</span> +91 70047 71388<br>
+          <span style="color:#555;">Address :</span> MLA Colony, Raja Bazar, Patna 800014, Bihar | <span style="color:#555;">Email :</span> busigrowindia@gmail.com<br>
+          <div style="margin-top:2px; font-style: italic; color:#777;">Note: This is a record rendered and is for usage by Authorised service provider only.</div>
         </td>
       </tr>
     </table>
@@ -613,9 +613,9 @@ export function openRetailInvoice(booking: any) {
   <div class="footer">
     <p>&copy; 2026 Fixxer - Precision Home Services. All rights reserved.</p>
     <p style="font-weight: 600;">This is a computer generated service bill and does not require a physical signature.</p>
-    <p>www.fixer.in | Support: support@fixer.in | Toll Free: 1800-FIXXER</p>
+    <p>www.fixxer.in | Contact: busigrowindia@gmail.com | +91 70047 71388</p>
     <p style="font-weight: 600;">This is a computer generated tax invoice and does not require a physical signature.</p>
-    <p>www.fixxer.in | Support: support@fixxer.in | Toll Free: 1800-FIXXER</p>
+    <p>www.fixxer.in | Contact: busigrowindia@gmail.com | +91 70047 71388</p>
   </div>
 </body>
 </html>`;
@@ -648,4 +648,3 @@ export function openRetailInvoice(booking: any) {
     }, 1000);
   };
 }
-

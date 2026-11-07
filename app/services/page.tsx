@@ -27,7 +27,7 @@ export default async function ServicesPage() {
         {/* Simple Catalog Header */}
         <section className="px-6 pt-2 md:pt-16 pb-6 md:pb-12 text-center">
           <div className="max-w-4xl mx-auto">
-            <h1 className="font-headline text-5xl md:text-7xl leading-tight tracking-tight text-on-surface mb-4">
+            <h1 className="font-headline text-3xl sm:text-5xl md:text-7xl whitespace-nowrap leading-tight tracking-tight text-on-surface mb-4">
               Our <span className="italic text-primary">Master</span> Catalog
             </h1>
             <p className="text-[10px] md:text-xs text-on-surface-variant font-black opacity-70 tracking-[0.25em] uppercase">

@@ -162,6 +162,14 @@ export default function ShopNavbar({
 
       <header className="fixed inset-x-0 top-0 z-50 hidden border-b border-slate-200 bg-white md:block">
         <div className="mx-auto flex h-[72px] w-full max-w-[1440px] items-center gap-6 px-8 lg:gap-10 lg:px-12">
+          <Link
+            href="/"
+            aria-label="Back to Fixxer home"
+            className="inline-flex shrink-0 items-center gap-1.5 text-sm font-medium text-zinc-600 transition-colors hover:text-primary"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Home</span>
+          </Link>
           <Link href="/shop" className="inline-flex shrink-0 items-baseline gap-1.5" aria-label="Fixxer Shop home">
             <FixxerLogo className="text-[26px] leading-none" />
             <span className="text-[20px] font-semibold tracking-tight text-zinc-800">Shop</span>

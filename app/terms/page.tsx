@@ -175,9 +175,9 @@ export default function TermsPage() {
             <h2 className="font-headline text-2xl md:text-3xl">9. Warranty</h2>
             <p className="text-on-surface-variant leading-relaxed">
               A completed repair includes a 60-day labour warranty for the same fault, starting
-              when the job is marked completed. Genuine parts installed by Fixxer carry a 6-month
-              part warranty from installation, unless the invoice or a manufacturer warranty
-              states a longer period. Booking a visit does not start the warranty. Coverage,
+              when the job is marked completed. Genuine parts installed by Fixxer carry the
+              part-specific warranty shown on the product information or invoice, from no cover
+              up to 12 months. Booking a visit does not start the warranty. Coverage,
               exclusions, and the claim steps are in the Warranty Policy, which is part of these
               terms.
             </p>

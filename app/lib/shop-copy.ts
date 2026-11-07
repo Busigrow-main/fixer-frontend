@@ -1,5 +1,5 @@
 export function warrantyInWords(months?: number | null) {
-  if (!months || months <= 0) return null;
+  if (!months || months <= 0) return "No warranty";
   if (months % 12 === 0) {
     const years = months / 12;
     return years === 1 ? "1-year warranty" : `${years}-year warranty`;

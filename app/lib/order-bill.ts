@@ -26,16 +26,20 @@ export function normalizeBillLines(
   return lineItems.map((row) => {
     const quantity = Math.max(1, Number(row.quantity) || defaultQuantity);
     const unitPrice = Math.max(0, Number(row.unitPrice) || 0);
+
     return {
       description: String(row.description || "").trim() || "Item",
       quantity,
       unitPrice,
-      amount:
-        row.amount != null
-          ? Number(row.amount) || 0
-          : Math.round(quantity * unitPrice * 100) / 100,
+      amount: row.amount != null
+        ? Number(row.amount) || 0
+        : Math.round(quantity * unitPrice * 100) / 100,
     };
   });
+}
+
+export function formatInr(amount: number): string {
+  return `₹${amount.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }
 
 /**

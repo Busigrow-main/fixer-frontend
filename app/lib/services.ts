@@ -22,6 +22,7 @@ export interface SubCategory {
   id: string;
   name: string;
   price: string;
+  priceNumeric?: number;
 }
 
 export interface Service {
@@ -47,7 +48,7 @@ export const SERVICES: Service[] = [
     icon: "ac_unit",
     image: "https://images.unsplash.com/photo-1584568694244-14fbdf83bd30?q=80&w=2000&auto=format&fit=crop",
     description: "Reliable fridge repair with fixed service charges by type.",
-    features: ["60 Days Service Warranty", "6 Months Part Warranty", "Transparent Pricing", "Genuine Spare Parts"],
+    features: ["60 Days Service Warranty", "Up to 1 Year Part Warranty", "Transparent Pricing", "Genuine Spare Parts"],
     subCategories: [
       { id: "single-door", name: "Single Door Refrigerator", price: "₹249" },
       { id: "double-door", name: "Double Door Refrigerator", price: "₹349" },
@@ -63,7 +64,7 @@ export const SERVICES: Service[] = [
     icon: "local_laundry_service",
     image: "https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?q=80&w=2000&auto=format&fit=crop",
     description: "Fast washing machine repairs with clear, upfront pricing.",
-    features: ["60 Days Service Warranty", "6 Months Part Warranty", "Transparent Pricing", "Vibration & Noise Diagnosis"],
+    features: ["60 Days Service Warranty", "Up to 1 Year Part Warranty", "Transparent Pricing", "Vibration & Noise Diagnosis"],
     subCategories: [
       { id: "semi-auto", name: "Semi-Automatic Washing Machine", price: "₹249" },
       { id: "top-load", name: "Fully Automatic (Top Load)", price: "₹349" },
@@ -79,7 +80,7 @@ export const SERVICES: Service[] = [
     icon: "cooking",
     image: "https://images.unsplash.com/photo-1574269909862-7e1d70bb8078?q=80&w=2000&auto=format&fit=crop",
     description: "Factory-trained technicians, with pricing based on capacity.",
-    features: ["60 Days Service Warranty", "6 Months Part Warranty", "Transparent Pricing", "Safety Radiation Checks"],
+    features: ["60 Days Service Warranty", "Up to 1 Year Part Warranty", "Transparent Pricing", "Safety Radiation Checks"],
     subCategories: [
       { id: "standard", name: "Microwave Repair (Based on Volume)", price: "Starting ₹249" },
     ],
@@ -93,8 +94,10 @@ export const SERVICES: Service[] = [
     icon: "thermostat",
     image: SERVICE_IMAGES.ac,
     description: "AC installation, service and repair to restore your comfort fast.",
-    features: ["60 Days Service Warranty", "6 Months Part Warranty", "Transparent Pricing", "Installation & Uninstallation"],
+    features: ["60 Days Service Warranty", "Up to 1 Year Part Warranty", "Transparent Pricing", "Installation & Uninstallation"],
     subCategories: [
+      { id: "window-ac", name: "Window AC", price: "₹249", priceNumeric: 24900 },
+      { id: "split-ac", name: "Split AC", price: "₹449", priceNumeric: 44900 },
       { id: "ac-install", name: "AC Installation", price: "₹1149" },
       { id: "ac-uninstall", name: "AC Uninstallation", price: "₹749" },
       { id: "ac-cleaning", name: "AC Cleaning & Repair", price: "₹549" },

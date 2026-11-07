@@ -5,7 +5,7 @@ import Footer from "@/app/components/Footer";
 export const metadata = {
   title: "Warranty Policy | Fixxer",
   description:
-    "Fixxer’s 60-day service warranty and 6-month installed-part warranty: coverage, exclusions, and how to claim.",
+    "Fixxer’s 60-day service warranty and conditional spare-part warranty: coverage, exclusions, and how to claim.",
 };
 
 const UPDATED = "28 September 2026";
@@ -24,8 +24,9 @@ export default function WarrantyPolicyPage() {
               Warranty Policy
             </h1>
             <p className="text-on-surface-variant text-base md:text-lg leading-relaxed max-w-2xl">
-              A completed Fixxer repair includes a 60-day labour warranty for the same fault, and
-              genuine parts we install include 6 months of cover. This policy is part of the{" "}
+              A completed Fixxer repair includes a 60-day labour warranty for the same fault.
+              Spare-part warranty periods are part-specific, from no cover up to 12 months. This
+              policy is part of the{" "}
               <Link href="/terms" className="text-primary font-semibold hover:underline">
                 Terms of Service
               </Link>
@@ -43,9 +44,10 @@ export default function WarrantyPolicyPage() {
                 to correct the same fault that was repaired on the completed job.
               </li>
               <li>
-                <strong className="text-on-surface">Installed-part warranty.</strong> 6 months on
-                a genuine spare that Fixxer supplied and installed, counted from the installation
-                date on the job.
+                <strong className="text-on-surface">Installed-part warranty.</strong> The period
+                shown for each genuine spare supplied and installed by Fixxer applies from the
+                installation date. A part may have no cover, 2 months, 6 months, or up to 12
+                months of cover.
               </li>
               <li>
                 <strong className="text-on-surface">Manufacturer warranty.</strong> If a catalog
@@ -68,9 +70,9 @@ export default function WarrantyPolicyPage() {
             </p>
             <p className="text-on-surface-variant leading-relaxed">
               The 60-day service warranty ends at midnight on the sixtieth day after completion.
-              A part warranty ends at the end of the 6-month period, or on the later date printed
-              for that serial on the bill. My Bookings shows whether cover is still active and the
-              expiry date once the job is completed.
+              A part warranty ends at the end of the period printed for that part, or on the later
+              date printed for its serial on the bill. My Bookings shows whether cover is still
+              active and the expiry date once the job is completed.
             </p>
             <p className="text-on-surface-variant leading-relaxed">
               A warranty visit that confirms the same fault and corrects it does not start a new
@@ -104,14 +106,16 @@ export default function WarrantyPolicyPage() {
             <h2 className="font-headline text-2xl md:text-3xl">4. What a part warranty covers</h2>
             <p className="text-on-surface-variant leading-relaxed">
               A part we supplied and installed is covered against a manufacturing or installation
-              defect for 6 months. Where the spare has a serial number, that serial is the record
-              we use to confirm cover. The replacement is a like part. If the same part is no
-              longer available, we fit an equivalent functional part.
+              defect for the part-specific period shown on the product information or invoice.
+              That period may be zero, 2 months, 6 months, or up to 12 months. Where the spare has
+              a serial number, that serial is the record we use to confirm cover. The replacement
+              is a like part. If the same part is no longer available, we fit an equivalent
+              functional part.
             </p>
             <p className="text-on-surface-variant leading-relaxed">
               Parts you bought elsewhere, parts already in the appliance, and consumables such as
-              refrigerant gas, filters, bulbs, gaskets, and remote batteries are not on this
-              6-month cover unless the invoice lists that item as covered.
+              refrigerant gas, filters, bulbs, gaskets, and remote batteries are not covered unless
+              the product information or invoice lists a warranty period for that item.
             </p>
           </section>
 

@@ -48,6 +48,10 @@ export default function AdminBookingsPage() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState("ALL");
+  const [search, setSearch] = useState("");
+  const [datePreset, setDatePreset] = useState("all");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -88,6 +92,24 @@ export default function AdminBookingsPage() {
         params.set("cancelledBy", "ADMIN");
       } else if (status !== "ALL") {
         params.set("status", status);
+      }
+
+      if (search.trim()) {
+        params.set("search", search.trim());
+      }
+
+      if (datePreset === "custom") {
+        if (fromDate) params.set("fromDate", fromDate);
+        if (toDate) params.set("toDate", toDate);
+      } else if (datePreset !== "all") {
+        const from = new Date();
+        if (datePreset === "last-week") {
+          from.setDate(from.getDate() - 7);
+        } else {
+          from.setMonth(from.getMonth() - 1);
+        }
+        params.set("fromDate", from.toISOString().slice(0, 10));
+        params.set("toDate", new Date().toISOString().slice(0, 10));
       }
 
       const response = await fetch(
@@ -144,7 +166,15 @@ export default function AdminBookingsPage() {
     if (!token) return;
 
     fetchBookings();
-  }, [token, page, status]);
+  }, [
+    token,
+    page,
+    status,
+    search,
+    datePreset,
+    fromDate,
+    toDate,
+  ]);
 
   useEffect(() => {
     if (!token) return;
@@ -154,6 +184,19 @@ export default function AdminBookingsPage() {
 
   const handleFilterChange = (newStatus: string) => {
     setStatus(newStatus);
+    setPage(1);
+  };
+
+  const handleDatePresetChange = (preset: string) => {
+    setDatePreset(preset);
+    setPage(1);
+  };
+
+  const clearSearchAndDates = () => {
+    setSearch("");
+    setDatePreset("all");
+    setFromDate("");
+    setToDate("");
     setPage(1);
   };
 
@@ -482,6 +525,178 @@ export default function AdminBookingsPage() {
           </span>
           Export CSV
         </button>
+      </div>
+
+      {/* Search and date filters */}
+      <div
+        className="admin-card"
+        style={{
+          marginBottom: 20,
+          padding: 16,
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            flexWrap: "wrap",
+          }}
+        >
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              flex: "1 1 320px",
+              minWidth: 240,
+              height: 40,
+              padding: "0 12px",
+              border: "1px solid var(--admin-border)",
+              borderRadius: 9,
+              background: "var(--admin-surface-2)",
+              color: "var(--admin-text-muted)",
+            }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: 18 }}>
+              search
+            </span>
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                setPage(1);
+              }}
+              placeholder="Search phone, booking/order number, serial number"
+              aria-label="Search bookings"
+              style={{
+                width: "100%",
+                minWidth: 0,
+                border: 0,
+                outline: 0,
+                background: "transparent",
+                color: "var(--admin-text)",
+                font: "inherit",
+                fontSize: 12,
+              }}
+            />
+          </label>
+
+          <div
+            style={{
+              display: "flex",
+              gap: 6,
+              flexWrap: "wrap",
+            }}
+            aria-label="Booking date range"
+          >
+            {[
+              ["all", "All time"],
+              ["last-week", "Last 7 days"],
+              ["last-month", "Last month"],
+              ["custom", "Custom range"],
+            ].map(([value, label]) => (
+              <button
+                type="button"
+                key={value}
+                className={`admin-btn admin-btn-sm ${
+                  datePreset === value
+                    ? "admin-btn-primary"
+                    : "admin-btn-secondary"
+                }`}
+                onClick={() => handleDatePresetChange(value)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {(search || datePreset !== "all") && (
+            <button
+              type="button"
+              className="admin-btn admin-btn-secondary admin-btn-sm"
+              onClick={clearSearchAndDates}
+            >
+              Clear
+            </button>
+          )}
+        </div>
+
+        {datePreset === "custom" && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "end",
+              gap: 10,
+              flexWrap: "wrap",
+              marginTop: 12,
+            }}
+          >
+            <label
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 4,
+                color: "var(--admin-text-muted)",
+                fontSize: 10,
+                fontWeight: 700,
+              }}
+            >
+              From
+              <input
+                type="date"
+                value={fromDate}
+                onChange={(event) => {
+                  setFromDate(event.target.value);
+                  setPage(1);
+                }}
+                className="admin-input"
+              />
+            </label>
+            <span
+              style={{
+                paddingBottom: 9,
+                color: "var(--admin-text-muted)",
+                fontSize: 11,
+              }}
+            >
+              to
+            </span>
+            <label
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 4,
+                color: "var(--admin-text-muted)",
+                fontSize: 10,
+                fontWeight: 700,
+              }}
+            >
+              To
+              <input
+                type="date"
+                value={toDate}
+                min={fromDate || undefined}
+                onChange={(event) => {
+                  setToDate(event.target.value);
+                  setPage(1);
+                }}
+                className="admin-input"
+              />
+            </label>
+          </div>
+        )}
+
+        <p
+          style={{
+            margin: "10px 0 0",
+            color: "var(--admin-text-muted)",
+            fontSize: 11,
+          }}
+        >
+          Search updates automatically across all bookings.
+        </p>
       </div>
 
       {/* Filters */}

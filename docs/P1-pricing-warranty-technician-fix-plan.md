@@ -190,8 +190,8 @@ There is **no** customer booking-detail route (`/my-bookings/[id]`), **no** cust
 
 | Source | Claim |
 |--------|--------|
-| `DifferenceSection`, `services.ts` | Up to **30 days** on parts |
-| Backend `DEFAULT_PART_WARRANTY_MONTHS` | **6 months** |
+| `DifferenceSection`, `services.ts` | Part-specific cover from none up to **12 months** |
+| Backend inventory warranty resolution | Uses the catalog/override value from **0–12 months**; no hidden default |
 | `spare-parts/verified/page.tsx` | Up to **12 months** on all spares |
 
 **Why it’s a bug:** Three clocks marketed as one product promise.
@@ -397,7 +397,7 @@ There is **no** customer booking-detail route (`/my-bookings/[id]`), **no** cust
 | Invoice model | `fixxer-backend/src/bookings/schemas/booking.schema.ts` |
 | Invoice gen | `fixxer-backend/src/bookings/bookings.service.ts` (`generateInvoiceData`) |
 | Warranty lock | `fixxer-backend/src/bookings/bookings.service.ts` (`lockServiceWarranty`) |
-| Part default | `fixxer-backend/src/warranties/warranties.service.ts` (`DEFAULT_PART_WARRANTY_MONTHS = 6`) |
+| Part warranty | `fixxer-backend/src/warranties/warranties.service.ts` resolves the catalog/override value from 0–12 months |
 | Dead legal links | `fixxer/app/components/Footer.tsx` |
 | Customer API gap | `findAllByUser` — no `technicianId` populate |
 | Tech-only mobile | `Fixxer-mobile/src/app/job/**` |
