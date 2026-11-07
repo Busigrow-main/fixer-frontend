@@ -1,11 +1,35 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import {
+  filterAssignableTechnicians,
+  needsAssignBeforeVisit,
+  resolveVisitTechnicianId,
+} from "@/app/lib/admin-manage-visits";
+
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/v1";
 
-export default function ManageVisitsModal({ bookingId, technicianId, token, onClose }: { bookingId: string, technicianId?: string, token: string, onClose: () => void }) {
+type TechOption = { _id: string; name?: string; isActive?: boolean; idVerified?: boolean };
+
+export default function ManageVisitsModal({
+  bookingId,
+  technicianId,
+  technicians = [],
+  token,
+  onClose,
+  onAssigned,
+}: {
+  bookingId: string;
+  technicianId?: string;
+  technicians?: TechOption[];
+  token: string;
+  onClose: () => void;
+  onAssigned?: () => void;
+}) {
   const [visits, setVisits] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pickedTechId, setPickedTechId] = useState("");
+  const [availableTechs, setAvailableTechs] = useState<TechOption[]>(technicians);
 
   // New Visit State
   const [showNewVisit, setShowNewVisit] = useState(false);
@@ -17,16 +41,38 @@ export default function ManageVisitsModal({ bookingId, technicianId, token, onCl
     timeOut: ""
   });
 
+  const assignableTechs = filterAssignableTechnicians(availableTechs);
+  const effectiveTechId = resolveVisitTechnicianId(technicianId, pickedTechId);
+
   useEffect(() => {
     fetchVisits();
+    fetchAvailableTechnicians();
   }, [bookingId]);
+
+  const fetchAvailableTechnicians = async () => {
+    try {
+      const res = await fetch(`${API}/admin/technicians/available`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        setAvailableTechs(data);
+        return;
+      }
+      // Fallback: parent list filtered to AVAILABLE via engine rule.
+      setAvailableTechs(technicians);
+    } catch (err) {
+      console.error(err);
+      setAvailableTechs(technicians);
+    }
+  };
 
   const fetchVisits = async () => {
     try {
       const res = await fetch(`${API}/admin/visits/booking/${bookingId}`, { headers: { Authorization: `Bearer ${token}` } });
       const data = await res.json();
-      setVisits(data || []);
-      setNewVisit(prev => ({ ...prev, visitOrder: (data?.length || 0) + 1 }));
+      setVisits(Array.isArray(data) ? data : []);
+      setNewVisit(prev => ({ ...prev, visitOrder: (Array.isArray(data) ? data.length : 0) + 1 }));
     } catch (err) {
       console.error(err);
     } finally {
@@ -36,9 +82,33 @@ export default function ManageVisitsModal({ bookingId, technicianId, token, onCl
 
   const handleCreateVisit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!technicianId) return;
+    if (!effectiveTechId) {
+      alert("Select a technician before scheduling a visit.");
+      return;
+    }
     try {
-      const payload = { ...newVisit, bookingId, technicianId };
+      // Assign booking when opening visits on an unassigned job.
+      if (needsAssignBeforeVisit(technicianId)) {
+        const assignRes = await fetch(`${API}/admin/bookings/${bookingId}/assign`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ technicianId: effectiveTechId }),
+        });
+        if (!assignRes.ok) {
+          const errData = await assignRes.json().catch(() => ({}));
+          alert(
+            (typeof errData?.message === "string" && errData.message) ||
+              "Failed to assign technician",
+          );
+          return;
+        }
+        onAssigned?.();
+      }
+
+      const payload = { ...newVisit, bookingId, technicianId: effectiveTechId };
       if (payload.scheduledDate) payload.scheduledDate = new Date(payload.scheduledDate).toISOString();
       if (payload.timeIn) payload.timeIn = new Date(`1970-01-01T${payload.timeIn}`).toISOString();
       if (payload.timeOut) payload.timeOut = new Date(`1970-01-01T${payload.timeOut}`).toISOString();
@@ -88,12 +158,12 @@ export default function ManageVisitsModal({ bookingId, technicianId, token, onCl
           {loading ? <div>Loading visits...</div> : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               {!technicianId && (
-                <div style={{ padding: '12px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: 8, fontSize: 13, color: '#ef4444' }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: 14, verticalAlign: 'middle', marginRight: 4 }}>warning</span>
-                  No technician assigned to this booking. Please assign one first.
+                <div style={{ padding: '12px', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.25)', borderRadius: 8, fontSize: 13, color: '#f59e0b' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: 14, verticalAlign: 'middle', marginRight: 4 }}>info</span>
+                  No technician yet — pick one when you schedule the first visit (assigns the booking too).
                 </div>
               )}
-              {visits.map((v, i) => (
+              {visits.map((v) => (
                 <div key={v._id} style={{ border: '1px solid var(--admin-border)', padding: 16, borderRadius: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
                     <h3 style={{ fontSize: 15, fontWeight: 700 }}>Visit #{v.visitOrder}</h3>
@@ -114,7 +184,7 @@ export default function ManageVisitsModal({ bookingId, technicianId, token, onCl
                 </div>
               ))}
 
-              {!showNewVisit && visits.length < 5 && technicianId && (
+              {!showNewVisit && visits.length < 5 && (
                 <button className="admin-btn admin-btn-secondary" onClick={() => setShowNewVisit(true)}>
                   + Schedule Visit
                 </button>
@@ -124,6 +194,28 @@ export default function ManageVisitsModal({ bookingId, technicianId, token, onCl
                 <form onSubmit={handleCreateVisit} style={{ border: '2px dashed var(--admin-border)', padding: 16, borderRadius: 12 }}>
                   <h3 style={{ fontSize: 14, marginBottom: 16 }}>Schedule Visit #{newVisit.visitOrder}</h3>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+                    {!technicianId && (
+                      <div style={{ gridColumn: '1 / -1' }}>
+                        <label className="admin-label">Available technicians</label>
+                        <select
+                          required
+                          className="admin-input admin-select"
+                          value={pickedTechId}
+                          onChange={(e) => setPickedTechId(e.target.value)}
+                        >
+                          <option value="">
+                            {assignableTechs.length
+                              ? "Select technician"
+                              : "No available technicians"}
+                          </option>
+                          {assignableTechs.map((t) => (
+                            <option key={t._id} value={t._id}>
+                              {t.name || t._id}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                     <div>
                       <label className="admin-label">Scheduled Date</label>
                       <input required type="date" className="admin-input" onChange={e => setNewVisit({...newVisit, scheduledDate: e.target.value})} />

@@ -4,6 +4,13 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/app/context/AuthContext";
 import { openJobSheet } from "@/app/admin/utils/jobsheet";
+import {
+  buildVisitModalState,
+  canOpenManageVisits,
+  filterAssignableTechnicians,
+  isAssignBlockedStatus,
+  resolveBookingTechnicianId,
+} from "@/app/lib/admin-manage-visits";
 import ManageVisitsModal from "./ManageVisitsModal";
 
 const API =
@@ -52,7 +59,10 @@ export default function AdminBookingsPage() {
   const [noteModal, setNoteModal] = useState<string | null>(null);
   const [noteText, setNoteText] = useState("");
 
-  const [visitModal, setVisitModal] = useState<string | null>(null);
+  const [visitModal, setVisitModal] = useState<{
+    bookingId: string;
+    technicianId?: string;
+  } | null>(null);
 
   const [cancellationModal, setCancellationModal] =
     useState<string | null>(null);
@@ -856,26 +866,25 @@ export default function AdminBookingsPage() {
                         )
                       }
                       disabled={
-                        updatingId ===
-                          booking._id ||
-                        booking.status ===
-                          "CANCELLED"
+                        updatingId === booking._id ||
+                        isAssignBlockedStatus(booking.status)
                       }
                     >
                       <option value="">
                         Unassigned
                       </option>
 
-                      {technicians.map(
-                        (technician) => (
+                      {filterAssignableTechnicians(
+                        technicians,
+                        resolveBookingTechnicianId(booking.technicianId),
+                      ).map((technician) => (
                           <option
                             key={technician._id}
                             value={technician._id}
                           >
                             {technician.name}
                           </option>
-                        )
-                      )}
+                        ))}
                     </select>
                   </td>
 
@@ -1127,15 +1136,10 @@ export default function AdminBookingsPage() {
                           padding: 6,
                         }}
                         onClick={() =>
-                          setVisitModal(
-                            booking._id
-                          )
+                          setVisitModal(buildVisitModalState(booking))
                         }
                         title="Manage Visits & Parts"
-                        disabled={
-                          booking.status ===
-                          "CANCELLED"
-                        }
+                        disabled={!canOpenManageVisits(booking.status)}
                       >
                         <span
                           className="material-symbols-outlined"
@@ -1472,11 +1476,14 @@ export default function AdminBookingsPage() {
       {/* Manage Visits Modal */}
       {visitModal && (
         <ManageVisitsModal
-          bookingId={visitModal}
+          bookingId={visitModal.bookingId}
+          technicianId={visitModal.technicianId}
+          technicians={technicians}
           token={token || ""}
-          onClose={() =>
-            setVisitModal(null)
-          }
+          onClose={() => setVisitModal(null)}
+          onAssigned={() => {
+            void fetchBookings();
+          }}
         />
       )}
     </div>

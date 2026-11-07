@@ -6,8 +6,15 @@ import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
 import ManageVisitsModal from "../ManageVisitsModal";
 import AddPartModal from "../AddPartModal";
-import { openJobSheet } from "@/app/admin/utils/jobsheet";
+import { openJobSheet, openRetailInvoice } from "@/app/admin/utils/jobsheet";
 import { buildJobSheetDefaults, partsFromVisits } from "@/app/lib/job-sheet-defaults";
+import {
+  filterAssignableTechnicians,
+  isAssignBlockedStatus,
+  resolveBookingTechnicianId,
+} from "@/app/lib/admin-manage-visits";
+import { formatInr } from "@/app/lib/customer-booking";
+import { readServiceInvoiceGst } from "@/app/lib/gst";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/v1";
 const STATUSES = ["ALL", "PENDING", "CONFIRMED", "ASSIGNED", "IN_PROGRESS", "COMPLETED", "RESCHEDULED", "CANCELLED"];
@@ -572,6 +579,9 @@ export default function BookingDetailPage() {
         <div style={{ display: "flex", gap: 12 }}>
           <button className="admin-btn admin-btn-secondary" onClick={() => openJobSheet(booking)}>
             <span className="material-symbols-outlined">print</span> Job Sheet
+          </button>
+          <button className="admin-btn admin-btn-secondary" onClick={() => openRetailInvoice(booking)}>
+            <span className="material-symbols-outlined">receipt_long</span> Tax Invoice
           </button>
           <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => setVisitModalVisible(true)}>
             <span className="material-symbols-outlined">calendar_month</span> Manage Visits
@@ -1168,10 +1178,17 @@ export default function BookingDetailPage() {
                 className="admin-input admin-select" 
                 value={booking.technicianId?._id || booking.technicianId || ""} 
                 onChange={e => handleAssignTechnician(e.target.value)}
-                disabled={updating || booking.isBilled}
+                disabled={
+                  updating ||
+                  booking.isBilled ||
+                  isAssignBlockedStatus(booking.status)
+                }
               >
                 <option value="">Unassigned</option>
-                {technicians.map(t => (
+                {filterAssignableTechnicians(
+                  technicians,
+                  resolveBookingTechnicianId(booking.technicianId),
+                ).map(t => (
                   <option key={t._id} value={t._id}>{t.name}</option>
                 ))}
               </select>
@@ -1333,19 +1350,61 @@ export default function BookingDetailPage() {
                 <span style={{ fontWeight: 600 }}>₹{(booking.invoiceData?.partsTotal || 0).toLocaleString("en-IN")}</span>
               </div>
 
-              <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, borderTop: "1px solid var(--admin-border)", paddingTop: 12, marginTop: 4, fontSize: 15 }}>
-                <span>Grand Total:</span>
-                <span style={{ color: 'var(--admin-primary)' }}>
-                  ₹{(
-                    Number(serviceFee || 0) +
-                    additionalCharges.reduce((sum, c) => sum + (Number(c.amount) || 0), 0) +
-                    Number(booking.invoiceData?.partsTotal || 0)
-                  ).toLocaleString("en-IN")}
-                </span>
-              </div>
-              <div style={{ fontSize: 11, color: "var(--admin-text-dim)" }}>
-                This total is what the customer is billed: service charge + other charges + parts. GST is not added on top.
-              </div>
+              {(() => {
+                const gst = readServiceInvoiceGst(booking.invoiceData);
+                const taxable =
+                  Number(serviceFee || 0) +
+                  additionalCharges.reduce((sum, c) => sum + (Number(c.amount) || 0), 0) +
+                  Number(booking.invoiceData?.partsTotal || 0);
+                const grand =
+                  booking.invoiceData?.totalAmount != null && Number(booking.invoiceData.taxAmount) > 0
+                    ? Number(booking.invoiceData.totalAmount)
+                    : gst && gst.taxAmount > 0
+                      ? taxable + gst.taxAmount
+                      : taxable;
+                return (
+                  <>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginTop: 8 }}>
+                      <span style={{ color: "var(--admin-text-dim)" }}>Taxable (pre-GST)</span>
+                      <span style={{ fontWeight: 600 }}>{formatInr(taxable)}</span>
+                    </div>
+                    {gst && gst.taxAmount > 0 && (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 8, fontSize: 13 }}>
+                        {gst.sacCode && (
+                          <div style={{ display: "flex", justifyContent: "space-between" }}>
+                            <span style={{ color: "var(--admin-text-dim)" }}>SAC</span>
+                            <span style={{ fontWeight: 600 }}>{gst.sacCode}</span>
+                          </div>
+                        )}
+                        {gst.igstAmount > 0 ? (
+                          <div style={{ display: "flex", justifyContent: "space-between" }}>
+                            <span style={{ color: "var(--admin-text-dim)" }}>IGST {gst.taxPercent}% (added)</span>
+                            <span style={{ fontWeight: 600 }}>{formatInr(gst.igstAmount)}</span>
+                          </div>
+                        ) : (
+                          <>
+                            <div style={{ display: "flex", justifyContent: "space-between" }}>
+                              <span style={{ color: "var(--admin-text-dim)" }}>CGST {gst.taxPercent / 2}% (added)</span>
+                              <span style={{ fontWeight: 600 }}>{formatInr(gst.cgstAmount)}</span>
+                            </div>
+                            <div style={{ display: "flex", justifyContent: "space-between" }}>
+                              <span style={{ color: "var(--admin-text-dim)" }}>SGST {gst.taxPercent / 2}% (added)</span>
+                              <span style={{ fontWeight: 600 }}>{formatInr(gst.sgstAmount)}</span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
+                    <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, borderTop: "1px solid var(--admin-border)", paddingTop: 12, marginTop: 8, fontSize: 15 }}>
+                      <span>Grand Total:</span>
+                      <span style={{ color: "var(--admin-primary)" }}>{formatInr(grand)}</span>
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--admin-text-dim)" }}>
+                      Service + parts are pre-GST. {gst?.taxPercent || 18}% GST is added on top (unlike shop prices).
+                    </div>
+                  </>
+                );
+              })()}
 
               {booking.technicianSettlement && (
                 <div style={{ marginTop: 16, padding: 12, background: 'var(--admin-surface-2)', border: '1px solid var(--admin-border)', borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13, color: 'var(--admin-text)' }}>
@@ -1399,11 +1458,15 @@ export default function BookingDetailPage() {
         <ManageVisitsModal 
           bookingId={id as string} 
           technicianId={booking.technicianId?._id || booking.technicianId}
+          technicians={technicians}
           token={token || ""} 
           onClose={() => {
             setVisitModalVisible(false);
             fetchBookingInfo();
-          }} 
+          }}
+          onAssigned={() => {
+            void fetchBookingInfo({ silent: true });
+          }}
         />
       )}
 

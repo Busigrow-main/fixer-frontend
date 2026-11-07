@@ -225,7 +225,7 @@ export default function AdminDashboardPage() {
     );
   }
 
-  const metrics = [
+  const serviceMetrics = [
     {
       label: "Needs Assignment",
       value: stats.bookings?.needsAdminAssignment ?? 0,
@@ -246,6 +246,15 @@ export default function AdminDashboardPage() {
       tone: "warning",
     },
     {
+      label: "Completed",
+      value: stats.bookings?.byStatus?.COMPLETED ?? 0,
+      icon: "check_circle",
+      tone: "success",
+    },
+  ];
+
+  const shopMetrics = [
+    {
       label: "Spare Parts",
       value: stats.spareParts?.total ?? 0,
       icon: "build",
@@ -263,13 +272,45 @@ export default function AdminDashboardPage() {
       icon: "group",
       tone: "cyan",
     },
-    {
-      label: "Completed",
-      value: stats.bookings?.byStatus?.COMPLETED ?? 0,
-      icon: "check_circle",
-      tone: "success",
-    },
   ];
+
+  const renderMetricCards = (
+    metrics: Array<{
+      label: string;
+      value: number;
+      icon: string;
+      tone: string;
+      href?: string;
+    }>,
+  ) =>
+    metrics.map((metric) => {
+      const card = (
+        <div className={`dashboard-kpi tone-${metric.tone}`}>
+          <div className="dashboard-kpi-top">
+            <div className="dashboard-kpi-icon">
+              <span className="material-symbols-outlined">{metric.icon}</span>
+            </div>
+            {metric.href && (
+              <span className="dashboard-kpi-arrow">
+                <span className="material-symbols-outlined">arrow_outward</span>
+              </span>
+            )}
+          </div>
+          <div className="dashboard-kpi-value">
+            {metric.value.toLocaleString("en-IN")}
+          </div>
+          <div className="dashboard-kpi-label">{metric.label}</div>
+        </div>
+      );
+
+      return metric.href ? (
+        <Link key={metric.label} href={metric.href} className="dashboard-kpi-link">
+          {card}
+        </Link>
+      ) : (
+        <div key={metric.label}>{card}</div>
+      );
+    });
 
   const bookingStatuses = Object.entries(stats.bookings.byStatus || {});
   const orderStatuses = Object.entries(stats.orders.byStatus || {});
@@ -316,47 +357,26 @@ export default function AdminDashboardPage() {
           </div>
         </section>
 
-        {/* KPI cards */}
-        <section className="dashboard-metrics">
-          {metrics.map((metric) => {
-            const card = (
-              <div className={`dashboard-kpi tone-${metric.tone}`}>
-                <div className="dashboard-kpi-top">
-                  <div className="dashboard-kpi-icon">
-                    <span className="material-symbols-outlined">
-                      {metric.icon}
-                    </span>
-                  </div>
+        <section className="dashboard-section">
+          <div className="dashboard-section-heading">
+            <div>
+              <div className="dashboard-section-kicker">FIXXER SERVICE</div>
+              <h2>Service overview</h2>
+              <p>Bookings and field operations.</p>
+            </div>
+          </div>
+          <div className="dashboard-metrics">{renderMetricCards(serviceMetrics)}</div>
+        </section>
 
-                  {metric.href && (
-                    <span className="dashboard-kpi-arrow">
-                      <span className="material-symbols-outlined">
-                        arrow_outward
-                      </span>
-                    </span>
-                  )}
-                </div>
-
-                <div className="dashboard-kpi-value">
-                  {metric.value.toLocaleString("en-IN")}
-                </div>
-
-                <div className="dashboard-kpi-label">{metric.label}</div>
-              </div>
-            );
-
-            return metric.href ? (
-              <Link
-                key={metric.label}
-                href={metric.href}
-                className="dashboard-kpi-link"
-              >
-                {card}
-              </Link>
-            ) : (
-              <div key={metric.label}>{card}</div>
-            );
-          })}
+        <section className="dashboard-section">
+          <div className="dashboard-section-heading">
+            <div>
+              <div className="dashboard-section-kicker">FIXXER SHOP</div>
+              <h2>Shop overview</h2>
+              <p>Catalog, fulfilment, and accounts.</p>
+            </div>
+          </div>
+          <div className="dashboard-metrics">{renderMetricCards(shopMetrics)}</div>
         </section>
 
         {(recentBookings.length > 0 || recentApplianceOrders.length > 0) && (
@@ -686,10 +706,10 @@ export default function AdminDashboardPage() {
           <section className="dashboard-section">
             <div className="dashboard-section-heading">
               <div>
-                <div className="dashboard-section-kicker">FINANCIALS</div>
-                <h2>Fixxer earnings</h2>
+                <div className="dashboard-section-kicker">FIXXER SERVICE</div>
+                <h2>Service earnings</h2>
                 <p>
-                  Net from customer collections after technician share.
+                  Net from billed / paid jobs after technician share.
                 </p>
               </div>
 
@@ -802,7 +822,7 @@ export default function AdminDashboardPage() {
             <div className="status-panel admin-card">
               <div className="status-panel-heading">
                 <div>
-                  <div className="dashboard-section-kicker">OPERATIONS</div>
+                  <div className="dashboard-section-kicker">FIXXER SERVICE</div>
                   <h2>Bookings by status</h2>
                 </div>
 
@@ -835,7 +855,7 @@ export default function AdminDashboardPage() {
             <div className="status-panel admin-card">
               <div className="status-panel-heading">
                 <div>
-                  <div className="dashboard-section-kicker">FULFILMENT</div>
+                  <div className="dashboard-section-kicker">FIXXER SHOP</div>
                   <h2>Orders by status</h2>
                 </div>
 
@@ -952,7 +972,11 @@ export default function AdminDashboardPage() {
           display: grid;
           grid-template-columns: repeat(4, minmax(0, 1fr));
           gap: 12px;
-          margin-bottom: 28px;
+          margin-bottom: 0;
+        }
+
+        .dashboard-section .dashboard-metrics {
+          margin-top: 4px;
         }
 
         .recent-grid {

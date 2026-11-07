@@ -1,3 +1,11 @@
+import {
+  FIXXER_SERVICE_GST_PERCENT,
+  fixxerServiceSac,
+  readServiceInvoiceGst,
+  serviceGstBillTotalsHtml,
+  serviceGstJobSheetRows,
+} from "@/app/lib/gst";
+
 /**
  * Generates a printable job sheet HTML document and opens it in a new window.
  * Completely standalone — no Next.js routing, no auth context dependency.
@@ -53,6 +61,11 @@ export function openJobSheet(booking: any) {
     <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>
   `;
   const invoiceAmount = booking.invoiceData?.totalAmount ? `INR ${booking.invoiceData.totalAmount}` : "____________";
+  const gst = readServiceInvoiceGst(booking.invoiceData);
+  const sacCode =
+    gst?.sacCode ||
+    fixxerServiceSac(booking.serviceId?.slug || booking.serviceId?.name || serviceName);
+  const gstFootRows = serviceGstJobSheetRows(booking.invoiceData);
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -193,6 +206,7 @@ export function openJobSheet(booking: any) {
             <tr><td class="lbl">Expiry Date:</td><td>${booking.jobDetails?.contractExpiryDate || ""}</td></tr>
             <tr><td class="lbl">Visit Category:</td><td>${booking.jobDetails?.visitCategory || ""}</td></tr>
             <tr><td class="lbl">Invoice Number:</td><td>${booking.jobDetails?.invoiceNumber || ""}</td></tr>
+            <tr><td class="lbl">SAC / GST:</td><td>${sacCode} · ${gst?.taxPercent || FIXXER_SERVICE_GST_PERCENT}% added on top</td></tr>
             <tr><td class="lbl">UID No:</td><td style="font-size:8px; word-break:break-all;">${fullId}</td></tr>
           </table>
         </td>
@@ -279,9 +293,15 @@ export function openJobSheet(booking: any) {
           <td colspan="5" style="border-left:none; text-align:right;" class="lbl">Labour(Service) / Transportation charges (if any) :</td>
           <td style="text-align:right;">${booking.invoiceData?.serviceTotal || 0}</td>
         </tr>
+        ${gstFootRows}
         <tr>
-          <td colspan="5" style="border-left:none; text-align:right; font-weight:bold; font-size:10px;">Total :</td>
+          <td colspan="5" style="border-left:none; text-align:right; font-weight:bold; font-size:10px;">Total (GST added) :</td>
           <td style="text-align:right;">${booking.invoiceData?.totalAmount || 0}</td>
+        </tr>
+        <tr>
+          <td colspan="6" style="border-left:none; text-align:right; font-size:8px; color:#555;" class="lbl">
+            Service amounts are pre-GST. GST is added on top of the taxable value.
+          </td>
         </tr>
       </tfoot>
     </table>
@@ -349,8 +369,20 @@ export function openJobSheet(booking: any) {
           <div class="flex-row">
             <div><span class="lbl">Tech Name & Sign :</span> <strong style="font-size:11px;">${techName}</strong> ___________</div>
             <div><span class="lbl">Date :</span> __________________</div>
-            <div><span class="lbl">Amount Collected :</span> <strong>${invoiceAmount}</strong></div>
+            <div><span class="lbl">Amount Collected (incl. GST) :</span> <strong>${invoiceAmount}</strong></div>
           </div>
+          ${
+            gst && gst.taxAmount > 0
+              ? `<div style="margin-top:8px; font-size:8.5px; color:#444;">
+            SAC ${sacCode} · Taxable ₹${gst.taxableValue.toLocaleString("en-IN")} ·
+            ${
+              gst.igstAmount > 0
+                ? `IGST ${gst.taxPercent}% ₹${gst.igstAmount.toLocaleString("en-IN")}`
+                : `CGST ₹${gst.cgstAmount.toLocaleString("en-IN")} + SGST ₹${gst.sgstAmount.toLocaleString("en-IN")}`
+            }
+          </div>`
+              : ""
+          }
         </td>
       </tr>
     </table>
@@ -405,6 +437,11 @@ export function openRetailInvoice(booking: any) {
   const additionalCharges = booking.invoiceData?.additionalCharges || [];
   const visits = booking.visits || [];
   const allParts = visits.flatMap((v: any) => v.partsUsed || []);
+  const gst = readServiceInvoiceGst(booking.invoiceData);
+  const sacCode =
+    gst?.sacCode ||
+    fixxerServiceSac(booking.serviceId?.slug || booking.serviceId?.name);
+  const gstRows = serviceGstBillTotalsHtml(booking.invoiceData);
 
   const itemsHtml = [
     // Service Fee
@@ -477,9 +514,10 @@ export function openRetailInvoice(booking: any) {
       <p style="margin-top: 8px; color: #71717a;">Reliable Repairs, Master Technicians.</p>
     </div>
     <div class="invoice-label">
-      <h1 style="margin: 0; font-size: 32px; font-weight: 800; letter-spacing: -1px;">Service Bill</h1>
+      <h1 style="margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -1px;">Tax Invoice / Service Bill</h1>
       <p style="margin: 4px 0 0 0; font-weight: 700; font-size: 16px;">#${invoiceNo}</p>
       <p style="margin: 2px 0 0 0; font-weight: 500; color: #71717a;">Date: ${date}</p>
+      <p style="margin: 6px 0 0 0; font-size: 12px; color: #71717a;">SAC ${sacCode} · GST ${gst?.taxPercent || FIXXER_SERVICE_GST_PERCENT}% added on top · ${gst?.supplyType === "INTER" ? "Inter-state (IGST)" : "Intra-state (CGST+SGST)"}</p>
     </div>
   </div>
 
@@ -490,6 +528,7 @@ export function openRetailInvoice(booking: any) {
       <p style="color: #71717a;">Brand: <strong>${booking.productDetails?.brand || 'N/A'}</strong></p>
       <p style="color: #71717a;">Model: <strong>${booking.productDetails?.modelNumber || 'N/A'}</strong></p>
       <p style="color: #71717a;">Serial: <strong>${booking.productDetails?.serialNumber || 'N/A'}</strong></p>
+      <p style="color: #71717a;">SAC: <strong>${sacCode}</strong></p>
     </div>
     <div>
       <div class="section-title">Billed To</div>
@@ -515,11 +554,12 @@ export function openRetailInvoice(booking: any) {
   </table>
 
   <div class="totals">
+    ${gstRows}
     <div class="total-row grand-total">
-      <span>Grand Total</span>
+      <span>Grand Total (GST added)</span>
       <span>₹${booking.invoiceData?.totalAmount || 0}</span>
     </div>
-    <p style="margin: 10px 0 0 0; font-size: 11px; color: #71717a;">GST is not added on this service bill. The total matches the admin billing breakdown.</p>
+    <p style="margin: 10px 0 0 0; font-size: 11px; color: #71717a;">Service amounts are pre-GST. GST is added on top of the taxable value.</p>
   </div>
 
   <div style="margin-top: 50px; padding: 30px; background: #fdfdfd; border-radius: 20px; border: 1px solid #f1f1f1; position: relative; overflow: hidden;">

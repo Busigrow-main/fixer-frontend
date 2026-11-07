@@ -13,8 +13,12 @@ export type BillLineItem = {
   taxAmount?: number;
 };
 
+export function formatInr(amount: number): string {
+  return `₹${amount.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+}
+
 export function normalizeBillLines(
-  lineItems: Array<Partial<BillLineItem>>,
+  lineItems: Array<Partial<BillLineItem>> = [],
   fallbackQuantity = 1,
 ): BillLineItem[] {
   const defaultQuantity = Math.max(1, Number(fallbackQuantity) || 1);
