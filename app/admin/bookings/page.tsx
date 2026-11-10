@@ -19,6 +19,7 @@ const API =
 const FILTERS = [
   "ALL",
   "NEEDS_ASSIGNMENT",
+  "AWAITING_REVIEW",
   "PENDING",
   "CONFIRMED",
   "ASSIGNED",
@@ -464,6 +465,9 @@ export default function AdminBookingsPage() {
       case "NEEDS_ASSIGNMENT":
         return "Needs Assignment";
 
+      case "AWAITING_REVIEW":
+        return "Awaiting Review";
+
       case "USER_CANCELLED":
         return "User Cancelled";
 
@@ -719,7 +723,8 @@ export default function AdminBookingsPage() {
             }`}
             onClick={() => handleFilterChange(filter)}
             style={
-              filter === "NEEDS_ASSIGNMENT" &&
+              (filter === "NEEDS_ASSIGNMENT" ||
+                filter === "AWAITING_REVIEW") &&
               status !== filter
                 ? {
                     borderColor:
@@ -733,6 +738,31 @@ export default function AdminBookingsPage() {
           </button>
         ))}
       </div>
+
+      {status === "AWAITING_REVIEW" && (
+        <div
+          className="admin-card"
+          style={{
+            marginBottom: 16,
+            padding: "12px 16px",
+            borderColor: "var(--admin-info)",
+            background: "var(--admin-info-soft)",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+          }}
+        >
+          <span
+            className="material-symbols-outlined"
+            style={{ color: "var(--admin-info)" }}
+          >
+            fact_check
+          </span>
+          <span style={{ fontSize: 13 }}>
+            Completed jobs waiting for supervisor quality review. Open a booking to approve or flag follow-up — payment and earnings stay unchanged.
+          </span>
+        </div>
+      )}
 
       {/* Needs Assignment Notice */}
       {status === "NEEDS_ASSIGNMENT" && (

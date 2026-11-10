@@ -65,6 +65,8 @@ export default function BookingDetailPage() {
   const [warranties, setWarranties] = useState<any[]>([]);
   const [serialLookup, setSerialLookup] = useState("");
   const [serialLookupResult, setSerialLookupResult] = useState<any>(null);
+  const [reviewRemarks, setReviewRemarks] = useState("");
+  const [reviewBusy, setReviewBusy] = useState(false);
   const jobSheetRevisionRef = useRef<number>(-1);
   const serverJobRef = useRef<Record<string, string>>({});
   const sheetWriteChain = useRef<Promise<void>>(Promise.resolve());
@@ -130,6 +132,7 @@ export default function BookingDetailPage() {
       serviceType: data.serviceType || "REPAIR",
       paymentStatus: data.paymentStatus || "UNPAID"
     });
+    setReviewRemarks(data.reviewRemarks || "");
     jobSheetRevisionRef.current = data.jobSheetRevision ?? 0;
   }, [id]);
 
@@ -267,6 +270,76 @@ export default function BookingDetailPage() {
       if (Array.isArray(data)) setTechnicians(data);
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const jobFinished =
+    !!booking?.jobClosed ||
+    booking?.status === "COMPLETED" ||
+    booking?.status === "PAYMENT_COLLECTED";
+
+  const handleQualityReview = async (status: "APPROVED" | "NEEDS_FOLLOW_UP") => {
+    if (!token || !id) return;
+    if (status === "NEEDS_FOLLOW_UP" && !reviewRemarks.trim()) {
+      alert("Add remarks before marking needs follow-up.");
+      return;
+    }
+    setReviewBusy(true);
+    try {
+      const res = await fetch(`${API}/admin/bookings/${id}/quality-review`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          status,
+          ...(reviewRemarks.trim() ? { remarks: reviewRemarks.trim() } : {}),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data.message || "Could not save quality review.");
+        return;
+      }
+      applyBookingData(data);
+    } catch (err) {
+      console.error(err);
+      alert("Could not save quality review.");
+    } finally {
+      setReviewBusy(false);
+    }
+  };
+
+  const handleCreateCorrective = async () => {
+    if (!token || !id) return;
+    if (
+      !confirm(
+        "Create a corrective follow-up booking linked to this job?\n\nThe original paid/completed job will not be changed.",
+      )
+    ) {
+      return;
+    }
+    setReviewBusy(true);
+    try {
+      const res = await fetch(`${API}/admin/bookings/${id}/corrective`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data.message || "Could not create corrective booking.");
+        return;
+      }
+      await fetchBookingInfo();
+      if (data?._id) {
+        router.push(`/admin/bookings/${data._id}`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Could not create corrective booking.");
+    } finally {
+      setReviewBusy(false);
     }
   };
 
@@ -570,9 +643,27 @@ export default function BookingDetailPage() {
                 <span className="material-symbols-outlined" style={{ fontSize: 14, verticalAlign: 'middle' }}>history</span>
                 <span>Warranty Claims:</span>
                 {booking.claimBookingIds.map((cid: any) => (
-                  <a key={cid} href={`/admin/bookings/${cid}`} style={{ color: 'var(--admin-primary)', fontWeight: 600 }}>#{cid.slice(-6).toUpperCase()}</a>
+                  <a key={String(cid)} href={`/admin/bookings/${cid}`} style={{ color: 'var(--admin-primary)', fontWeight: 600 }}>#{String(cid).slice(-6).toUpperCase()}</a>
                 ))}
               </div>
+            )}
+            {booking.correctiveBookingIds && booking.correctiveBookingIds.length > 0 && (
+              <div style={{ fontSize: 13, marginTop: 4, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: 14, verticalAlign: 'middle' }}>build_circle</span>
+                <span>Corrective Jobs:</span>
+                {booking.correctiveBookingIds.map((cid: any) => (
+                  <a key={String(cid)} href={`/admin/bookings/${cid}`} style={{ color: 'var(--admin-primary)', fontWeight: 600 }}>#{String(cid).slice(-6).toUpperCase()}</a>
+                ))}
+              </div>
+            )}
+            {(booking.reviewStatus || jobFinished) && (
+              <p style={{ fontSize: 13, marginTop: 4 }}>
+                Quality review:{" "}
+                <strong>{booking.reviewStatus || "PENDING"}</strong>
+                {booking.reviewedAt
+                  ? ` · ${new Date(booking.reviewedAt).toLocaleString("en-IN")}`
+                  : ""}
+              </p>
             )}
           </div>
         </div>
@@ -1115,6 +1206,103 @@ export default function BookingDetailPage() {
 
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
           {/* Actions Panel */}
+          {jobFinished ? (
+            <div className="admin-card" style={{ background: "var(--admin-surface-2)" }}>
+              <h3 style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: 1, color: "var(--admin-text-muted)", marginBottom: 16 }}>
+                Supervisor Quality Review
+              </h3>
+              <p style={{ fontSize: 12, color: "var(--admin-text-dim)", marginBottom: 12 }}>
+                Review does not change payment, completion, warranty, or earnings on this job.
+              </p>
+              <div style={{ marginBottom: 12, fontSize: 13 }}>
+                <strong>Status:</strong> {booking.reviewStatus || "PENDING"}
+                {booking.reviewedBy ? (
+                  <>
+                    <br />
+                    <span style={{ color: "var(--admin-text-dim)" }}>
+                      Reviewer:{" "}
+                      {typeof booking.reviewedBy === "object"
+                        ? booking.reviewedBy.fullName || booking.reviewedBy.phone || "Admin"
+                        : "Admin"}
+                    </span>
+                  </>
+                ) : null}
+                {booking.reviewedAt ? (
+                  <>
+                    <br />
+                    <span style={{ color: "var(--admin-text-dim)" }}>
+                      Reviewed: {new Date(booking.reviewedAt).toLocaleString("en-IN")}
+                    </span>
+                  </>
+                ) : null}
+              </div>
+              <label className="admin-label">Remarks</label>
+              <textarea
+                className="admin-input"
+                rows={3}
+                value={reviewRemarks}
+                onChange={(e) => setReviewRemarks(e.target.value)}
+                placeholder="Required for needs follow-up"
+                style={{ marginBottom: 12 }}
+              />
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  className="admin-btn admin-btn-primary admin-btn-sm"
+                  disabled={reviewBusy}
+                  onClick={() => handleQualityReview("APPROVED")}
+                >
+                  Approve
+                </button>
+                <button
+                  type="button"
+                  className="admin-btn admin-btn-secondary admin-btn-sm"
+                  disabled={reviewBusy}
+                  onClick={() => handleQualityReview("NEEDS_FOLLOW_UP")}
+                >
+                  Needs follow-up
+                </button>
+                <button
+                  type="button"
+                  className="admin-btn admin-btn-ghost admin-btn-sm"
+                  disabled={reviewBusy}
+                  onClick={handleCreateCorrective}
+                >
+                  Create corrective job
+                </button>
+              </div>
+              {Array.isArray(booking.reviewHistory) && booking.reviewHistory.length > 0 ? (
+                <div style={{ marginTop: 16 }}>
+                  <div className="admin-label">Review history</div>
+                  <div style={{ display: "grid", gap: 8, marginTop: 8 }}>
+                    {[...booking.reviewHistory].reverse().map((entry: any, index: number) => (
+                      <div
+                        key={`${entry.at}-${index}`}
+                        style={{
+                          fontSize: 12,
+                          padding: 8,
+                          borderRadius: 8,
+                          background: "var(--admin-surface)",
+                          border: "1px solid var(--admin-border)",
+                        }}
+                      >
+                        <strong>{entry.status}</strong>
+                        {entry.at
+                          ? ` · ${new Date(entry.at).toLocaleString("en-IN")}`
+                          : ""}
+                        {entry.remarks ? (
+                          <div style={{ marginTop: 4, color: "var(--admin-text-dim)" }}>
+                            {entry.remarks}
+                          </div>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
           <div className="admin-card" style={{ background: "var(--admin-surface-2)" }}>
             <h3 style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: 1, color: "var(--admin-text-muted)", marginBottom: 16 }}>
               Management
