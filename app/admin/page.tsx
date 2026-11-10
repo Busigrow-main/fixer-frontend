@@ -10,6 +10,7 @@ interface DashboardStats {
     total: number;
     byStatus: Record<string, number>;
     needsAdminAssignment?: number;
+    overdueOps?: number;
     recent?: Array<Record<string, any>>;
   };
   spareParts: { total: number };
@@ -234,16 +235,17 @@ export default function AdminDashboardPage() {
       href: "/admin/bookings?status=NEEDS_ASSIGNMENT",
     },
     {
+      label: "Pending & Overdue",
+      value: stats.bookings?.overdueOps ?? 0,
+      icon: "pending_actions",
+      tone: "warning",
+      href: "/admin/ops",
+    },
+    {
       label: "Total Bookings",
       value: stats.bookings?.total ?? 0,
       icon: "calendar_month",
       tone: "info",
-    },
-    {
-      label: "Pending Bookings",
-      value: stats.bookings?.byStatus?.PENDING ?? 0,
-      icon: "pending_actions",
-      tone: "warning",
     },
     {
       label: "Completed",

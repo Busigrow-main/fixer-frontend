@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
 import { openJobSheet } from "@/app/admin/utils/jobsheet";
 import {
@@ -42,13 +43,24 @@ const STATUS_ACTIONS = [
 
 export default function AdminBookingsPage() {
   const { token } = useAuth();
+  const searchParams = useSearchParams();
+  const statusFromUrl = searchParams.get("status");
 
   const [bookings, setBookings] = useState<any[]>([]);
   const [technicians, setTechnicians] = useState<any[]>([]);
 
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [status, setStatus] = useState("ALL");
+  const [status, setStatus] = useState(
+    statusFromUrl && FILTERS.includes(statusFromUrl) ? statusFromUrl : "ALL",
+  );
+
+  useEffect(() => {
+    if (statusFromUrl && FILTERS.includes(statusFromUrl)) {
+      setStatus(statusFromUrl);
+      setPage(1);
+    }
+  }, [statusFromUrl]);
   const [search, setSearch] = useState("");
   const [datePreset, setDatePreset] = useState("all");
   const [fromDate, setFromDate] = useState("");

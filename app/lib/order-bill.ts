@@ -38,10 +38,6 @@ export function normalizeBillLines(
   });
 }
 
-export function formatInr(amount: number): string {
-  return `₹${amount.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
-}
-
 /**
  * Bill totals for GST-inclusive catalog prices.
  * Grand total stays the displayed amount; GST is reverse-calculated (Rule 35).

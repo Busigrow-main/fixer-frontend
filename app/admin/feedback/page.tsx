@@ -54,7 +54,7 @@ export default function AdminFeedbackPage() {
     [items],
   );
 
-  const loadFollowUps = async () => {
+  const loadFollowUps = async (opts?: { keepMessage?: boolean }) => {
     if (!token) return;
     setLoading(true);
     try {
@@ -67,7 +67,7 @@ export default function AdminFeedbackPage() {
       const data = await res.json();
       setItems(Array.isArray(data.data) ? data.data : []);
       setTotal(Number(data.total) || 0);
-      setMessage("");
+      if (!opts?.keepMessage) setMessage("");
     } catch (error) {
       setMessage(
         error instanceof Error ? error.message : "Could not load recovery queue.",
@@ -139,7 +139,7 @@ export default function AdminFeedbackPage() {
       }
       setSelected(null);
       setMessage(markResolved ? "Case resolved." : "Follow-up updated.");
-      await loadFollowUps();
+      await loadFollowUps({ keepMessage: true });
     } catch (error) {
       setMessage(
         error instanceof Error ? error.message : "Could not update follow-up.",
