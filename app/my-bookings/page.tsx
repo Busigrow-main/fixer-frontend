@@ -651,11 +651,13 @@ function MyBookingsContent() {
                   <RepairBookingCard
                     key={booking._id}
                     booking={booking}
+                    token={token}
                     getWarrantyStatus={getWarrantyStatus}
                     onClaimWarranty={handleClaimWarranty}
                     onCancelBooking={(id) =>
                       openCancellationModal(id)
                     }
+                    onFeedbackSaved={fetchAllHistory}
                   />
                 ))}
 
@@ -783,17 +785,21 @@ function MyBookingsContent() {
 
 function RepairBookingCard({
   booking,
+  token,
   getWarrantyStatus,
   onClaimWarranty,
   onCancelBooking,
+  onFeedbackSaved,
 }: {
   booking: any;
+  token: string | null;
   getWarrantyStatus: (b: any) => {
     label: string;
     isActive: boolean;
   } | null;
   onClaimWarranty: (id: string) => void;
   onCancelBooking: (id: string) => void;
+  onFeedbackSaved: () => void;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -869,6 +875,18 @@ function RepairBookingCard({
     "EN_ROUTE",
     "RESCHEDULED",
   ].includes(booking.status);
+
+  const canLeaveFeedback =
+    booking.jobClosed ||
+    booking.status === "COMPLETED" ||
+    booking.status === "PAYMENT_COLLECTED";
+
+  const existingFeedback =
+    booking.feedbackId &&
+    typeof booking.feedbackId === "object" &&
+    typeof booking.feedbackId.rating === "number"
+      ? booking.feedbackId
+      : null;
 
   return (
     <article className={cardCls}>
@@ -1271,8 +1289,189 @@ function RepairBookingCard({
             )}
           </div>
         )}
+
+        {canLeaveFeedback && token ? (
+          <BookingFeedbackPanel
+            bookingId={booking._id}
+            token={token}
+            existing={existingFeedback}
+            onSaved={onFeedbackSaved}
+          />
+        ) : null}
       </div>
     </article>
+  );
+}
+
+function BookingFeedbackPanel({
+  bookingId,
+  token,
+  existing,
+  onSaved,
+}: {
+  bookingId: string;
+  token: string;
+  existing: { rating: number; resolved: boolean; comment?: string } | null;
+  onSaved: () => void;
+}) {
+  const [rating, setRating] = useState(existing?.rating || 0);
+  const [resolved, setResolved] = useState(
+    existing ? existing.resolved : true,
+  );
+  const [comment, setComment] = useState(existing?.comment || "");
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<{
+    tone: "success" | "error";
+    text: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!existing) return;
+    setRating(existing.rating);
+    setResolved(existing.resolved);
+    setComment(existing.comment || "");
+  }, [existing]);
+
+  const submit = async () => {
+    if (rating < 1 || rating > 5) {
+      setMessage({ tone: "error", text: "Choose a rating from 1 to 5." });
+      return;
+    }
+
+    setSaving(true);
+    setMessage(null);
+
+    try {
+      const res = await fetch(`${API_URL}/user/bookings/${bookingId}/feedback`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          rating,
+          resolved,
+          ...(comment.trim() ? { comment: comment.trim() } : {}),
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const text = Array.isArray(data.message)
+          ? data.message.join(" ")
+          : data.message;
+        throw new Error(text || "Could not save feedback.");
+      }
+
+      setMessage({
+        tone: "success",
+        text: existing
+          ? "Feedback updated."
+          : "Thanks — your feedback was saved.",
+      });
+      onSaved();
+    } catch (error) {
+      setMessage({
+        tone: "error",
+        text:
+          error instanceof Error
+            ? error.message
+            : "Could not save feedback.",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="mt-3 rounded-xl border border-zinc-200/80 bg-white p-3">
+      <p className="text-[11px] font-bold uppercase tracking-wide text-zinc-500">
+        {existing ? "Your feedback" : "How did we do?"}
+      </p>
+
+      <div className="mt-2 flex items-center gap-1">
+        {[1, 2, 3, 4, 5].map((value) => (
+          <button
+            key={value}
+            type="button"
+            aria-label={`Rate ${value} out of 5`}
+            onClick={() => setRating(value)}
+            className="rounded-lg p-1 text-primary transition hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15"
+          >
+            <span
+              className={`material-symbols-outlined text-[22px] ${
+                rating >= value ? "icon-filled" : ""
+              }`}
+            >
+              star
+            </span>
+          </button>
+        ))}
+      </div>
+
+      <fieldset className="mt-3">
+        <legend className="text-[12px] font-semibold text-zinc-700">
+          Was the issue resolved?
+        </legend>
+        <div className="mt-1.5 flex gap-2">
+          <button
+            type="button"
+            onClick={() => setResolved(true)}
+            className={`h-9 flex-1 rounded-lg border text-[13px] font-semibold transition ${
+              resolved
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-zinc-200 bg-white text-zinc-700"
+            }`}
+          >
+            Yes
+          </button>
+          <button
+            type="button"
+            onClick={() => setResolved(false)}
+            className={`h-9 flex-1 rounded-lg border text-[13px] font-semibold transition ${
+              !resolved
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-zinc-200 bg-white text-zinc-700"
+            }`}
+          >
+            No
+          </button>
+        </div>
+      </fieldset>
+
+      <label className="mt-3 block">
+        <span className="text-[12px] font-semibold text-zinc-700">
+          Comment (optional)
+        </span>
+        <textarea
+          value={comment}
+          onChange={(event) => setComment(event.target.value)}
+          maxLength={2000}
+          rows={2}
+          placeholder="Anything we should know?"
+          className="mt-1.5 w-full resize-none rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-primary focus:ring-4 focus:ring-primary/10"
+        />
+      </label>
+
+      {message ? (
+        <p
+          className={`mt-2 text-xs font-medium ${
+            message.tone === "success" ? "text-green-700" : "text-red-600"
+          }`}
+        >
+          {message.text}
+        </p>
+      ) : null}
+
+      <button
+        type="button"
+        onClick={submit}
+        disabled={saving || rating < 1}
+        className="mt-3 inline-flex h-10 w-full items-center justify-center rounded-xl bg-primary px-4 text-[13px] font-semibold text-on-primary transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {saving ? "Saving..." : existing ? "Update feedback" : "Submit feedback"}
+      </button>
+    </div>
   );
 }
 
