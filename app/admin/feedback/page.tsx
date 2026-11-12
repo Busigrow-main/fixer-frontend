@@ -191,7 +191,7 @@ export default function AdminFeedbackPage() {
         <button
           type="button"
           className="admin-btn admin-btn-secondary"
-          onClick={loadFollowUps}
+          onClick={() => loadFollowUps()}
           disabled={loading}
         >
           <span className="material-symbols-outlined">refresh</span>
