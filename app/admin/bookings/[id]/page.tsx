@@ -1206,6 +1206,84 @@ export default function BookingDetailPage() {
 
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
           {/* Actions Panel */}
+          <div className="admin-card" style={{ background: "var(--admin-surface-2)" }}>
+            <h3 style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: 1, color: "var(--admin-text-muted)", marginBottom: 12 }}>
+              Change history
+            </h3>
+            <p style={{ fontSize: 12, color: "var(--admin-text-dim)", marginBottom: 12 }}>
+              Append-only audit of assignment, status, price, parts, warranty and review. Corrections create new events.
+            </p>
+            {Array.isArray(booking.changeHistory) && booking.changeHistory.length > 0 ? (
+              <div style={{ display: "grid", gap: 8, maxHeight: 320, overflowY: "auto" }}>
+                {[...booking.changeHistory].reverse().map((entry: any, index: number) => {
+                  const actor =
+                    typeof entry.actorId === "object" && entry.actorId
+                      ? entry.actorId.fullName || entry.actorId.phone
+                      : entry.actorRole || "SYSTEM";
+                  const prev =
+                    entry.previous == null
+                      ? "—"
+                      : typeof entry.previous === "object"
+                        ? JSON.stringify(entry.previous)
+                        : String(entry.previous);
+                  const next =
+                    entry.next == null
+                      ? "—"
+                      : typeof entry.next === "object"
+                        ? JSON.stringify(entry.next)
+                        : String(entry.next);
+                  return (
+                    <div
+                      key={`${entry.at}-${entry.field}-${index}`}
+                      style={{
+                        fontSize: 12,
+                        padding: 8,
+                        borderRadius: 8,
+                        background: "var(--admin-surface)",
+                        border: "1px solid var(--admin-border)",
+                      }}
+                    >
+                      <strong>{entry.field}</strong>
+                      {entry.at
+                        ? ` · ${new Date(entry.at).toLocaleString("en-IN")}`
+                        : ""}
+                      <div style={{ marginTop: 4, color: "var(--admin-text-dim)" }}>
+                        {actor} · {prev} → {next}
+                      </div>
+                      {entry.reason ? (
+                        <div style={{ marginTop: 4 }}>{entry.reason}</div>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p style={{ fontSize: 13, color: "var(--admin-text-dim)" }}>
+                No critical changes recorded yet.
+              </p>
+            )}
+          </div>
+
+          {(booking.opsPendingReason || booking.opsPartsWait) && (
+            <div className="admin-card" style={{ background: "var(--admin-surface-2)" }}>
+              <h3 style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: 1, color: "var(--admin-text-muted)", marginBottom: 12 }}>
+                Pending / Overdue
+              </h3>
+              <p style={{ fontSize: 13, marginBottom: 8 }}>
+                <strong>{booking.opsPendingReason || "PARTS_WAIT"}</strong>
+                {booking.opsFirstPendingAt
+                  ? ` · since ${new Date(booking.opsFirstPendingAt).toLocaleString("en-IN")}`
+                  : ""}
+              </p>
+              <p style={{ fontSize: 13, color: "var(--admin-text-dim)", marginBottom: 12 }}>
+                Next: {booking.opsNextAction || "—"}
+              </p>
+              <Link href="/admin/ops" className="admin-btn admin-btn-secondary admin-btn-sm">
+                Open overdue queue
+              </Link>
+            </div>
+          )}
+
           {jobFinished ? (
             <div className="admin-card" style={{ background: "var(--admin-surface-2)" }}>
               <h3 style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: 1, color: "var(--admin-text-muted)", marginBottom: 16 }}>
