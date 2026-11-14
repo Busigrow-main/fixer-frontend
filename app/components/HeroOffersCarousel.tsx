@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { getHomeOffers, type ApiOffer } from "@/app/lib/offers-api";
+import slideImageTwo from "@/app/public/images/shop/2.png";
+import slideImageThree from "@/app/public/images/shop/3.png";
 
-const FALLBACK_IMAGE =
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuDA9mgV-aJUlhsUCFdpsjAh68ldSYuVZG2VUmsj7OENR0BXA1gTDTblJEOs-o4QuxoYqOB3ATEbqXfQnlhhnTZfaLr4GrDJKb_KKZNCgj4MuVslFnjNnpt2vimmj3KSRaUMnWW3aOKkFhPUbZYgwTswXCRlDchT9CFwlo-S87VSmDqAODSSoXuAhh3nRB-oLg8wsMqBtMAbN7re1oHbiaipdcAUnMuDbw2bg8bMhqlgrPfpSIcTXcmvTpPQ3uPQ1jSpFqSg9IrarOA";
+const CAROUSEL_IMAGES = [slideImageTwo, slideImageThree];
 
 const AUTO_MS = 3500;
 
@@ -15,8 +16,6 @@ export default function HeroOffersCarousel({
   className?: string;
 }) {
   const [offers, setOffers] = useState<ApiOffer[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const resumeTimer = useRef<number | null>(null);
@@ -31,20 +30,10 @@ export default function HeroOffersCarousel({
       .then(setOffers)
       .catch((error) => {
         if (error?.name !== "AbortError") {
-          setLoadError(true);
           console.error(error);
         }
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
       });
   }, []);
-
-  const retryOffers = () => {
-    setLoading(true);
-    setLoadError(false);
-    loadOffers();
-  };
 
   useEffect(() => {
     loadOffers();
@@ -52,11 +41,12 @@ export default function HeroOffersCarousel({
   }, [loadOffers]);
 
   useEffect(() => {
-    if (paused || offers.length < 2) return;
+    const slideCount = offers.length || CAROUSEL_IMAGES.length;
+    if (paused || slideCount < 2) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     const timer = window.setInterval(() => {
-      setActiveIndex((current) => (current + 1) % offers.length);
+      setActiveIndex((current) => (current + 1) % slideCount);
     }, AUTO_MS);
     return () => window.clearInterval(timer);
   }, [offers.length, paused]);
@@ -74,7 +64,8 @@ export default function HeroOffersCarousel({
     resumeTimer.current = window.setTimeout(() => setPaused(false), AUTO_MS);
   };
 
-  const visibleIndex = offers.length > 0 ? activeIndex % offers.length : 0;
+  const slideCount = offers.length || CAROUSEL_IMAGES.length;
+  const visibleIndex = activeIndex % slideCount;
 
   // if (offers.length === 0) {
   //   return (
@@ -115,44 +106,62 @@ export default function HeroOffersCarousel({
       aria-roledescription="carousel"
       aria-label="Live Fixxer offers"
     >
-      {offers.map((offer, index) => (
-        <Link
-          key={offer._id}
-          href={offer.ctaHref}
-          tabIndex={visibleIndex === index ? 0 : -1}
-          aria-label={offer.title || "View offer"}
-          aria-hidden={visibleIndex !== index}
-          className={`relative col-start-1 row-start-1 block transition-opacity duration-700 ${
-            visibleIndex === index
-              ? "visible pointer-events-auto opacity-100"
-              : "invisible pointer-events-none opacity-0"
-          }`}
-        >
-          <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{
-              backgroundImage: `url("${offer.imageUrl || FALLBACK_IMAGE}")`,
-            }}
-          />
-          <div className="absolute inset-0 hidden bg-gradient-to-t from-black/75 via-black/10 to-transparent md:block" />
-          <div className="absolute inset-x-4 bottom-10 hidden items-end justify-between gap-3 text-left text-white sm:inset-x-6 sm:bottom-11 md:inset-x-8 md:flex">
-            <span className="min-w-0">
-              <span className="block truncate font-headline text-lg font-bold sm:text-2xl md:text-3xl">{offer.title}</span>
-              {offer.discountText && <span className="mt-1 block truncate text-xs font-semibold sm:text-sm">{offer.discountText}</span>}
-            </span>
-            <span className="shrink-0 rounded-lg bg-primary px-3 py-2 text-[9px] font-black uppercase tracking-wide text-on-primary shadow-lg sm:px-4 sm:text-[10px]">
-              {offer.ctaLabel?.trim() || "Explore offer"}
-            </span>
-          </div>
-        </Link>
-      ))}
+      {Array.from({ length: slideCount }, (_, index) => {
+        const offer = offers[index];
+        const slideClass = `relative col-start-1 row-start-1 block transition-opacity duration-700 ${
+          visibleIndex === index
+            ? "visible pointer-events-auto opacity-100"
+            : "invisible pointer-events-none opacity-0"
+        }`;
+        const content = (
+          <>
+            <div
+              className="absolute inset-0 bg-cover bg-center"
+              style={{
+                backgroundImage: `url("${offer?.imageUrl || CAROUSEL_IMAGES[index % CAROUSEL_IMAGES.length].src}")`,
+              }}
+            />
+            {offer && (
+              <>
+                <div className="absolute inset-0 hidden bg-gradient-to-t from-black/75 via-black/10 to-transparent md:block" />
+                <div className="absolute inset-x-4 bottom-10 hidden items-end justify-between gap-3 text-left text-white sm:inset-x-6 sm:bottom-11 md:inset-x-8 md:flex">
+                  <span className="min-w-0">
+                    <span className="block truncate font-headline text-lg font-bold sm:text-2xl md:text-3xl">{offer.title}</span>
+                    {offer.discountText && <span className="mt-1 block truncate text-xs font-semibold sm:text-sm">{offer.discountText}</span>}
+                  </span>
+                  <span className="shrink-0 rounded-lg bg-primary px-3 py-2 text-[9px] font-black uppercase tracking-wide text-on-primary shadow-lg sm:px-4 sm:text-[10px]">
+                    {offer.ctaLabel?.trim() || "Explore offer"}
+                  </span>
+                </div>
+              </>
+            )}
+          </>
+        );
 
-      {offers.length > 1 && (
+        return offer ? (
+          <Link
+            key={offer._id}
+            href={offer.ctaHref}
+            tabIndex={visibleIndex === index ? 0 : -1}
+            aria-label={offer.title || "View offer"}
+            aria-hidden={visibleIndex !== index}
+            className={slideClass}
+          >
+            {content}
+          </Link>
+        ) : (
+          <div key={index} aria-hidden="true" className={slideClass}>
+            {content}
+          </div>
+        );
+      })}
+
+      {slideCount > 1 && (
         <div className="pointer-events-none absolute inset-x-0 bottom-3 z-20 flex justify-center md:bottom-4">
           <div className="pointer-events-auto flex items-center gap-1.5 rounded-full bg-black/40 px-2.5 py-2 backdrop-blur-sm">
-            {offers.map((offer, index) => (
+            {Array.from({ length: slideCount }, (_, index) => (
               <button
-                key={offer._id}
+                key={offers[index]?._id ?? index}
                 type="button"
                 aria-label={`Show offer ${index + 1}`}
                 aria-current={visibleIndex === index}
