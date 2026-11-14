@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
 import { openJobSheet } from "@/app/admin/utils/jobsheet";
 import {
@@ -19,6 +20,7 @@ const API =
 const FILTERS = [
   "ALL",
   "NEEDS_ASSIGNMENT",
+  "AWAITING_REVIEW",
   "PENDING",
   "CONFIRMED",
   "ASSIGNED",
@@ -41,13 +43,24 @@ const STATUS_ACTIONS = [
 
 export default function AdminBookingsPage() {
   const { token } = useAuth();
+  const searchParams = useSearchParams();
+  const statusFromUrl = searchParams.get("status");
 
   const [bookings, setBookings] = useState<any[]>([]);
   const [technicians, setTechnicians] = useState<any[]>([]);
 
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [status, setStatus] = useState("ALL");
+  const [status, setStatus] = useState(
+    statusFromUrl && FILTERS.includes(statusFromUrl) ? statusFromUrl : "ALL",
+  );
+
+  useEffect(() => {
+    if (statusFromUrl && FILTERS.includes(statusFromUrl)) {
+      setStatus(statusFromUrl);
+      setPage(1);
+    }
+  }, [statusFromUrl]);
   const [search, setSearch] = useState("");
   const [datePreset, setDatePreset] = useState("all");
   const [fromDate, setFromDate] = useState("");
@@ -464,6 +477,9 @@ export default function AdminBookingsPage() {
       case "NEEDS_ASSIGNMENT":
         return "Needs Assignment";
 
+      case "AWAITING_REVIEW":
+        return "Awaiting Review";
+
       case "USER_CANCELLED":
         return "User Cancelled";
 
@@ -719,7 +735,8 @@ export default function AdminBookingsPage() {
             }`}
             onClick={() => handleFilterChange(filter)}
             style={
-              filter === "NEEDS_ASSIGNMENT" &&
+              (filter === "NEEDS_ASSIGNMENT" ||
+                filter === "AWAITING_REVIEW") &&
               status !== filter
                 ? {
                     borderColor:
@@ -733,6 +750,31 @@ export default function AdminBookingsPage() {
           </button>
         ))}
       </div>
+
+      {status === "AWAITING_REVIEW" && (
+        <div
+          className="admin-card"
+          style={{
+            marginBottom: 16,
+            padding: "12px 16px",
+            borderColor: "var(--admin-info)",
+            background: "var(--admin-info-soft)",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+          }}
+        >
+          <span
+            className="material-symbols-outlined"
+            style={{ color: "var(--admin-info)" }}
+          >
+            fact_check
+          </span>
+          <span style={{ fontSize: 13 }}>
+            Completed jobs waiting for supervisor quality review. Open a booking to approve or flag follow-up — payment and earnings stay unchanged.
+          </span>
+        </div>
+      )}
 
       {/* Needs Assignment Notice */}
       {status === "NEEDS_ASSIGNMENT" && (

@@ -43,6 +43,16 @@ const NAV_SECTIONS: NavSection[] = [
         label: "Serviceable Pincodes",
       },
       { href: "/admin/leads", icon: "contact_page", label: "Leads" },
+      {
+        href: "/admin/feedback",
+        icon: "sentiment_dissatisfied",
+        label: "Customer Recovery",
+      },
+      {
+        href: "/admin/ops",
+        icon: "pending_actions",
+        label: "Pending & Overdue",
+      },
       { href: "/admin/technicians", icon: "engineering", label: "Technicians" },
     ],
   },
