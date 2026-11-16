@@ -292,18 +292,16 @@ export default function AdminOffersPage() {
         </div>
 
         <div className="offer-admin-grid">
-          <Field label="Campaign title *">
+          <Field label="Campaign title">
             <input
-              required
               className="admin-input"
               value={form.title}
               onChange={(event) => updateField("title", event.target.value)}
               placeholder="AC summer service special"
             />
           </Field>
-          <Field label="Savings text *">
+          <Field label="Savings text">
             <input
-              required
               className="admin-input"
               value={form.discountText}
               onChange={(event) =>

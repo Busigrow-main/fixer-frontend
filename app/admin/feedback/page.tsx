@@ -33,10 +33,29 @@ type FollowUp = {
   };
 };
 
+type FeedbackEntry = {
+  _id: string;
+  rating: number;
+  resolved: boolean;
+  comment?: string;
+  createdAt?: string;
+  userId?: AdminUser | string | null;
+  bookingId?: {
+    _id?: string;
+    status?: string;
+    addressData?: { text?: string; zip?: string };
+  } | string;
+};
+
+type AdminFeedbackView = "all" | "recovery";
+
 export default function AdminFeedbackPage() {
   const { token } = useAuth();
+  const [view, setView] = useState<AdminFeedbackView>("all");
   const [items, setItems] = useState<FollowUp[]>([]);
   const [total, setTotal] = useState(0);
+  const [feedbackItems, setFeedbackItems] = useState<FeedbackEntry[]>([]);
+  const [feedbackTotal, setFeedbackTotal] = useState(0);
   const [status, setStatus] = useState<(typeof STATUSES)[number]>("OPEN");
   const [page, setPage] = useState(1);
   const [admins, setAdmins] = useState<AdminUser[]>([]);
@@ -48,7 +67,10 @@ export default function AdminFeedbackPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
-  const totalPages = Math.max(1, Math.ceil(total / 20));
+  const totalPages = Math.max(
+    1,
+    Math.ceil((view === "all" ? feedbackTotal : total) / 20),
+  );
   const openCount = useMemo(
     () => items.filter((item) => item.status === "OPEN").length,
     [items],
@@ -77,9 +99,32 @@ export default function AdminFeedbackPage() {
     }
   };
 
+  const loadFeedback = async () => {
+    if (!token) return;
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({ page: String(page), limit: "20" });
+      const res = await fetch(`${API}/admin/feedback?${params}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Could not load customer feedback.");
+      const data = await res.json();
+      setFeedbackItems(Array.isArray(data.data) ? data.data : []);
+      setFeedbackTotal(Number(data.total) || 0);
+      setMessage("");
+    } catch (error) {
+      setMessage(
+        error instanceof Error ? error.message : "Could not load customer feedback.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    loadFollowUps();
-  }, [token, page, status]);
+    if (view === "all") loadFeedback();
+    else loadFollowUps();
+  }, [token, page, status, view]);
 
   useEffect(() => {
     if (!token) return;
@@ -177,7 +222,7 @@ export default function AdminFeedbackPage() {
         }}
       >
         <div>
-          <h2 style={{ fontSize: 22, fontWeight: 800 }}>Customer Recovery</h2>
+          <h2 style={{ fontSize: 22, fontWeight: 800 }}>Customer Feedback</h2>
           <p
             style={{
               fontSize: 13,
@@ -185,18 +230,38 @@ export default function AdminFeedbackPage() {
               marginTop: 4,
             }}
           >
-            Low ratings and unresolved jobs that need follow-up.
+            Read customer ratings and comments, and manage recovery follow-ups.
           </p>
         </div>
         <button
           type="button"
           className="admin-btn admin-btn-secondary"
-          onClick={() => loadFollowUps()}
+          onClick={() => (view === "all" ? loadFeedback() : loadFollowUps())}
           disabled={loading}
         >
           <span className="material-symbols-outlined">refresh</span>
           Refresh
         </button>
+      </div>
+
+      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+        {([
+          ["all", "All feedback"],
+          ["recovery", "Needs follow-up"],
+        ] as const).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            className={view === key ? "admin-btn admin-btn-primary" : "admin-btn admin-btn-secondary"}
+            onClick={() => {
+              setView(key);
+              setPage(1);
+              setMessage("");
+            }}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
       {message ? (
@@ -205,7 +270,7 @@ export default function AdminFeedbackPage() {
         </div>
       ) : null}
 
-      <div className="admin-stats-grid" style={{ marginBottom: 24 }}>
+      {view === "recovery" ? <div className="admin-stats-grid" style={{ marginBottom: 24 }}>
         <div className="admin-card admin-metric-card">
           <div className="admin-metric-label">Queue total</div>
           <div className="admin-metric-value">{total}</div>
@@ -214,9 +279,16 @@ export default function AdminFeedbackPage() {
           <div className="admin-metric-label">Open on this page</div>
           <div className="admin-metric-value">{openCount}</div>
         </div>
-      </div>
+      </div> : (
+        <div className="admin-stats-grid" style={{ marginBottom: 24 }}>
+          <div className="admin-card admin-metric-card">
+            <div className="admin-metric-label">Feedback entries</div>
+            <div className="admin-metric-value">{feedbackTotal}</div>
+          </div>
+        </div>
+      )}
 
-      <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
+      {view === "recovery" ? <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
         <select
           className="admin-input admin-select"
           value={status}
@@ -231,9 +303,57 @@ export default function AdminFeedbackPage() {
             </option>
           ))}
         </select>
-      </div>
+      </div> : null}
 
-      {loading ? (
+      {view === "all" ? (
+        loading ? (
+          <div className="admin-card" style={{ padding: 32, textAlign: "center" }}>
+            Loading customer feedback...
+          </div>
+        ) : feedbackItems.length === 0 ? (
+          <div className="admin-card" style={{ padding: 32, textAlign: "center" }}>
+            No customer feedback has been submitted yet.
+          </div>
+        ) : (
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Customer</th>
+                  <th>Booking</th>
+                  <th>Rating</th>
+                  <th>Resolved?</th>
+                  <th>Comment</th>
+                  <th>Submitted</th>
+                </tr>
+              </thead>
+              <tbody>
+                {feedbackItems.map((item) => {
+                  const user = typeof item.userId === "object" ? item.userId : null;
+                  const booking = typeof item.bookingId === "object" ? item.bookingId : null;
+                  return (
+                    <tr key={item._id}>
+                      <td>
+                        <strong>{user?.fullName || "Customer"}</strong>
+                        <br />
+                        <small>{user?.phone || "—"}</small>
+                      </td>
+                      <td>
+                        #{(booking?._id || (typeof item.bookingId === "string" ? item.bookingId : "")).slice(-6).toUpperCase() || "—"}
+                        {booking?.status ? <><br /><small>{booking.status}</small></> : null}
+                      </td>
+                      <td>{item.rating}/5</td>
+                      <td>{item.resolved ? "Yes" : "No"}</td>
+                      <td>{item.comment?.trim() || "No comment"}</td>
+                      <td>{item.createdAt ? new Date(item.createdAt).toLocaleDateString("en-IN") : "—"}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )
+      ) : loading ? (
         <div className="admin-card" style={{ padding: 32, textAlign: "center" }}>
           Loading recovery queue...
         </div>
@@ -318,7 +438,7 @@ export default function AdminFeedbackPage() {
         }}
       >
         <span style={{ fontSize: 13, color: "var(--admin-text-dim)" }}>
-          {total} total follow-ups
+          {view === "all" ? feedbackTotal : total} total {view === "all" ? "feedback entries" : "follow-ups"}
         </span>
         <div style={{ display: "flex", gap: 8 }}>
           <button

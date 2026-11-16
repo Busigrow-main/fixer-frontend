@@ -54,7 +54,7 @@ export default function Footer() {
     );
 
     window.open(
-      `https://mail.google.com/mail/?view=cm&fs=1&to=busigrowindia@gmail.com&su=${subject}&body=${body}`,
+      `https://mail.google.com/mail/?view=cm&fs=1&to=grow@busigrow.in&su=${subject}&body=${body}`,
       "_blank"
     );
   };

@@ -393,7 +393,7 @@ export function openJobSheet(booking: any) {
         <td style="border:none; padding:0; line-height: 1.4;">
           <strong>Authorised Service Provider : Cool Air Refrigeration (Fixxer)</strong><br>
           <span style="color:#555;">Contact Number :</span> +91 70047 71388<br>
-          <span style="color:#555;">Address :</span> MLA Colony, Raja Bazar, Patna 800014, Bihar | <span style="color:#555;">Email :</span> busigrowindia@gmail.com<br>
+          <span style="color:#555;">Address :</span> MLA Colony, Raja Bazar, Patna 800014, Bihar | <span style="color:#555;">Email :</span> grow@busigrow.in<br>
           <div style="margin-top:2px; font-style: italic; color:#777;">Note: This is a record rendered and is for usage by Authorised service provider only.</div>
         </td>
       </tr>
@@ -613,9 +613,9 @@ export function openRetailInvoice(booking: any) {
   <div class="footer">
     <p>&copy; 2026 Fixxer - Precision Home Services. All rights reserved.</p>
     <p style="font-weight: 600;">This is a computer generated service bill and does not require a physical signature.</p>
-    <p>www.fixxer.in | Contact: busigrowindia@gmail.com | +91 70047 71388</p>
+    <p>www.fixxer.in | Contact: grow@busigrow.in | +91 70047 71388</p>
     <p style="font-weight: 600;">This is a computer generated tax invoice and does not require a physical signature.</p>
-    <p>www.fixxer.in | Contact: busigrowindia@gmail.com | +91 70047 71388</p>
+    <p>www.fixxer.in | Contact: grow@busigrow.in | +91 70047 71388</p>
   </div>
 </body>
 </html>`;

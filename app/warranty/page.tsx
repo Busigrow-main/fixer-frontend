@@ -168,10 +168,10 @@ export default function WarrantyPolicyPage() {
               </a>{" "}
               or email{" "}
               <a
-                href="mailto:busigrowindia@gmail.com"
+                href="mailto:grow@busigrow.in"
                 className="text-primary font-semibold hover:underline"
               >
-                busigrowindia@gmail.com
+                grow@busigrow.in
               </a>{" "}
               with the booking reference, the symptom, and the date the job was completed.
             </p>

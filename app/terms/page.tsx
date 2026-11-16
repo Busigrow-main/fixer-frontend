@@ -41,10 +41,10 @@ export default function TermsPage() {
               </a>{" "}
               or{" "}
               <a
-                href="mailto:busigrowindia@gmail.com"
+                href="mailto:grow@busigrow.in"
                 className="text-primary font-semibold hover:underline"
               >
-                busigrowindia@gmail.com
+                grow@busigrow.in
               </a>
               . In these terms, “we”, “us”, and “Fixxer” mean that business. “You” means the
               person who books, pays, or authorises work on an appliance.
@@ -236,10 +236,10 @@ export default function TermsPage() {
               jurisdiction, without affecting any right you have to approach a consumer forum.
               Write to{" "}
               <a
-                href="mailto:busigrowindia@gmail.com"
+                href="mailto:grow@busigrow.in"
                 className="text-primary font-semibold hover:underline"
               >
-                busigrowindia@gmail.com
+                grow@busigrow.in
               </a>{" "}
               with your booking reference and we will respond to a service complaint.
             </p>

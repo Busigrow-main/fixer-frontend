@@ -197,8 +197,8 @@ function MyBookingsContent() {
     }
   }, [token, authLoading, refreshKey]);
 
-  const fetchAllHistory = async () => {
-    setLoading(true);
+  const fetchAllHistory = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
 
     try {
       const response = await fetch(`${API_URL}/user/bookings`, {
@@ -218,7 +218,7 @@ function MyBookingsContent() {
           : "Network error. Could not load technician bookings.",
       );
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
@@ -657,7 +657,7 @@ function MyBookingsContent() {
                     onCancelBooking={(id) =>
                       openCancellationModal(id)
                     }
-                    onFeedbackSaved={fetchAllHistory}
+                    onFeedbackSaved={() => fetchAllHistory(false)}
                   />
                 ))}
 
@@ -876,10 +876,12 @@ function RepairBookingCard({
     "RESCHEDULED",
   ].includes(booking.status);
 
+  const normalizedStatus = String(booking.status || "").toUpperCase();
   const canLeaveFeedback =
-    booking.jobClosed ||
-    booking.status === "COMPLETED" ||
-    booking.status === "PAYMENT_COLLECTED";
+    booking.jobClosed === true ||
+    normalizedStatus === "COMPLETED" ||
+    normalizedStatus === "PAYMENT_COLLECTED";
+  const canShowFeedback = normalizedStatus !== "CANCELLED";
 
   const existingFeedback =
     booking.feedbackId &&
@@ -1290,13 +1292,22 @@ function RepairBookingCard({
           </div>
         )}
 
-        {canLeaveFeedback && token ? (
+        {token && canLeaveFeedback ? (
           <BookingFeedbackPanel
             bookingId={booking._id}
             token={token}
             existing={existingFeedback}
             onSaved={onFeedbackSaved}
           />
+        ) : token && canShowFeedback ? (
+          <div className="mt-3 rounded-xl border border-zinc-200/80 bg-white p-3">
+            <p className="text-[11px] font-bold uppercase tracking-wide text-zinc-500">
+              Feedback
+            </p>
+            <p className="mt-1 text-[13px] leading-relaxed text-zinc-600">
+              You can rate your service and share comments after the technician completes the job.
+            </p>
+          </div>
         ) : null}
       </div>
     </article>

@@ -23,7 +23,7 @@ export const DEFAULT_INVOICE_SELLER: InvoiceSoldBy = {
   gstin: "",
   pan: "",
   phone: "+91 70047 71388",
-  email: "busigrowindia@gmail.com",
+  email: "grow@busigrow.in",
   website: "www.fixxer.in",
 };
 

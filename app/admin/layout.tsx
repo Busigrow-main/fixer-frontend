@@ -46,7 +46,7 @@ const NAV_SECTIONS: NavSection[] = [
       {
         href: "/admin/feedback",
         icon: "sentiment_dissatisfied",
-        label: "Customer Recovery",
+        label: "Feedback & Recovery",
       },
       {
         href: "/admin/ops",
