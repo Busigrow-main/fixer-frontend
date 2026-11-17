@@ -197,6 +197,7 @@ export default function BookingForm({
   const [formData, setFormData] = useState({
     serviceId: "",
     subCategoryId: "",
+    acType: "",
     brand: "",
     brandOther: "",
     name: user?.fullName || "",
@@ -237,7 +238,7 @@ export default function BookingForm({
         setServices(data);
         if (initialServiceSlug) {
           const matched = data.find((s) => s.slug === initialServiceSlug);
-          if (matched) setFormData((p) => ({ ...p, serviceId: matched._id, subCategoryId: "" }));
+          if (matched) setFormData((p) => ({ ...p, serviceId: matched._id, subCategoryId: "", acType: "" }));
         }
       } catch (err) {
         console.error("Failed to load services:", err);
@@ -266,6 +267,7 @@ export default function BookingForm({
       ...p,
       serviceId: resolvedServiceId,
       subCategoryId: restoreSub ? resumeDraft.subCategoryId : "",
+      acType: "",
       brand: resumeDraft.brand || p.brand,
       name: resumeDraft.name || p.name,
       phone: resumeDraft.phone || p.phone,
@@ -292,6 +294,13 @@ export default function BookingForm({
   /* ---------- derived ---------- */
   const selectedService = services.find((s) => s._id === formData.serviceId);
   const selectedSub = selectedService?.subCategories?.find((sc) => sc._id === formData.subCategoryId);
+  const isAcService = /air conditioner|\bac\b/i.test(selectedService?.name ?? "");
+  const acTypeOptions = isAcService
+    ? selectedService?.subCategories?.filter((sc) => /^(window|split)\s+ac$/i.test(sc.name)) ?? []
+    : [];
+  const visibleSubCategories = isAcService
+    ? selectedService?.subCategories?.filter((sc) => !/^(window|split)\s+ac$/i.test(sc.name)) ?? []
+    : selectedService?.subCategories ?? [];
   const isServiceLocked = Boolean(initialServiceSlug) && Boolean(selectedService);
   const resolvedBrand = formData.brand === OTHER_BRAND ? formData.brandOther.trim() : formData.brand.trim();
 
@@ -378,7 +387,9 @@ export default function BookingForm({
           contactPhone: formData.phone,
           productDetails: { brand: resolvedBrand },
           addressData: { zip: formData.zip.trim(), text: formData.address },
-          description: formData.description,
+          description: [formData.acType ? `AC type: ${formData.acType}` : "", formData.description]
+            .filter(Boolean)
+            .join("\n") || undefined,
           ...(formData.preferredVisitDate ? { preferredVisitDate: formData.preferredVisitDate } : {}),
           ...(formData.preferredVisitSlot ? { preferredVisitSlot: formData.preferredVisitSlot } : {}),
         }),
@@ -613,7 +624,7 @@ export default function BookingForm({
                       <Choice
                         key={s._id}
                         active={active}
-                        onClick={() => set({ serviceId: s._id, subCategoryId: "" })}
+                        onClick={() => set({ serviceId: s._id, subCategoryId: "", acType: "" })}
                         className="flex flex-col gap-2.5 p-3.5"
                       >
                         {active && <Tick />}
@@ -636,9 +647,29 @@ export default function BookingForm({
 
             {selectedService && (
               <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                <Label>Your appliance type</Label>
+                {isAcService && acTypeOptions.length > 0 && (
+                  <div className="mb-6">
+                    <Label optional>AC type</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {acTypeOptions.map((option) => {
+                        const active = formData.acType === option.name;
+                        return (
+                          <Choice
+                            key={option._id}
+                            active={active}
+                            onClick={() => set({ acType: active ? "" : option.name })}
+                            className="px-4 py-2.5"
+                          >
+                            <span className="text-[13px] font-medium text-zinc-900">{option.name}</span>
+                          </Choice>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                <Label>{isAcService ? "What AC service do you need?" : "Your appliance type"}</Label>
                 <div className="space-y-2">
-                  {selectedService.subCategories?.map((sc) => {
+                  {visibleSubCategories.map((sc) => {
                     const active = formData.subCategoryId === sc._id;
                     return (
                       <Choice
