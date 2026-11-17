@@ -62,6 +62,7 @@ export default function OrdersPage() {
   const [error, setError] = useState("");
   const [addingOrder, setAddingOrder] = useState("");
   const [cancelTarget, setCancelTarget] = useState<Order | null>(null);
+  const [cancelSuccess, setCancelSuccess] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [cancelling, setCancelling] = useState(false);
 
@@ -151,6 +152,7 @@ export default function OrdersPage() {
       setOrders((current) => current.map((order) => order._id === body._id ? { ...order, ...body, canCancel: false, invoiceAvailable: false } : order));
       setCancelTarget(null);
       setCancelReason("");
+      setCancelSuccess(true);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not cancel this order.");
     } finally {
@@ -336,11 +338,15 @@ export default function OrdersPage() {
           </article>;
         })}</div>}
         <OrderCancelDialog
-          open={Boolean(cancelTarget)}
+          open={Boolean(cancelTarget) || cancelSuccess}
+          success={cancelSuccess}
           reason={cancelReason}
           submitting={cancelling}
           onReasonChange={setCancelReason}
-          onClose={() => { if (!cancelling) setCancelTarget(null); }}
+          onClose={() => {
+            if (cancelSuccess) setCancelSuccess(false);
+            else if (!cancelling) setCancelTarget(null);
+          }}
           onConfirm={() => void submitCancel()}
         />
       </main>
