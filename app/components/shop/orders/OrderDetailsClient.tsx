@@ -16,6 +16,9 @@ type Order = {
   _id: string;
   orderType?: string;
   status: string;
+  cancelledBy?: "ADMIN" | "CUSTOMER" | string | null;
+  cancellationReason?: string | null;
+  cancelledAt?: string | null;
   paymentStatus?: string;
   paymentMethod?: string;
   createdAt?: string;
@@ -28,7 +31,7 @@ type Order = {
   canCancel?: boolean;
   invoiceAvailable?: boolean;
 };
-type Tracking = { status?: string; paymentStatus?: string; paymentMethod?: string | null; courierTracking?: { courierName?: string; trackingNumber?: string } | null; createdAt?: string; updatedAt?: string; canCancel?: boolean; invoiceAvailable?: boolean };
+type Tracking = { status?: string; paymentStatus?: string; paymentMethod?: string | null; courierTracking?: { courierName?: string; trackingNumber?: string } | null; cancelledBy?: "ADMIN" | "CUSTOMER" | string | null; cancellationReason?: string | null; cancelledAt?: string | null; createdAt?: string; updatedAt?: string; canCancel?: boolean; invoiceAvailable?: boolean };
 const money = (value: number) => `₹${Number(value || 0).toLocaleString("en-IN")}`;
 const date = (value?: string) => value ? new Date(value).toLocaleString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" }) : "";
 
@@ -135,7 +138,7 @@ export default function OrderDetailsClient({ id }: { id: string }) {
       {placed && <p role="status" className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">Order placed successfully. We’ll update its status here.</p>}
 
       <section id="tracking" className="rounded-2xl border border-zinc-200 bg-white p-4 sm:p-5"><div className="flex items-start justify-between gap-3"><div><h2 className="text-[15px] font-medium text-zinc-900">Order status</h2><p className="mt-1 text-xs text-zinc-500">Status last updated {date(tracking?.updatedAt || order.updatedAt)}</p></div><span className={`rounded-full px-3 py-1 text-xs font-medium ${status === "CANCELLED" || status === "RETURNED" ? "bg-red-50 text-red-700" : status === "DELIVERED" ? "bg-emerald-50 text-emerald-700" : status === "DISPATCHED" ? "bg-emerald-50 text-emerald-800" : "bg-blue-50 text-blue-700"}`}>{statusLabel}</span></div>
-        {stage >= 0 ? <ol className="mt-6 grid grid-cols-4 gap-1" aria-label="Order progress">{stageLabels.map((label, index) => <li key={label} className="relative text-center"><div className={`mx-auto flex h-7 w-7 items-center justify-center rounded-full ${index <= stage ? "bg-emerald-600 text-white" : "bg-zinc-100 text-zinc-400"}`}>{index <= stage ? <Check className="h-4 w-4" /> : <span className="text-[10px]">{index + 1}</span>}</div><p className={`mt-2 text-[10px] sm:text-xs ${index <= stage ? "text-zinc-600" : "text-zinc-400"}`}>{label}</p></li>)}</ol> : <p className="mt-4 rounded-xl bg-zinc-50 p-3 text-sm text-zinc-600">This order is {statusLabel.toLowerCase()}.</p>}
+        {stage >= 0 ? <ol className="mt-6 grid grid-cols-4 gap-1" aria-label="Order progress">{stageLabels.map((label, index) => <li key={label} className="relative text-center"><div className={`mx-auto flex h-7 w-7 items-center justify-center rounded-full ${index <= stage ? "bg-emerald-600 text-white" : "bg-zinc-100 text-zinc-400"}`}>{index <= stage ? <Check className="h-4 w-4" /> : <span className="text-[10px]">{index + 1}</span>}</div><p className={`mt-2 text-[10px] sm:text-xs ${index <= stage ? "text-zinc-600" : "text-zinc-400"}`}>{label}</p></li>)}</ol> : <div className="mt-4 rounded-xl bg-rose-50 p-3 text-sm text-rose-900"><p>{status === "CANCELLED" && (tracking?.cancelledBy || order.cancelledBy) === "ADMIN" ? "This order was cancelled by Fixxer." : status === "CANCELLED" && (tracking?.cancelledBy || order.cancelledBy) === "CUSTOMER" ? "You cancelled this order." : `This order is ${statusLabel.toLowerCase()}.`}</p>{status === "CANCELLED" && (tracking?.cancellationReason || order.cancellationReason) && <p className="mt-1 leading-relaxed"><span className="font-semibold">Reason:</span> {tracking?.cancellationReason || order.cancellationReason}</p>}</div>}
         {(tracking?.courierTracking?.trackingNumber || order.courierTracking?.trackingNumber) && <div className="mt-4 flex items-start gap-3 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-900"><Truck className="mt-0.5 h-4 w-4 shrink-0" /><p><span className="font-medium">{tracking?.courierTracking?.courierName || order.courierTracking?.courierName || "Courier"}</span><br />Tracking number: {tracking?.courierTracking?.trackingNumber || order.courierTracking?.trackingNumber}</p></div>}
       </section>
 

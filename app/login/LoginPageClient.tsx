@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
@@ -25,13 +25,24 @@ function LoginFormInner() {
   const [pendingDraft, setPendingDraft] = useState<PendingBookingDraft | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { continueWithPhone, continueWithGoogle, token } = useAuth();
+  const { continueWithPhone, continueWithGoogle, token, loading: authLoading } = useAuth();
 
   const redirect = safeAppRedirect(searchParams.get("redirect"));
+  const destination = ["/login", "/register"].includes(redirect.split("?")[0]) ? "/" : redirect;
   const source = searchParams.get("source");
   const isBookingFlow = source === BOOKING_FLOW_SOURCE;
   const isShopFlow = isShopRedirect(redirect);
   const authQuery = searchParams.toString();
+
+  useEffect(() => {
+    if (authLoading || !token) return;
+    const draft = isBookingFlow ? loadPendingBookingDraft() : null;
+    if (draft) {
+      setPendingDraft(draft);
+      return;
+    }
+    router.replace(destination);
+  }, [authLoading, token, isBookingFlow, destination, router]);
 
   const afterAuth = async () => {
     const draft = loadPendingBookingDraft();
@@ -39,8 +50,10 @@ function LoginFormInner() {
       setPendingDraft(draft);
       return;
     }
-    router.push(redirect);
+    router.push(destination);
   };
+
+  if (authLoading || (token && !pendingDraft)) return <LoginFallback />;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -192,7 +205,7 @@ function LoginFormInner() {
           draft={pendingDraft}
           token={token}
           onDismiss={() => setPendingDraft(null)}
-          redirectTo={redirect}
+          redirectTo={destination}
         />
       )}
     </>

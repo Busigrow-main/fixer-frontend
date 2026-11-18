@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/app/context/AuthContext";
+import ConfirmActionDialog from "@/app/components/ConfirmActionDialog";
 import {
   DEFAULT_INVOICE_SELLER,
   DEFAULT_PLACE_OF_SUPPLY,
@@ -49,6 +50,7 @@ export function AdminOrderDetail({
   const [trackingNumber, setTrackingNumber] = useState("");
   const [savingTracking, setSavingTracking] = useState(false);
   const [savingStatus, setSavingStatus] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<"deliver" | "paid" | null>(null);
 
   const loadOrder = useCallback(async () => {
     if (!token || !id) return;
@@ -205,14 +207,7 @@ export function AdminOrderDetail({
     const saved = await saveBill(true);
     if (!saved && !order) return;
     openOrderInvoice(previewOrderSnapshot(saved || order));
-    const ok = window.confirm(
-      "Invoice preview opened. Mark this order as delivered and post the tax invoice to the customer?",
-    );
-    if (!ok) {
-      setMessage("Delivery not marked. Preview is still available — adjust the bill and try again.");
-      return;
-    }
-    await confirmDelivered();
+    setConfirmAction("deliver");
   };
 
   const saveTracking = async () => {
@@ -322,12 +317,11 @@ export function AdminOrderDetail({
 
   const markPaid = async () => {
     if (!token || !id) return;
-    if (
-      !confirm(
-        "Mark payment as complete? The tax invoice is posted to the customer after delivery.",
-      )
-    )
-      return;
+    setConfirmAction("paid");
+  };
+
+  const confirmMarkPaid = async () => {
+    if (!token || !id) return;
     setSaving(true);
     setMessage("");
     try {
@@ -356,6 +350,13 @@ export function AdminOrderDetail({
     } finally {
       setSaving(false);
     }
+  };
+
+  const confirmPendingAction = async () => {
+    const action = confirmAction;
+    setConfirmAction(null);
+    if (action === "paid") await confirmMarkPaid();
+    if (action === "deliver") await confirmDelivered();
   };
 
   if (loading) {
@@ -968,6 +969,22 @@ export function AdminOrderDetail({
           and CGST/SGST or IGST (CGST Rule 35) — grand total does not increase. Preview before marking delivered.
         </p>
       </section>
+      <ConfirmActionDialog
+        open={confirmAction !== null}
+        title={confirmAction === "deliver" ? "Mark order as delivered?" : "Mark payment complete?"}
+        description={
+          confirmAction === "deliver"
+            ? "The invoice preview is open. Confirm delivery to post the tax invoice to the customer."
+            : "The tax invoice will be posted to the customer after delivery."
+        }
+        confirmLabel={confirmAction === "deliver" ? "Confirm delivery" : "Mark payment complete"}
+        busy={saving || savingStatus}
+        onCancel={() => {
+          setConfirmAction(null);
+          if (confirmAction === "deliver") setMessage("Delivery not marked. The invoice preview is still available.");
+        }}
+        onConfirm={() => void confirmPendingAction()}
+      />
     </div>
   );
 }

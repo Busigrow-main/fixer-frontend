@@ -9,6 +9,7 @@ import { useAuth } from "@/app/context/AuthContext";
 import { API_URL } from "@/app/config";
 import ShopNavbar from "@/app/components/shop/ShopNavbar";
 import { applianceProductHref } from "@/app/lib/shop-copy";
+import ConfirmActionDialog from "@/app/components/ConfirmActionDialog";
 
 type CartItem = {
   itemId: string;
@@ -40,6 +41,7 @@ export default function CartPage() {
   const [loading, setLoading] = useState(true);
   const [busyItem, setBusyItem] = useState("");
   const [busyAction, setBusyAction] = useState(false);
+  const [confirmClearCart, setConfirmClearCart] = useState(false);
   const [error, setError] = useState("");
   const [couponCode, setCouponCode] = useState("");
   const [showCouponEntry, setShowCouponEntry] = useState(false);
@@ -107,14 +109,18 @@ export default function CartPage() {
   };
 
   const clearCart = async () => {
-    if (!token || !cart?.items.length || !window.confirm("Remove all items from your cart?")) return;
+    if (!token || !cart?.items.length) return;
     setBusyAction(true); setError("");
     try {
       const response = await fetch(`${API_URL}/cart/items`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
       const body = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(body.message || "Could not clear your cart.");
       setCart(body); window.dispatchEvent(new Event("shop-cart-updated"));
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not clear your cart."); }
+      setConfirmClearCart(false);
+    } catch (cause) {
+      setConfirmClearCart(false);
+      setError(cause instanceof Error ? cause.message : "Could not clear your cart.");
+    }
     finally { setBusyAction(false); }
   };
 
@@ -182,11 +188,11 @@ export default function CartPage() {
             <p className="text-xs font-medium uppercase tracking-[.14em] text-zinc-500">Fixxer Shop</p>
             <h1 className="mt-1 text-2xl font-semibold tracking-tight text-zinc-950 sm:text-3xl">My Cart <span className="text-base font-medium text-zinc-500">{cart ? `(${cart.items.length} ${cart.items.length === 1 ? "item" : "items"})` : ""}</span></h1>
           </div>
-          {!!cart?.items.length && <button type="button" onClick={() => void clearCart()} disabled={busyAction} className="text-xs font-medium text-zinc-500 underline decoration-zinc-300 underline-offset-4 hover:text-primary disabled:opacity-50">Clear all</button>}
+          {!!cart?.items.length && <button type="button" onClick={() => setConfirmClearCart(true)} disabled={busyAction} className="text-xs font-medium text-zinc-500 underline decoration-zinc-300 underline-offset-4 hover:text-primary disabled:opacity-50">Clear all</button>}
         </div>
         {!!cart?.items.length && (
           <div className="mb-3 flex justify-end md:hidden">
-            <button type="button" onClick={() => void clearCart()} disabled={busyAction} className="text-[12px] font-medium text-zinc-500 underline decoration-zinc-300 underline-offset-4 disabled:opacity-50">Clear all</button>
+            <button type="button" onClick={() => setConfirmClearCart(true)} disabled={busyAction} className="text-[12px] font-medium text-zinc-500 underline decoration-zinc-300 underline-offset-4 disabled:opacity-50">Clear all</button>
           </div>
         )}
 
@@ -295,6 +301,17 @@ export default function CartPage() {
           </Link>
         </div>
       )}
+
+      <ConfirmActionDialog
+        open={confirmClearCart}
+        title="Clear your cart?"
+        description="This will remove every item from your cart. You can add them again from the shop."
+        confirmLabel="Clear cart"
+        busy={busyAction}
+        destructive
+        onCancel={() => setConfirmClearCart(false)}
+        onConfirm={() => void clearCart()}
+      />
     </div>
   );
 }

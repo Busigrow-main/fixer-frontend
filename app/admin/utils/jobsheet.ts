@@ -156,10 +156,10 @@ export function openJobSheet(booking: any) {
           <div class="logo-text">Fixx<span>er</span></div>
         </td>
         <td style="width:50%; text-align:center; padding:8px;">
-          <strong style="font-size: 12px; letter-spacing: 0.5px;">AUTHORIZED SERVICE PROVIDER</strong><br>
-          <span style="font-size: 10px; font-weight: bold;">FIXXER SERVICE PLATFORM</span><br>
-          <span style="color:#444;">A-12, TECH PARK, NEW DELHI<br>
-          DELHI, 110001, INDIA</span>
+          <strong style="font-size: 12px; letter-spacing: 0.5px;">AUTHORISED SERVICE PROVIDER</strong><br>
+          <span style="font-size: 10px; font-weight: bold;">COOL AIR REFRIGERATION</span><br>
+          <span style="color:#444;">MLA Colony, Raja Bazar, Patna 800014, Bihar, India<br>
+          GSTIN: 10AHKPR1007K2ZM | +91 70047 71388</span>
         </td>
         <td style="width:25%; font-size:9px;">
           <table class="no-border-table">
@@ -391,9 +391,9 @@ export function openJobSheet(booking: any) {
     <table style="border:none; margin-top:4px; font-size:8.5px;">
       <tr>
         <td style="border:none; padding:0; line-height: 1.4;">
-          <strong>Authorised Service Provider : Cool Air Refrigeration (Fixxer)</strong><br>
+          <strong>Authorised Service Provider : Cool Air Refrigeration</strong><br>
           <span style="color:#555;">Contact Number :</span> +91 70047 71388<br>
-          <span style="color:#555;">Address :</span> MLA Colony, Raja Bazar, Patna 800014, Bihar | <span style="color:#555;">Email :</span> grow@busigrow.in<br>
+          <span style="color:#555;">Address :</span> MLA Colony, Raja Bazar, Patna 800014, Bihar | <span style="color:#555;">Email :</span> grow@busigrow.in | <span style="color:#555;">GSTIN :</span> 10AHKPR1007K2ZM<br>
           <div style="margin-top:2px; font-style: italic; color:#777;">Note: This is a record rendered and is for usage by Authorised service provider only.</div>
         </td>
       </tr>
@@ -611,11 +611,11 @@ export function openRetailInvoice(booking: any) {
   </div>
 
   <div class="footer">
-    <p>&copy; 2026 Fixxer - Precision Home Services. All rights reserved.</p>
+    <p>Cool Air Refrigeration | Authorised service provider for Fixxer</p>
     <p style="font-weight: 600;">This is a computer generated service bill and does not require a physical signature.</p>
-    <p>www.fixxer.in | Contact: grow@busigrow.in | +91 70047 71388</p>
+    <p>MLA Colony, Raja Bazar, Patna 800014, Bihar | GSTIN: 10AHKPR1007K2ZM</p>
     <p style="font-weight: 600;">This is a computer generated tax invoice and does not require a physical signature.</p>
-    <p>www.fixxer.in | Contact: grow@busigrow.in | +91 70047 71388</p>
+    <p>Contact: +91 70047 71388 | grow@busigrow.in | www.fixxer.in</p>
   </div>
 </body>
 </html>`;

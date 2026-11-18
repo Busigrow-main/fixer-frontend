@@ -17,6 +17,9 @@ type Order = {
   _id: string;
   orderType?: "part" | "appliance" | string;
   status: string;
+  cancelledBy?: "ADMIN" | "CUSTOMER" | string | null;
+  cancellationReason?: string | null;
+  cancelledAt?: string | null;
   paymentStatus?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -258,7 +261,7 @@ export default function OrdersPage() {
             <div className="flex items-center justify-between gap-2 px-3.5 pt-3.5 sm:px-4">
               <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-medium ${order.status === "CANCELLED" || order.status === "RETURNED" ? "bg-rose-100 text-rose-700" : order.status === "DELIVERED" ? "bg-teal-100 text-teal-800" : order.status === "DISPATCHED" ? "bg-teal-100 text-teal-800" : "bg-blue-100 text-blue-800"}`}>
                 <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                {status}
+                {order.status === "CANCELLED" && order.cancelledBy === "ADMIN" ? "CANCELLED BY FIXXER" : order.status === "CANCELLED" && order.cancelledBy === "CUSTOMER" ? "CANCELLED BY YOU" : status}
               </span>
               <span className="text-[11px] text-zinc-400">#{order._id.slice(-8).toUpperCase()} <span className="ml-2">{date(order.createdAt)}</span></span>
             </div>
@@ -289,7 +292,10 @@ export default function OrdersPage() {
               </div>
             )}
             {order.status === "CANCELLED" || order.status === "RETURNED" ? (
-              <p className="mx-3.5 mb-3 rounded-lg bg-rose-50 px-3 py-2 text-[12px] text-rose-800 sm:mx-4">This shop order was {status.toLowerCase()}.</p>
+              <div className="mx-3.5 mb-3 rounded-lg border border-rose-100 bg-rose-50 px-3 py-2.5 text-[12px] text-rose-900 sm:mx-4">
+                <p className="font-medium">{order.status === "CANCELLED" && order.cancelledBy === "ADMIN" ? "This order was cancelled by Fixxer." : order.status === "CANCELLED" && order.cancelledBy === "CUSTOMER" ? "You cancelled this order." : `This shop order was ${status.toLowerCase()}.`}</p>
+                {order.status === "CANCELLED" && order.cancellationReason && <p className="mt-1 leading-relaxed"><span className="font-semibold">Reason:</span> {order.cancellationReason}</p>}
+              </div>
             ) : null}
             {hasInstallation(order) && (
               <div className="mx-3.5 mb-3 flex items-center gap-1.5 rounded-lg bg-teal-50 px-2.5 py-2 text-[12px] text-teal-800 sm:mx-4">

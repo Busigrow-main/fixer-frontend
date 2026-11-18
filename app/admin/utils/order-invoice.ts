@@ -18,9 +18,9 @@ export type InvoiceSupplyType = "INTRA" | "INTER";
 
 /** Default Sold By block — admin can override per order before posting. */
 export const DEFAULT_INVOICE_SELLER: InvoiceSoldBy = {
-  name: "Cool Air Refrigeration (Fixxer)",
+  name: "Cool Air Refrigeration",
   address: "MLA Colony, Raja Bazar, Patna 800014, Bihar, India",
-  gstin: "",
+  gstin: "10AHKPR1007K2ZM",
   pan: "",
   phone: "+91 70047 71388",
   email: "grow@busigrow.in",
@@ -37,7 +37,9 @@ export function resolveInvoiceSeller(order: any): InvoiceSoldBy {
     address:
       String(soldBy.address || DEFAULT_INVOICE_SELLER.address).trim() ||
       DEFAULT_INVOICE_SELLER.address,
-    gstin: String(soldBy.gstin ?? DEFAULT_INVOICE_SELLER.gstin).trim(),
+    // Older invoices may contain an explicitly empty GSTIN. Fall back to the
+    // verified business GSTIN in that case so it appears on downloaded copies.
+    gstin: String(soldBy.gstin || DEFAULT_INVOICE_SELLER.gstin).trim(),
     pan: String(soldBy.pan ?? DEFAULT_INVOICE_SELLER.pan).trim(),
     phone: String(soldBy.phone || DEFAULT_INVOICE_SELLER.phone).trim() || DEFAULT_INVOICE_SELLER.phone,
     email: String(soldBy.email || DEFAULT_INVOICE_SELLER.email).trim() || DEFAULT_INVOICE_SELLER.email,
@@ -633,6 +635,8 @@ export function openOrderInvoice(order: any) {
     printWindow.document.write(html);
     printWindow.document.close();
     printWindow.focus();
+  } else {
+    window.alert("Please allow popups for this site to view or download the invoice.");
   }
 }
 
