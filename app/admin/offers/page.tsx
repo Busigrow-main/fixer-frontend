@@ -415,10 +415,11 @@ export default function AdminOffersPage() {
               placeholder="0"
             />
           </Field>
-          <Field label="Background image URL">
+          <Field label="Background image URL *">
             <input
               type="url"
               className="admin-input"
+              required
               value={form.imageUrl}
               onChange={(event) => updateField("imageUrl", event.target.value)}
               placeholder="https://..."

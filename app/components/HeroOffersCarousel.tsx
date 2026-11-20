@@ -126,7 +126,7 @@ export default function HeroOffersCarousel({
                 <div className="absolute inset-0 hidden bg-gradient-to-t from-black/75 via-black/10 to-transparent md:block" />
                 <div className="absolute inset-x-4 bottom-10 hidden items-end justify-between gap-3 text-left text-white sm:inset-x-6 sm:bottom-11 md:inset-x-8 md:flex">
                   <span className="min-w-0">
-                    <span className="block truncate font-headline text-lg font-bold sm:text-2xl md:text-3xl">{offer.title}</span>
+                    {offer.title?.trim() && <span className="block truncate font-headline text-lg font-bold sm:text-2xl md:text-3xl">{offer.title}</span>}
                     {offer.discountText && <span className="mt-1 block truncate text-xs font-semibold sm:text-sm">{offer.discountText}</span>}
                   </span>
                   <span className="shrink-0 rounded-lg bg-primary px-3 py-2 text-[9px] font-black uppercase tracking-wide text-on-primary shadow-lg sm:px-4 sm:text-[10px]">
@@ -143,7 +143,7 @@ export default function HeroOffersCarousel({
             key={offer._id}
             href={offer.ctaHref}
             tabIndex={visibleIndex === index ? 0 : -1}
-            aria-label={offer.title || "View offer"}
+            aria-label={offer.title?.trim() || "View offer"}
             aria-hidden={visibleIndex !== index}
             className={slideClass}
           >

@@ -2,8 +2,8 @@ import { API_URL } from "@/app/config";
 
 export interface ApiOffer {
   _id: string;
-  title: string;
-  discountText: string;
+  title?: string;
+  discountText?: string;
   imageUrl?: string;
   ctaLabel: string;
   ctaHref: string;
@@ -33,7 +33,7 @@ export async function getShopOffers(signal?: AbortSignal): Promise<ApiOffer[]> {
       offer.isActive === true &&
       (offer.audience === "ALL" || offer.audience === "SHOP") &&
       validNow &&
-      Boolean(offer.title?.trim()) &&
+      Boolean(offer.imageUrl?.trim()) &&
       Boolean(offer.ctaLabel?.trim()) &&
       isSafeOfferHref(offer.ctaHref)
     );
@@ -60,7 +60,7 @@ export async function getHomeOffers(signal?: AbortSignal): Promise<ApiOffer[]> {
       offer.isActive === true &&
       (offer.audience === "ALL" || offer.audience === "SERVICES") &&
       inValidityWindow &&
-      Boolean(offer.title?.trim()) &&
+      Boolean(offer.imageUrl?.trim()) &&
       isSafeOfferHref(offer.ctaHref)
     );
   });
